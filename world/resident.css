@@ -1,0 +1,40 @@
+.resident-greeting {
+  position: fixed;
+  z-index: 8;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  padding: 0.35rem 0.55rem;
+  border: 2px solid #20252b;
+  border-radius: 0.35rem;
+  background: #fff8e8;
+  box-shadow: 3px 3px 0 #20252b;
+  color: #20252b;
+  font: 700 0.78rem/1.25 system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.resident-greeting::after {
+  position: absolute;
+  left: 50%;
+  bottom: -0.42rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-right: 2px solid #20252b;
+  border-bottom: 2px solid #20252b;
+  background: #fff8e8;
+  content: '';
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.resident-greeting b,
+.resident-greeting span {
+  position: relative;
+  z-index: 1;
+}
+
+.resident-greeting b {
+  display: block;
+  margin-bottom: 0.08rem;
+  color: #a34d39;
+  font-size: 0.68rem;
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "name": {
+    "zh": "Wyc的世界",
+    "en": "Wyc Home"
+  },
+  "url": "https://www.wyc21.com/",
+  "logo": "",
+  "intro": {
+    "zh": "惬意的海岛",
+    "en": "Cozy Island"
+  },
+  "lang": ["zh", "en"],
+  "homecraft": true
+}

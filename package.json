@@ -1,0 +1,38 @@
+{
+  "name": "homecraft",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Build your own Minecraft-inspired 3D personal website.",
+  "keywords": ["personal-website", "homepage", "portfolio", "template", "threejs", "voxel", "webring", "vibe-coding"],
+  "homepage": "https://github.com/terryHu7/homecraft#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/terryHu7/homecraft.git"
+  },
+  "bugs": {
+    "url": "https://github.com/terryHu7/homecraft/issues"
+  },
+  "author": "Terry (https://terryhu.cn)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "serve": "python3 tools/serve.py",
+    "check:site": "node tools/check-site.mjs",
+    "check": "node tools/check-site.mjs && node tools/check.mjs",
+    "check:portal": "node tools/sync-protocol.mjs --check && node tools/check-portal.mjs",
+    "check:metadata": "node tools/check-metadata.mjs",
+    "check:piano": "node tools/check-piano-ui.mjs",
+    "check:computer": "node tools/check-computer.mjs",
+    "check:beach": "node tools/check-beach.mjs",
+    "check:furniture": "node tools/check-furniture.mjs",
+    "check:jet-ski": "node tools/check-jet-ski.mjs",
+    "check:lehun": "node tools/check-lehun.mjs",
+    "check:minimap": "node tools/check-minimap.mjs",
+    "check:mailbox": "node --experimental-vm-modules tools/check-mailbox.cjs && node tools/check-mailbox-ui.cjs",
+    "build": "bash tools/build.sh",
+    "directory": "node tools/directory.mjs check"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}

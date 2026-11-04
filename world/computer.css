@@ -1,0 +1,63 @@
+dialog#panel[data-station="computer"] {
+  width: min(960px, calc(100vw - 40px));
+  height: min(680px, calc(100dvh - 120px));
+}
+#panel[data-station="computer"] .body { display: flex; overflow: hidden; }
+.computer-desktop {
+  position: relative; isolation: isolate; display: flex; flex: 1; flex-direction: column;
+  min-width: 0; min-height: 0; overflow: hidden; color: #f1f5f4;
+  border: 8px solid transparent; border-image: var(--mc-frame) 4 fill / 8px;
+  background: #213d4b; font-family: var(--text);
+}
+.computer-wallpaper { position: absolute; inset: 0; z-index: -1; overflow: hidden; background: linear-gradient(#244657, #739c9e); }
+.computer-wallpaper::before { content: ''; position: absolute; right: 12%; top: 15%; width: 68px; height: 68px; background: #e6d9b5; box-shadow: 0 0 0 12px #e6d9b518; }
+.computer-wallpaper i { position: absolute; inset: 30% -2% 0; background: #416b71; clip-path: polygon(0 65%, 12% 65%, 12% 40%, 25% 40%, 25% 10%, 40% 10%, 40% 45%, 57% 45%, 57% 30%, 72% 30%, 72% 55%, 87% 55%, 87% 35%, 100% 35%, 100% 100%, 0 100%); }
+.computer-wallpaper i:nth-child(2) { inset: 54% -12% 0; background: #2c535c; transform: scaleX(-1); }
+.computer-wallpaper i:nth-child(3) { inset: 76% -2% 0; background: #1c3d46; }
+.computer-topbar { display: flex; justify-content: space-between; gap: 16px; padding: 12px 18px; background: #142c3699; color: #d0e0df; font-size: 11px; letter-spacing: 1.4px; }
+.computer-workspace { flex: 1; min-height: 0; padding: 32px; overflow-y: auto; overscroll-behavior: contain; }
+.computer-eyebrow { font-size: 10px; letter-spacing: 3px; color: #c2d5ce; }
+.page .computer-welcome h3 { margin: 8px 0; font-size: clamp(22px, 3vw, 32px); color: #fff; text-shadow: 2px 2px #17343e; }
+.page .computer-welcome p { margin: 0; font-size: 14px; color: #d3e0dc; }
+.computer-filters { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 18px; }
+.computer-filters .mc-button { min-height: 36px; padding: 0 14px; font-size: 13px; }
+.computer-filters [aria-pressed="true"] { background: #436650; color: #fff; }
+.computer-apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 12px; max-width: 650px; }
+.computer-app {
+  display: flex; flex-direction: column; align-items: center; gap: 9px; min-width: 0;
+  padding: 16px 8px; border: 1px solid transparent; border-radius: 0;
+  background: #122f3b55; color: #fff; font: inherit; text-decoration: none; text-align: center; cursor: pointer;
+}
+.computer-app:hover { background: #c4dfdf22; border-color: #c4dfdf88; }
+.computer-app:focus-visible, .computer-filters button:focus-visible { outline: 2px solid #f3dc9e; outline-offset: 3px; }
+.computer-app[hidden] { display: none; }
+.computer-app-icon { display: grid; place-items: center; width: 60px; height: 60px; background: #70947f; box-shadow: inset 3px 3px #ffffff25, inset -3px -3px #0003, 3px 3px #102e3a66; }
+.computer-app:nth-child(3n) .computer-app-icon { background: #88759a; }
+.computer-app:nth-child(4n) .computer-app-icon { background: #b18a62; }
+.computer-app-icon.is-github { background: #24292f; }
+.computer-app-icon img { object-fit: contain; image-rendering: pixelated; }
+.computer-app-icon.is-github img { image-rendering: auto; }
+.computer-app strong { max-width: 100%; font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+.computer-app small { font-size: 11px; color: #d0dedb; }
+.page .computer-status { margin: 22px 0 0; font-size: 12px; line-height: 1.7; color: #d0dedb; overflow-wrap: anywhere; }
+.computer-taskbar { display: flex; align-items: center; gap: 16px; min-height: 48px; padding: 8px 14px; border-top: 2px solid #93ada04d; background: #102832ee; font-size: 12px; }
+.computer-start { display: flex; align-items: center; gap: 10px; }
+.computer-start img { image-rendering: pixelated; }
+.computer-taskbar-hint { margin-left: auto; color: #a7bfbb; }
+.computer-taskbar time { margin-left: auto; font-variant-numeric: tabular-nums; }
+#pages .computer-desktop { min-height: 460px; }
+@media (max-width: 600px) {
+  dialog#panel[data-station="computer"] { width: calc(100vw - 24px); height: min(680px, calc(100dvh - 112px)); }
+  .computer-topbar { padding: 10px 12px; font-size: 9px; letter-spacing: .8px; }
+  .computer-topbar > span:last-child { display: none; }
+  .computer-workspace { padding: 22px 16px; }
+  .computer-filters { gap: 8px; margin-top: 22px; }
+  .computer-filters .mc-button { min-height: 40px; padding: 0 12px; }
+  .computer-apps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .computer-app { padding: 14px 6px; }
+  .computer-taskbar-hint { display: none; }
+}
+@media (max-height: 500px) {
+  dialog#panel[data-station="computer"] { inset: 8px 0; height: calc(100dvh - 16px); }
+  .computer-workspace { padding: 16px; }
+}

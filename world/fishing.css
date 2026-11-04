@@ -1,0 +1,37 @@
+#fishingPrompt {
+  position: fixed; right: 20px; bottom: max(22px, env(safe-area-inset-bottom)); z-index: 12;
+  display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border: 0;
+  font: 600 16px/1 var(--text); color: var(--ink); cursor: pointer;
+}
+#fishingPrompt:hover { background: var(--gui-light); }
+#fishingPrompt kbd {
+  display: grid; place-items: center; width: 28px; height: 28px;
+  font: 600 15px/1 var(--text); color: #fff; background: var(--btn);
+  box-shadow: inset -2px -3px #0006, inset 2px 2px #ffffff50, 0 0 0 2px var(--line);
+}
+#fishingPrompt svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; }
+body.fishing-available #prompt { display: none; }
+#fishingStatus {
+  position: fixed; right: 20px; bottom: max(86px, calc(72px + env(safe-area-inset-bottom)));
+  z-index: 12; display: grid; gap: 8px; width: min(320px, calc(100vw - 40px)); padding: 16px;
+  font: 14px/1.6 var(--text); color: var(--ink); pointer-events: none;
+}
+#fishingStatus strong { font-size: 17px; }
+#fishingStatus > span { color: var(--ink-soft); }
+#fishingStatus meter { width: 100%; height: 12px; accent-color: var(--accent); }
+#fishingPrompt[data-phase="bite"] { color: var(--accent); outline: 2px solid var(--gold); }
+@media (pointer: coarse) {
+  #fishingPrompt { min-height: 48px; padding-left: 14px; }
+  #fishingPrompt kbd { display: none; }
+}
+@media (max-width: 720px), (max-height: 520px) {
+  #fishingPrompt {
+    left: max(12px, env(safe-area-inset-left)); right: auto;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+  #fishingStatus {
+    left: max(12px, env(safe-area-inset-left)); right: auto;
+    bottom: calc(156px + env(safe-area-inset-bottom));
+    width: min(286px, calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  }
+}

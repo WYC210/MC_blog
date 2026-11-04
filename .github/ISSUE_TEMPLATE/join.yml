@@ -1,0 +1,70 @@
+name: 申请收录 / Request listing
+description: 申请将网站收录到 Homecraft 公共目录。Request a listing in the Homecraft public directory.
+title: "申请收录 / Request listing: "
+labels: [join]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交的资料会公开。审核通过后，网站将随下一次目录发布显示在传送门中。
+
+        Submitted information is public. Approved websites appear in portals after the next directory publication.
+  - type: input
+    id: url
+    attributes:
+      label: 网址 / Address
+      description: https:// 开头。Starts with https://.
+      placeholder: https://alex.github.io/home/
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: 网站名称 / Website name
+      description: 60 字以内。Up to 60 characters.
+      placeholder: Alex's Home
+    validations:
+      required: true
+  - type: input
+    id: name_en
+    attributes:
+      label: 英文名称（可选）/ English name (optional)
+      description: 与上方名称不同时填写。Fill in only if different from the name above.
+  - type: input
+    id: owner
+    attributes:
+      label: 作者名称 / Author name
+      description: 40 字以内。Up to 40 characters.
+    validations:
+      required: true
+  - type: dropdown
+    id: lang
+    attributes:
+      label: 网站语言 / Languages
+      options:
+        - 中文和英文 / Chinese and English
+        - 中文 / Chinese
+        - English / 英文
+    validations:
+      required: true
+  - type: input
+    id: intro
+    attributes:
+      label: 简介 / Introduction
+      description: 120 字以内。留空时从 homecraft.json 读取。Up to 120 characters; read from homecraft.json if left blank.
+  - type: input
+    id: intro_en
+    attributes:
+      label: 英文简介（可选）/ English introduction (optional)
+  - type: input
+    id: logo
+    attributes:
+      label: Logo
+      description: 同一网站下的方形图片，100 KB 以内。留空时从 homecraft.json 读取。Square image on the same website, up to 100 KB; read from homecraft.json if left blank.
+      placeholder: https://alex.github.io/home/assets/logo.png
+  - type: input
+    id: preview
+    attributes:
+      label: 预览图（可选）/ Preview image (optional)
+      description: 例如 og.jpg。For example, your og.jpg.
+      placeholder: https://alex.github.io/home/assets/og.jpg

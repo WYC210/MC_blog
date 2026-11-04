@@ -1,0 +1,45 @@
+# Publishes the site to GitHub Pages on every push to main.
+# Turn it on: Settings → Pages → Source: GitHub Actions, then
+# Settings → Secrets and variables → Actions → Variables: DEPLOY_PAGES = true.
+# (Or run it by hand from the Actions tab.)
+#
+# The main Homecraft repository also sets HOMECRAFT_DIRECTORY = true: its site
+# then carries worlds.json, the shared directory every Homecraft portal reads,
+# rebuilt from directory/ on each push and re-checked every Monday so worlds
+# that stopped answering drop out (docs/worlds.md). Forks never need it.
+name: Pages
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && vars.DEPLOY_PAGES == 'true') || (github.event_name == 'schedule' && vars.HOMECRAFT_DIRECTORY == 'true')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: bash tools/build.sh
+      - name: The shared directory (main repository only)
+        if: vars.HOMECRAFT_DIRECTORY == 'true'
+        run: node tools/directory.mjs build dist/worlds.json --online
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
