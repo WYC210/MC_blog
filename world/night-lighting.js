@@ -1,3 +1,4 @@
+import { MOODS } from '@engine/world/stage.js';
 import { FOUNTAIN, ORIGIN_GONGLU } from './layout.js';
 
 const WOOD = { tex: 'walnut' };
@@ -6,6 +7,14 @@ const STONE = { tex: 'travertine', tint: 0xe3e5dc };
 const WARM = { tex: 'paint', tint: 0xffdda4, emissive: 0.7 };
 
 export function buildNightLighting({ B: batch, obstacles, bakes }) {
+  Object.assign(MOODS.night, {
+    sunIntensity: 0.42,
+    hemiSky: 0xb0bac8,
+    hemiGround: 0x8d867d,
+    hemiIntensity: 1.15,
+    exposure: 1.14,
+  });
+
   const box = (positionX, bottom, positionZ, width, height, depth, look) =>
     batch.box(positionX, bottom, positionZ, width, height, depth, look, { tag: 'night-lighting' });
   const bake = (id, positionX, height, positionZ, power, radius, direction = null) =>

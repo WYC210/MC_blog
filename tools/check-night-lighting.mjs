@@ -88,6 +88,17 @@ try {
     for (const mode of ['day', 'night']) {
       await page.evaluate(mode => { __home.setTimeMode(mode); __home.stage.settle(); }, mode);
       await page.waitForTimeout(900);
+      const light = await page.evaluate(() => ({
+        ambient: __home.stage.hemi.intensity,
+        sky: __home.stage.hemi.color.getHex(),
+        ground: __home.stage.hemi.groundColor.getHex(),
+        exposure: __home.stage.renderer.toneMappingExposure,
+        baked: __home.world.lighting.uniforms.uInteriorBoost.value,
+      }));
+      assert.deepEqual(light, mode === 'night'
+        ? { ambient: 1.15, sky: 0xb0bac8, ground: 0x8d867d, exposure: 1.14, baked: 1 }
+        : { ambient: 1.25, sky: 0xe6e3da, ground: 0xa8967a, exposure: 1.1, baked: 0.025 },
+      `${view.name} ${mode}: lift night shadows without changing daylight or baked lamps`);
       await page.screenshot({ path: fileURLToPath(new URL(`night-lighting-${view.name}-${mode}.png`, output)) });
       const stats = await page.evaluate(() => __home.stats());
       assert.ok(stats.calls <= stats.budget.calls, `${view.name} ${mode}: ${stats.calls} calls`);
@@ -95,6 +106,20 @@ try {
       assert.equal(stats.lights, 0, 'night lighting must not add real-time lights');
       console.log(`${view.name} ${mode}: ${stats.calls} calls, ${stats.triangles} triangles, ${stats.lights} real-time lights`);
     }
+    const weather = await page.evaluate(() => {
+      __home.setWeatherMode('rain');
+      __home.stage.settle();
+      const rainyAmbient = __home.stage.hemi.intensity;
+      __home.setTimeMode('day');
+      __home.stage.settle();
+      __home.setTimeMode('night');
+      __home.setWeatherMode('clear');
+      __home.stage.settle();
+      return { rainyAmbient, restoredAmbient: __home.stage.hemi.intensity, restoredExposure: __home.stage.renderer.toneMappingExposure };
+    });
+    assert.ok(weather.rainyAmbient >= 1, `${view.name}: rainy nights must retain readable ambient light`);
+    assert.equal(weather.restoredAmbient, 1.15, 'weather and time switches must restore the night preset without accumulating brightness');
+    assert.equal(weather.restoredExposure, 1.14);
     console.log(`${view.name}: coverage, light continuity, facade, grove and three walking routes passed; ${Math.round(checks.bakedBytes / 1024)} KiB baked in ${Math.round(checks.bakeMs)} ms`);
     assert.deepEqual(errors, []);
     await context.close();
