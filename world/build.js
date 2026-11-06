@@ -1,7 +1,7 @@
 import { BoxBatch } from '@engine/world/blocks.js';
 import { buildIsland } from '@engine/world/terrain.js';
 import { buildForest, buildTufts } from '@engine/world/landscape.js';
-import { ISLAND, LAND, BAY, BOARDWALK, TREES, MODEL_ORIGIN, IKUN_CENTER, IKUN_ENTRY, LEHUN_ORIGIN, ORIGIN_GONGLU, ORIGIN_FERRIS } from './layout.js';
+import { ISLAND, LAND, BAY, BOARDWALK, TREES, FOUNTAIN, MODEL_ORIGIN, IKUN_CENTER, IKUN_ENTRY, LEHUN_ORIGIN, ORIGIN_GONGLU, ORIGIN_FERRIS } from './layout.js';
 import { buildLitematicIKUN } from './ikun-model.js';
 import { buildLitematicLEHUN } from './lehun-model.js';
 import { buildLitematicGONGLU } from './gonglu-model.js';
@@ -17,6 +17,12 @@ import { createFurnitureInteraction } from './furniture-interaction.js';
 import { createJetSki } from './jet-ski.js';
 import { furnishIKUN } from './ikun-furnish.js';
 import { createResident } from './resident.js';
+import { buildFountain } from './fountain.js';
+import { buildNightLighting } from './night-lighting.js';
+import { buildConcertCrowd } from './night-concert-crowd.js';
+import { createNightConcert } from './night-concert.js';
+import { createConcertAudio } from './night-concert-audio.js';
+import { createNightNature } from './night-nature.js';
 
 // Two cottages rebuilt one-to-one from litematics. The palette keeps every
 // block's properties, so stairs, slabs, doors, panes and lanterns come out as
@@ -285,7 +291,7 @@ export function build({ grid, layer, materials, stage }) {
   for (let i = 0; i < 100; i++) {
     const x = -32 + rng() * 64;
     const z = -22 + rng() * 48;
-    if (inBuilding(x, z)) continue;
+    if (inBuilding(x, z) || Math.hypot(x - FOUNTAIN.x, z - FOUNTAIN.z) < FOUNTAIN.radius + 0.6) continue;
     const tiles = ['tall_grass', 'tall_grass', 'tall_grass', 'flower_red', 'flower_white', 'flower_violet'];
     tufts.push({ x, z, tile: tiles[Math.floor(rng() * tiles.length)], s: 0.5 + rng() * 0.4 });
   }
@@ -306,6 +312,10 @@ export function build({ grid, layer, materials, stage }) {
   planes.push(...furnishLeHun({ B, walk, obstacles, bakes }));
   planes.push(tuftsMesh);
   furnishBeach({ B, obstacles, bakes });
+  buildNightLighting({ B, obstacles, bakes });
+  const fountain = buildFountain({ B, layer, materials, obstacles, bakes });
+  const concertCrowd = buildConcertCrowd({ layer, materials });
+  planes.push(fountain.mesh, concertCrowd.group);
   return {
     batches: { model: B },
     bakes,
@@ -315,22 +325,36 @@ export function build({ grid, layer, materials, stage }) {
     planes,
     forest,
     sites: [toys, makeModelSite(walk, obstacles)],
+    named: { fountain, concertCrowd },
   };
 }
 
 // The floats ride the swell.
-export function setup({ stage, config, player, avatar, rig, sound, world, nav }) {
+export function setup({ stage, config, player, avatar, rig, sound, world, nav, quality }) {
   createComputer(config.computer);
   const fishing = createFishing({ stage, player, avatar, rig, sound });
   const furniture = createFurnitureInteraction({ stage, player, rig, sound, world });
   const jetSki = createJetSki({ stage, player, rig, sound, world, toys });
-  const resident = createResident({ stage, world, nav, player, jetSki, config });
+  const audio = createConcertAudio(sound);
+  const nightConcert = createNightConcert({ stage, world, nav, player, avatar, rig, sound, audio });
+  nightConcert.update(0);
+  const resident = createResident({ stage, world, nav, player, jetSki, config, nightConcert });
+  const nightNature = createNightNature({ stage, world, nav, quality });
   return {
-    fishing, furniture, jetSki, resident,
-    interact: () => jetSki.interact() || furniture.interact(),
+    fishing, furniture, jetSki, resident, nightConcert, nightNature,
+    interact: () => jetSki.interact() || furniture.interact() || nightConcert.interact(),
     tap: (x, y, picked) => jetSki.tap(x, y, picked) || furniture.tap(x, y, picked),
     pad: jetSki.pad,
-    update(dt) { toys?.update(dt, stage.camera); fishing.update(dt); furniture.update(dt); jetSki.update(dt); resident?.update(dt); },
+    update(dt) {
+      toys?.update(dt, stage.camera);
+      nightConcert.update(dt);
+      nightNature.update(dt);
+      world.fountain.update(dt, stage.camera);
+      fishing.update(dt);
+      furniture.update(dt);
+      jetSki.update(dt);
+      resident?.update(dt);
+    },
   };
 }
 

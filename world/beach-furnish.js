@@ -1,7 +1,7 @@
 // Small beach details that make the open sand read as a lived-in shoreline.
 // Everything stays in the shared model batch so the decoration costs no extra
 // draw call beyond the existing furniture group.
-import { PORTAL, IKUN_ENTRY, BOARDWALK } from './layout.js';
+import { PORTAL, IKUN_ENTRY, BOARDWALK, FOUNTAIN } from './layout.js';
 import { addRestPoint } from './rest-points.js';
 
 const OAK = { tex: 'oak' };
@@ -232,7 +232,7 @@ export function furnishBeach({ B, obstacles, bakes }) {
   palm(28, -8, 0.85);
   palm(25, 12, 0.95);
   // Central area accent
-  palm(-8, -8, 0.78);
+  palm(FOUNTAIN.x - 4, FOUNTAIN.z + 3, 0.78);
   palm(10, 2, 0.85);
   palm(18, 8, 0.9);
   // Beach area fill
@@ -242,20 +242,13 @@ export function furnishBeach({ B, obstacles, bakes }) {
 
   // ===== Torches for night lighting =====
   // North area (between buildings)
-  torch(-20, -10);
-  torch(-5, -15);
   torch(12, -8);
   // Central path
-  torch(-12, 5);
-  torch(0, 5);
   torch(12, 5);
   // Beach approach
   torch(-8, 18);
   torch(12, 18);
   // Building entrances
-  torch(-22, -14);
-  torch(-22, -18);
-  torch(0, -2);
   torch(10, 0);
   torch(28, -10);
   torch(28, -18);
@@ -269,7 +262,8 @@ export function furnishBeach({ B, obstacles, bakes }) {
 
   // ===== Stone paths connecting areas =====
   // Path stones: irregular stepping stones
-  function pathStone(x, z, size = 0.6) {
+  function pathStone(x, z, size = 0.6, ring = false) {
+    if (!ring && Math.hypot(x - FOUNTAIN.x, z - FOUNTAIN.z) < FOUNTAIN.radius + 1.9) return;
     const s = size * (0.8 + Math.random() * 0.4);
     B.box(x, 0.02, z, s, 0.06, s * (0.85 + Math.random() * 0.3), paver, { ry: Math.random() * 0.5 });
   }
@@ -288,6 +282,13 @@ export function furnishBeach({ B, obstacles, bakes }) {
   // Branch to ferris wheel (east)
   for (let x = 3; x <= 18; x += 1.7) {
     pathStone(x, -10 + (Math.random() - 0.5) * 0.3);
+  }
+  for (let positionX = -2; positionX >= -12; positionX -= 1.8) {
+    pathStone(positionX, 5.9, 0.6);
+  }
+  for (let step = 0; step < 16; step++) {
+    const angle = step * Math.PI / 8;
+    pathStone(FOUNTAIN.x + Math.sin(angle) * (FOUNTAIN.radius + 1.1), FOUNTAIN.z + Math.cos(angle) * (FOUNTAIN.radius + 1.1), 0.65, true);
   }
 
   // ===== Beach decorations =====

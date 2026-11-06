@@ -26,7 +26,7 @@ function shortestAngle(angle) {
   return Math.atan2(Math.sin(angle), Math.cos(angle));
 }
 
-export function createResident({ stage, world, nav, player, jetSki, config }) {
+export function createResident({ stage, world, nav, player, jetSki, config, nightConcert }) {
   const settings = config.resident;
   if (!settings?.enabled) return null;
 
@@ -66,6 +66,8 @@ export function createResident({ stage, world, nav, player, jetSki, config }) {
   let bubbleClockStep = 0;
   let lastNight = world.isNight();
   let lookYaw = 0;
+  let concertClock = 0;
+  const idlePose = { speed: 0, fly: -1, lookYaw: 0 };
 
   greeting.querySelector('b').textContent = settings.name || 'Terry';
   avatar.root.position.set(position.x, height, position.z);
@@ -190,6 +192,11 @@ export function createResident({ stage, world, nav, player, jetSki, config }) {
   }
 
   function chooseActivity() {
+    if (world.isNight()) {
+      if (nightConcert?.active && concertClock < 180) beginConcert();
+      else beginHome();
+      return;
+    }
     activityClock = 0;
     const roll = Math.random();
     if (roll < 0.25 && chooseRest()) return;
@@ -209,6 +216,38 @@ export function createResident({ stage, world, nav, player, jetSki, config }) {
     if (resident.vehicle) dismountBoat();
     if (state === 'swim') setPosition(BOAT_DOCK.x, BOAT_DOCK.z, 0);
     if (!makeHomeRoute()) arriveHome();
+  }
+
+  function exitHome(done) {
+    route = navigation.homeRoute(false);
+    let closest = 0, distance = Infinity;
+    for (let index = 0; index < route.length; index++) {
+      const point = route[index];
+      const away = Math.hypot(point.x - position.x, point.z - position.z, point.y - height);
+      if (away < distance) { distance = away; closest = index; }
+    }
+    routeIndex = closest;
+    routeDone = done;
+    state = 'walking';
+  }
+
+  function reachConcert() {
+    activity = 'concert';
+    if (!makeLandRoute(nightConcert.target, () => {
+      clearRoute();
+      state = 'concert';
+      heading = -Math.PI / 2;
+    })) beginHome();
+  }
+
+  function beginConcert() {
+    greeting.hidden = true;
+    rod.visible = false;
+    if (resident.vehicle) dismountBoat();
+    if (state === 'swim') setPosition(BOAT_DOCK.x, BOAT_DOCK.z, 0);
+    activity = 'concert';
+    if (height > 0.5) exitHome(reachConcert);
+    else reachConcert();
   }
 
   function updateWalking(dt) {
@@ -272,8 +311,22 @@ export function createResident({ stage, world, nav, player, jetSki, config }) {
 
   function update(dt) {
     const night = world.isNight();
-    if (night !== lastNight) { lastNight = night; if (night) beginHome(); else if (state === 'sleeping') { state = 'walking'; route = navigation.homeRoute(false); routeIndex = 0; routeDone = () => { setPosition(IKUN_ENTRY.x, IKUN_ENTRY.z, 0); chooseActivity(); }; } }
-    if (night && state !== 'sleeping' && state !== 'walking' && activity !== 'home') beginHome();
+    if (night !== lastNight) {
+      lastNight = night;
+      concertClock = 0;
+      if (night) {
+        if (nightConcert?.active) beginConcert();
+        else beginHome();
+      } else if (state === 'sleeping' || activity === 'home' || activity === 'concert') {
+        if (height > 0.5) exitHome(chooseActivity);
+        else chooseActivity();
+      }
+    }
+    if (night && activity === 'concert') {
+      concertClock += dt;
+      if (concertClock >= 180) beginHome();
+    }
+    if (night && state !== 'sleeping' && state !== 'walking' && activity !== 'home' && activity !== 'concert') beginHome();
 
     if (state === 'walking') updateWalking(dt);
     else if (state === 'boating') updateBoat(dt);
@@ -295,6 +348,14 @@ export function createResident({ stage, world, nav, player, jetSki, config }) {
     else if (state === 'fishing') {
       avatar.update(dt, { speed: 0, fly: -1, lookYaw });
       applyFishingPose(avatar);
+    } else if (state === 'concert') {
+      idlePose.lookYaw = lookYaw;
+      avatar.update(dt, idlePose);
+      if (nightConcert.phase === 'applause' || nightConcert.cheering > 0) {
+        const clap = Math.abs(Math.sin(concertClock * 7));
+        avatar.armR.rotation.set(-1.2, -0.3, -0.35 - clap * 0.35);
+        avatar.armL.rotation.set(-1.2, 0.3, 0.35 + clap * 0.35);
+      }
     }
 
     avatar.root.position.set(position.x, height, position.z);
@@ -310,12 +371,16 @@ export function createResident({ stage, world, nav, player, jetSki, config }) {
     pos: position,
     get y() { return height; },
     get mode() { return state === 'boating' ? 'vehicle' : state === 'swim' ? 'swim' : 'ground'; },
+    get activity() { return activity; },
     vehicle: null,
     mountVehicle(controller) { this.vehicle = controller; state = 'boating'; return true; },
     dismountVehicle() { dismountBoat(); return true; },
     update,
   };
-  if (lastNight) arriveHome();
+  if (lastNight) {
+    if (nightConcert?.active) beginConcert();
+    else arriveHome();
+  }
   else {
     route = navigation.homeRoute(false);
     routeIndex = 0;

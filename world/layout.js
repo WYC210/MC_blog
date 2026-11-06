@@ -30,6 +30,7 @@ export const inPool = (x, z) => {
 };
 export const SPAWN = { x: 0.5, z: 18, heading: Math.PI };
 export const PIANO = { x: -16.6, z: -0.1 };
+export const FOUNTAIN = { x: -5, z: -10, radius: 2.75 };
 export const COMPUTER = { x: -27.32, z: 9.8, floor: 1 };
 export const STATIONS = [
   { id: 'computer', name: '电脑', en: 'Computer', icon: 'works', at: [COMPUTER.x + 2.2, COMPUTER.z], look: [COMPUTER.x, COMPUTER.z], floor: COMPUTER.floor },
@@ -102,7 +103,4 @@ export function floorAt(x, z) {
   return 0;
 }
 
-// The baked lamp light covers both litematic cottages (min corner, size in
-// metres, texels). The LeHun loft reaches y=27, so the volume must include
-// its ceiling fixtures as well as the lower gym.
-export const LIGHT_VOLUME = { min: [-30, -1, -16], extent: [68, 30, 70], size: [68, 30, 70] };
+export const LIGHT_VOLUME = { min: [-42, -1, -32], extent: [86, 30, 90], size: [86, 30, 90] };
