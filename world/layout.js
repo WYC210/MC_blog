@@ -31,8 +31,14 @@ export const inPool = (x, z) => {
 export const SPAWN = { x: 0.5, z: 18, heading: Math.PI };
 export const PIANO = { x: -16.6, z: -0.1 };
 export const FOUNTAIN = { x: -5, z: -10, radius: 2.75 };
+export const LOOKOUT = {
+  at: [0.5, -22.5], floor: 0,
+  bounds: { x0: -2, x1: 3, z0: -25, z1: -21 },
+  camera: [-26, 58, -96], portrait: [-48, 94, -178], focus: [0, 12, 10],
+};
 export const COMPUTER = { x: -27.32, z: 9.8, floor: 1 };
 export const STATIONS = [
+  { id: 'lookout', name: '北岸观景点', en: 'North Lookout', icon: 'eye', at: LOOKOUT.at, look: [0.5, 0], floor: LOOKOUT.floor, page: false },
   { id: 'computer', name: '电脑', en: 'Computer', icon: 'works', at: [COMPUTER.x + 2.2, COMPUTER.z], look: [COMPUTER.x, COMPUTER.z], floor: COMPUTER.floor },
   { id: 'piano', name: '钢琴', en: 'Piano', icon: 'works', at: [PIANO.x, PIANO.z + 2.2], look: [PIANO.x, PIANO.z] },
   { id: 'mailbox', name: '留言', en: 'Mailbox', icon: 'mail', at: [0.5, 23.9], look: [0.5, 25.5] },

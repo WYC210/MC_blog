@@ -23,6 +23,7 @@ import { buildConcertCrowd } from './night-concert-crowd.js';
 import { createNightConcert } from './night-concert.js';
 import { createConcertAudio } from './night-concert-audio.js';
 import { createNightNature } from './night-nature.js';
+import { buildLookout, createLookout } from './lookout.js';
 
 // Two cottages rebuilt one-to-one from litematics. The palette keeps every
 // block's properties, so stairs, slabs, doors, panes and lanterns come out as
@@ -313,6 +314,7 @@ export function build({ grid, layer, materials, stage }) {
   planes.push(tuftsMesh);
   furnishBeach({ B, obstacles, bakes });
   buildNightLighting({ B, obstacles, bakes });
+  buildLookout({ grid, B, obstacles, bakes });
   const fountain = buildFountain({ B, layer, materials, obstacles, bakes });
   const concertCrowd = buildConcertCrowd({ layer, materials });
   planes.push(fountain.mesh, concertCrowd.group);
@@ -340,12 +342,14 @@ export function setup({ stage, config, player, avatar, rig, sound, world, nav, q
   nightConcert.update(0);
   const resident = createResident({ stage, world, nav, player, jetSki, config, nightConcert });
   const nightNature = createNightNature({ stage, world, nav, quality });
+  const lookout = createLookout({ stage, player, rig });
   return {
-    fishing, furniture, jetSki, resident, nightConcert, nightNature,
-    interact: () => jetSki.interact() || furniture.interact() || nightConcert.interact(),
-    tap: (x, y, picked) => jetSki.tap(x, y, picked) || furniture.tap(x, y, picked),
+    fishing, furniture, jetSki, resident, nightConcert, nightNature, lookout,
+    interact: () => lookout.interact() || jetSki.interact() || furniture.interact() || nightConcert.interact(),
+    tap: (x, y, picked) => lookout.tap() || jetSki.tap(x, y, picked) || furniture.tap(x, y, picked),
     pad: jetSki.pad,
     update(dt) {
+      lookout.update(dt);
       toys?.update(dt, stage.camera);
       nightConcert.update(dt);
       nightNature.update(dt);
