@@ -93,6 +93,25 @@ function cloudTexture() {
   return texture;
 }
 
+function skyNoiseTexture() {
+  const size = 128, random = rng(7319);
+  const noise = Uint8Array.from({ length: size * size }, () => Math.floor(random() * 256));
+  const pixels = new Uint8Array(size * size * 4);
+  for (let row = 0; row < size; row++) for (let column = 0; column < size; column++) {
+    const offset = (row * size + column) * 4;
+    pixels[offset] = noise[row * size + column];
+    pixels[offset + 1] = noise[((row + 17) % size) * size + (column + 37) % size];
+    pixels[offset + 3] = 255;
+  }
+  const texture = new THREE.DataTexture(pixels, size, size);
+  texture.name = 'night-sky-noise';
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.minFilter = texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+}
+
 export function detectQuality() {
   const coarse = matchMedia('(pointer: coarse)').matches;
   const small = Math.min(screen.width, screen.height) < 820;
@@ -116,17 +135,83 @@ const SKY_VERTEX = /* glsl */`
 `;
 
 const SKY_FRAGMENT = /* glsl */`
-  uniform vec3 uTop, uHorizon, uBottom, uSunDir, uSunColor, uFogColor, uCloudLit, uCloudShade, uCamPos;
+  uniform vec3 uTop, uHorizon, uBottom, uSunDir, uSunColor, uFogColor, uCloudLit, uCloudShade, uCamPos, uHorizonOffset;
   uniform float uNight, uCloud, uFlash, uCover;
-  uniform vec2 uCloudShift;
-  uniform sampler2D uClouds;
+  uniform vec2 uCloudShift, uSkyMotion;
+  uniform sampler2D uClouds, uSkyNoise;
   varying vec3 vDir;
   float hash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+  float skyNoise(vec3 position) {
+    vec3 cell = floor(position);
+    vec3 blend = fract(position);
+    blend = blend * blend * (3.0 - 2.0 * blend);
+    vec2 coordinates = cell.xy + vec2(37.0, 17.0) * cell.z + blend.xy;
+    vec2 samples = texture2D(uSkyNoise, (coordinates + 0.5) / 128.0).rg;
+    return mix(samples.r, samples.g, blend.z);
+  }
+  vec3 skyStars(vec3 direction, float density, float threshold) {
+    vec3 dominant = abs(direction);
+    vec2 coordinates;
+    float face;
+    if (dominant.x >= dominant.y && dominant.x >= dominant.z) {
+      coordinates = direction.yz / dominant.x;
+      face = sign(direction.x);
+    } else if (dominant.y >= dominant.z) {
+      coordinates = direction.xz / dominant.y;
+      face = 2.0 * sign(direction.y);
+    } else {
+      coordinates = direction.xy / dominant.z;
+      face = 3.0 * sign(direction.z);
+    }
+    vec2 grid = coordinates * density;
+    vec2 footprint = fwidth(grid);
+    float seed = hash(vec3(floor(grid), face * 19.0 + density));
+    vec2 center = 0.2 + 0.6 * fract(vec2(seed * 113.17, seed * 37.31));
+    vec2 offset = fract(grid) - center;
+    float radius = mix(0.055, 0.14, fract(seed * 97.13));
+    float filtered = max(radius, max(footprint.x, footprint.y) * 0.55);
+    float distanceSquared = dot(offset, offset);
+    float point = exp(-distanceSquared / (filtered * filtered)) * radius * radius / (filtered * filtered);
+    float glow = exp(-distanceSquared / (filtered * filtered * 7.0)) * 0.035;
+    float twinkle = 0.88 + 0.12 * sin(uSkyMotion.y + seed * 93.0);
+    vec3 color = mix(vec3(0.62, 0.77, 1.0), vec3(1.0, 0.88, 0.74), fract(seed * 43.71));
+    return color * (point + glow) * twinkle * step(threshold, seed);
+  }
+  vec3 nightSky(vec3 direction) {
+    float rotationCos = cos(uSkyMotion.x), rotationSin = sin(uSkyMotion.x);
+    direction.xz = mat2(rotationCos, -rotationSin, rotationSin, rotationCos) * direction.xz;
+    vec3 normal = normalize(vec3(0.88, 0.28, 0.38));
+    float broadNoise = skyNoise(direction * 7.0 + 13.0);
+    float mediumNoise = skyNoise(direction * 21.0 + 31.0);
+    float fineNoise = skyNoise(direction * 57.0 + 47.0);
+    float grain = skyNoise(direction * 145.0 + 71.0);
+    float speckle = skyNoise(direction * 367.0 + 97.0);
+    float clouds = broadNoise * 0.28 + mediumNoise * 0.3 + fineNoise * 0.23 + grain * 0.13 + speckle * 0.06;
+    float latitude = dot(direction, normal);
+    float distance = abs(latitude + (broadNoise - 0.5) * 0.09);
+    float outerBand = exp(-distance * distance * 26.0);
+    float innerBand = exp(-distance * distance * 180.0);
+    float core = pow(max(0.0, dot(direction, normalize(vec3(0.25, 0.38, -0.86)))), 9.0);
+    float dustPath = latitude + (mediumNoise - 0.5) * 0.095 + (fineNoise - 0.5) * 0.025 + 0.012;
+    float dust = exp(-dustPath * dustPath * 1450.0) * (0.6 + grain * 0.4);
+    float structure = pow(smoothstep(0.3, 0.76, clouds), 1.35);
+    vec3 haze = mix(vec3(0.009, 0.022, 0.06), vec3(0.035, 0.027, 0.075), broadNoise);
+    vec3 cloudColor = mix(vec3(0.035, 0.09, 0.19), vec3(0.16, 0.105, 0.18), core * 0.45 + fineNoise * 0.25);
+    vec3 galaxy = haze * outerBand * (0.25 + structure * 0.75);
+    galaxy += cloudColor * innerBand * structure * (0.7 + core * 1.8);
+    galaxy *= 1.0 - dust * 0.94;
+    galaxy += vec3(0.06, 0.085, 0.13) * innerBand * pow(speckle, 5.0) * structure * (1.0 - dust);
+    vec3 stars = skyStars(direction, 70.0, 0.995) * 1.8;
+    stars += skyStars(direction, 180.0, 0.989) * 0.95;
+    stars += skyStars(direction, 420.0, mix(0.984, 0.94, innerBand * structure)) * (0.22 + innerBand * structure * 1.6);
+    return galaxy + stars;
+  }
   void main() {
     vec3 d = normalize(vDir);
     float h = d.y;
-    vec3 col = mix(uHorizon, uTop, smoothstep(0.0, 0.55, h));
-    col = mix(col, uBottom, smoothstep(0.02, -0.35, h));
+    float skyHeight = h + dot(d, uHorizonOffset);
+    vec3 col = mix(uHorizon, uTop, smoothstep(0.0, 0.55, skyHeight));
+    col = mix(col, uBottom, 1.0 - smoothstep(-0.35, 0.02, skyHeight));
     // Minecraft's clouds: one flat layer of square puffs drifting with the
     // wind, 160 m up and 16 m to a cell. Coverage chooses how many cells are cloud.
     float puff = 0.0, v = 0.0;
@@ -136,6 +221,9 @@ const SKY_FRAGMENT = /* glsl */`
       puff = step(1.0 - uCover, v) * smoothstep(0.035, 0.26, h) * exp(-t * 0.0015) * smoothstep(0.0, 16.0, lift);
     }
     float clear = (1.0 - uCloud) * (1.0 - puff);
+    if (uNight > 0.001 && clear > 0.001 && skyHeight > 0.0) {
+      col += nightSky(d) * smoothstep(0.0, 0.85, uNight) * smoothstep(0.015, 0.24, skyHeight) * clear;
+    }
     // A square sun or moon, as it should be in a block world, with a soft halo.
     vec3 s = normalize(uSunDir);
     vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), s));
@@ -147,15 +235,8 @@ const SKY_FRAGMENT = /* glsl */`
     float halo = pow(max(facing, 0.0), mix(24.0, 60.0, uNight));
     col += uSunColor * (halo * mix(0.35, 0.25, uNight)) * (1.0-uCloud);
     col = mix(col, uSunColor * mix(1.6, 1.25, uNight), disc * clear);
-    if (uNight > 0.0) {
-      vec3 cell = floor(d * 260.0);
-      float star = step(0.9975, hash(cell)) * smoothstep(0.05, 0.35, h);
-      col += vec3(star) * uNight * 0.9 * clear;
-    }
     col = mix(col, mix(uCloudLit, uCloudShade, smoothstep(1.0 - uCover, 1.0, v) * 0.7), puff * 0.93);
-    // At and below the horizon the sky is the fog, so the far edge of the
-    // world, where the camera stops drawing, melts into it.
-    col = mix(col, uFogColor, smoothstep(0.02, -0.03, h));
+    col = mix(col, uFogColor, 1.0 - smoothstep(0.0, 0.14, skyHeight));
     col += vec3(0.22, 0.27, 0.28) * uFlash;
     gl_FragColor = vec4(col, 1.0);
     #include <colorspace_fragment>
@@ -196,6 +277,8 @@ export function createStage(container, quality) {
         uSunDir: { value: new THREE.Vector3() }, uSunColor: { value: new THREE.Color() }, uNight: { value: 0 }, uCloud: { value: 0 }, uFlash: { value: 0 },
         uFogColor: { value: new THREE.Color() }, uCloudLit: { value: new THREE.Color() }, uCloudShade: { value: new THREE.Color() },
         uCamPos: { value: new THREE.Vector3() }, uCover: { value: 0 }, uCloudShift: { value: new THREE.Vector2() }, uClouds: { value: cloudTexture() },
+        uSkyNoise: { value: skyNoiseTexture() }, uSkyMotion: { value: new THREE.Vector2() },
+        uHorizonOffset: { value: new THREE.Vector3() },
       },
     }),
   );
@@ -286,6 +369,11 @@ export function createStage(container, quality) {
   function update(dt) {
     const shift = sky.material.uniforms.uCloudShift.value;
     if (!still.matches) { shift.addScaledVector(drift, (1.2 + 6 * weather.wind) * dt); shift.set(shift.x % 1024, shift.y % 1024); }
+    if (!still.matches && !document.hidden && now.night > 0.001 && now.veil < 0.999) {
+      const motion = sky.material.uniforms.uSkyMotion.value;
+      motion.x = (motion.x + dt * 0.0003) % (Math.PI * 2);
+      motion.y = (motion.y + dt * 0.7) % (Math.PI * 2);
+    }
     if (!settling) return;
     const k = 1 - Math.exp(-dt / 0.7);
     let left = 0;
@@ -350,6 +438,8 @@ export function createStage(container, quality) {
   function render() {
     sky.position.copy(camera.position);
     sky.material.uniforms.uCamPos.value.copy(camera.position);
+    camera.getWorldDirection(sky.material.uniforms.uHorizonOffset.value)
+      .multiplyScalar(Math.max(0, camera.position.y + 0.32) / Math.max(1, scene.fog.far));
     // three.js gathers a frame's lights after drawing its shadows, so a shadow
     // pass in the frame the sun returns would compile shaders for a sunless
     // sky. Re-bake one frame later; the sun is still near zero by then.

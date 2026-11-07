@@ -27,6 +27,7 @@
     "check:furniture": "node tools/check-furniture.mjs",
     "check:fountain": "node tools/check-fountain.mjs",
     "check:night-lighting": "node tools/check-night-lighting.mjs",
+    "check:night-sky": "node tools/check-night-sky.mjs",
     "check:lookout": "node tools/check-lookout.mjs",
     "check:night-concert": "node tools/check-night-concert.mjs",
     "check:night-nature": "node tools/check-night-nature.mjs",

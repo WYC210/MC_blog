@@ -8,6 +8,10 @@ const WARM = { tex: 'paint', tint: 0xffdda4, emissive: 0.7 };
 
 export function buildNightLighting({ B: batch, obstacles, bakes }) {
   Object.assign(MOODS.night, {
+    skyTop: 0x04091c,
+    skyHorizon: 0x172b50,
+    skyBottom: 0x091221,
+    fog: 0x101c30,
     sunIntensity: 0.42,
     hemiSky: 0xb0bac8,
     hemiGround: 0x8d867d,
