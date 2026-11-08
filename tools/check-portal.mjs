@@ -7,6 +7,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const remembered = () => { try { return readFileSync(new URL('./.serve-url', import.meta.url), 'utf8').trim(); } catch { return ''; } };
 const base = (process.argv[2] || remembered()).replace(/\/$/, '');
@@ -21,15 +22,24 @@ const views = [
   { name: 'reduced', viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' },
 ];
 const DIRECTORY = ['https://homecraft.terryhu.cn/worlds.json', 'https://terryhu7.github.io/homecraft/worlds.json'];
+let context;
+const closeContext = async () => {
+  const current = context;
+  context = null;
+  if (!current) return;
+  try { await current.unrouteAll({ behavior: 'ignoreErrors' }); }
+  finally { await current.close(); }
+};
 try {
   for (const { name, ...view } of views) {
-    const context = await browser.newContext({ ...view, locale: 'zh-CN' });
+    context = await browser.newContext({ ...view, locale: 'zh-CN' });
     const page = await context.newPage(), errors = [];
     page.on('pageerror', e => errors.push(e.message));
     const starter = { name: 'Starter', url: `${base}/`, homecraft: true };
     const neighbour = { name: 'Neighbour', owner: 'Alex', url: `${base}/visit/`, homecraft: true, intro: { zh: '隔壁', en: 'Next door' } };
     let directory = { version: 1, join: 'https://example.com/join', blocked: [], worlds: [starter, neighbour] };
-    let directoryDown = false, holdDirectory = false, releaseDirectory = null;
+    let directoryDown = false, pauseDirectory = null, pausedDirectory = 0, directoryRequests = 0;
+    let recordedStats = null;
     await context.route(`${base}/visit/**`, async route => {
       const url = new URL(route.request().url());
       url.pathname = url.pathname.replace(/^\/visit/, '') || '/';
@@ -39,9 +49,10 @@ try {
     });
     await context.route('**/homecraft.json', route => route.fulfill({ status: 404 }));
     for (const url of DIRECTORY) await context.route(url, async route => {
-      if (holdDirectory) await new Promise(resolve => { releaseDirectory = resolve; });
-      if (directoryDown) return route.fulfill({ status: 503, body: 'unavailable' });
-      await route.fulfill({ json: directory, headers: { 'access-control-allow-origin': '*' } });
+      directoryRequests++;
+      if (pauseDirectory) { pausedDirectory++; await pauseDirectory; }
+      if (directoryDown) return route.fulfill({ status: 503, body: 'unavailable', headers: { 'cache-control': 'no-store' } });
+      await route.fulfill({ json: directory, headers: { 'access-control-allow-origin': '*', 'cache-control': 'no-store' } });
     });
     // Pause just before leaving, so the departing page can be inspected.
     await context.route('**/engine/portal.js', async route => {
@@ -53,6 +64,7 @@ try {
     });
     const ready = async () => {
       await page.waitForFunction(() => window.__home?.player, null, { timeout: 60000 });
+      await page.evaluate(() => { if (__home.rig.introActive) __home.rig.update(20, __home.player); });
       await page.waitForFunction(() => !document.querySelector('#loading') && !document.querySelector('#hud').hidden && !__home.portal?.busy, null, { timeout: 15000 });
     };
     const open = async () => {
@@ -61,12 +73,16 @@ try {
       await page.waitForFunction(() => document.querySelector('#panel').open && getComputedStyle(document.querySelector('#panel')).opacity === '1');
     };
     const close = async () => { await page.locator('#panel .close').click(); await page.waitForFunction(() => !document.querySelector('#panel').open); };
+    const fresh = async () => { await page.reload(); await ready(); await open(); };
 
     await page.goto(`${base}/?lang=zh`); await ready();
+    assert(directoryRequests > 0, 'The directory was not fetched before opening the portal');
+    await page.evaluate(async () => (await import('@engine/portal.js')).getWorlds());
+    const prefetchedRequests = directoryRequests;
     await page.evaluate(() => {
       const h = __home; h.setTimeMode('day'); const f = h.portal.front; h.player.teleport(f.x + Math.sin(f.heading) * 3, f.z + Math.cos(f.heading) * 3); h.rig.set(f.heading + .05, .35, 9); h.rig.recenter(h.player);
     });
-    await page.screenshot({ path: new URL(`${name}-door.png`, out).pathname });
+    await page.screenshot({ path: fileURLToPath(new URL(`${name}-door.png`, out)) });
     // Click the real 3D portal, rather than calling a synthetic DOM control.
     const point = await page.evaluate(() => __home.project(__home.portal.root.position.x, 1.2, __home.portal.root.position.z + .1));
     if (view.hasTouch) await page.touchscreen.tap(point.x, point.y); else await page.mouse.click(point.x, point.y);
@@ -79,8 +95,9 @@ try {
     assert.equal(await page.locator('.world-tags, .world-join').count(), 0);
     assert.equal(await page.locator('.world-footer a').getAttribute('href'), 'https://example.com/join');
     assert.equal(await page.locator('#loading').count(), 0, 'Opening the list started a journey');
+    assert.equal(directoryRequests, prefetchedRequests, 'Opening the portal did not reuse the prefetched directory');
     const before = await page.evaluate(() => __home.player.pos.toArray());
-    await page.screenshot({ path: new URL(`${name}-list.png`, out).pathname });
+    await page.screenshot({ path: fileURLToPath(new URL(`${name}-list.png`, out)) });
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.querySelector('#panel').open);
     assert.deepEqual(await page.evaluate(() => __home.player.pos.toArray()), before);
@@ -95,11 +112,11 @@ try {
     if (name !== 'reduced') {
       assert(await page.evaluate(() => __home.portal.busy), 'Did not walk into the portal');
       await page.waitForTimeout(900);
-      await page.screenshot({ path: new URL(`${name}-departure.png`, out).pathname });
+      await page.screenshot({ path: fileURLToPath(new URL(`${name}-departure.png`, out)) });
     }
     await page.locator('#loading .bar[role="progressbar"]').waitFor({ state: 'visible', timeout: 10000 });
     await page.waitForFunction(() => document.querySelector('#loading .loading-label')?.textContent.includes('Neighbour'));
-    await page.screenshot({ path: new URL(`${name}-loading.png`, out).pathname });
+    await page.screenshot({ path: fileURLToPath(new URL(`${name}-loading.png`, out)) });
     await page.waitForFunction(() => typeof window.__releaseWorldNavigation === 'function');
     await page.evaluate(() => window.__releaseWorldNavigation());
 
@@ -110,7 +127,7 @@ try {
     if (name !== 'reduced') {
       await page.evaluate(() => __home.setTimeMode('day'));
       await page.waitForFunction(() => !document.querySelector('#loading'));
-      await page.screenshot({ path: new URL(`${name}-arrival.png`, out).pathname });
+      await page.screenshot({ path: fileURLToPath(new URL(`${name}-arrival.png`, out)) });
     }
     await ready();
     const arrived = new URL(page.url());
@@ -136,26 +153,31 @@ try {
     assert.equal(await page.evaluate(() => __home.portal.busy), false);
 
     // Empty and unavailable lists keep the visitor here.
-    directory = { ...directory, worlds: [] }; await open();
+    directory = { ...directory, worlds: [] }; await fresh();
     assert.equal(await page.locator('.world-row').count(), 1);
     assert((await page.locator('.world-row').textContent()).includes("Terry's Home"));
     assert.equal(await page.locator('#loading').count(), 0); await close();
-    directoryDown = true; await open();
+    directoryDown = true; await fresh();
     assert((await page.locator('.world-row').textContent()).includes("Terry's Home"));
     assert.equal(await page.locator('.world-list-status.is-error').count(), 0); await close();
     directoryDown = false; directory = { ...directory, worlds: [starter, neighbour] };
     // The directory can hide a listed world.
-    directory = { ...directory, blocked: [`${base}/`] }; await open();
+    directory = { ...directory, blocked: [`${base}/`] }; await fresh();
     assert.equal(await page.locator(`.world-list button[data-world="${base}/"]`).count(), 0); await close();
     directory = { ...directory, blocked: [] };
 
     // A late response cannot overwrite a different page after the list closes.
-    holdDirectory = true;
-    await page.evaluate(() => __home.openPortal());
-    await page.locator('.world-row').first().waitFor(); await close();
+    directoryDown = true; await fresh();
+    let releaseDirectory;
+    pausedDirectory = 0;
+    pauseDirectory = new Promise(resolve => { releaseDirectory = resolve; });
+    await page.locator('.world-refresh').click();
+    const held = Date.now();
+    while (!pausedDirectory && Date.now() - held < 5000) await new Promise(resolve => setTimeout(resolve, 10));
+    assert(pausedDirectory, 'The directory request was not held');
+    await close();
     await page.evaluate(() => __home.go('about'));
-    while (!releaseDirectory) await new Promise(resolve => setTimeout(resolve, 10));
-    holdDirectory = false; releaseDirectory();
+    pauseDirectory = null; directoryDown = false; releaseDirectory();
     await page.waitForTimeout(100);
     assert.equal(await page.locator('#panel').getAttribute('data-station'), 'about');
     assert.equal(await page.locator('.world-directory').count(), 0); await close();
@@ -164,7 +186,7 @@ try {
     directory = { ...directory, worlds: [neighbour, { name: '<img src=x onerror="alert(1)">', url: `${base}/safe-label/` },
       { name: 'Unsafe', url: 'javascript:alert(1)' },
       ...Array.from({ length: 20 }, (_, i) => ({ name: `World ${i + 1}`, url: `${base}/world-${i}/` }))] };
-    await open();
+    await fresh();
     assert.equal(await page.locator('.world-list button').count(), 22);
     assert.equal(await page.locator('.world-text img').count(), 0);
     assert(await page.locator('.world-screen').evaluate(el => el.scrollHeight > el.clientHeight));
@@ -180,10 +202,13 @@ try {
     assert.equal(await forged.locator('#portalReturn').count(), 0);
     assert.equal(await forged.evaluate(() => __home.worn.carried), false);
     assert.equal(new URL(forged.url()).hash, '');
+    await forged.close();
     // An ordinary blog with the door plugin (once): no Return on a direct
     // visit, into a world, and back out of the world's door to the blog,
     // whose Return chip carries the traveller on.
     if (name === 'computer') {
+      recordedStats = await page.evaluate(() => __home.stats());
+      await page.close();
       const blog = `${base}/blog/`, page2 = await context.newPage();
       page2.on('pageerror', e => errors.push(e.message));
       directory = { ...directory, worlds: [{ ...neighbour }, { name: 'A blog', url: blog, homecraft: true }] };
@@ -199,7 +224,13 @@ try {
       await page2.waitForURL(url => url.pathname === '/visit/');
       await page2.waitForFunction(() => window.__home?.player && !document.querySelector('#loading') && !__home.portal.busy, null, { timeout: 60000 });
       assert(await page2.locator('#portalReturn').isVisible(), 'The blog sends no referrer, yet its door must vouch');
-      await page2.evaluate(() => __home.openPortal());
+      await page2.waitForFunction(url => {
+        const home = window.__home;
+        if (!home?.player || document.querySelector('#loading') || home.portal?.busy) return false;
+        const panel = document.querySelector('#panel');
+        if (!panel?.open || panel.dataset.station !== 'portal') home.openPortal();
+        return [...document.querySelectorAll('.world-list button')].some(button => button.dataset.world === url);
+      }, blog);
       await page2.locator(`.world-list button[data-world="${blog}"]`).click();
 
       await page2.waitForURL(url => url.pathname === '/blog/' && !url.search, { timeout: 20000 });
@@ -211,7 +242,11 @@ try {
       await page2.close();
     }
     assert.deepEqual(errors, []);
-    console.log(`PASS ${name}: portal click, one-click entry, walk-through, startup progress, carried skin, keyboard return, Back/Forward, empty/error/blocked, stale request, scrolling, forged link${name === 'computer' ? ', blog plugin' : ''}; ${JSON.stringify(await page.evaluate(() => __home.stats()))}`);
-    await context.close();
+    const stats = recordedStats || await page.evaluate(() => __home.stats());
+    console.log(`PASS ${name}: portal click, one-click entry, walk-through, startup progress, carried skin, keyboard return, Back/Forward, empty/error/blocked, stale request, scrolling, forged link${name === 'computer' ? ', blog plugin' : ''}; ${JSON.stringify(stats)}`);
+    await closeContext();
   }
+} catch (error) {
+  await closeContext().catch(() => {});
+  throw error;
 } finally { await browser.close(); }
