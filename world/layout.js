@@ -1,5 +1,6 @@
 import { blockGONGLU } from './gonglu-model.js';
 import { IKUN_SIZE, IKUN_SCALE } from './ikun-model.js';
+import { FERRIS_SIZE, FERRIS_SCALE } from './ferris-model.js';
 import { QIN_ISLAND, QIN_STATIONS, qinLandAt, qinFloorAt } from './qin-island-layout.js';
 export { QIN_ISLAND } from './qin-island-layout.js';
 
@@ -16,6 +17,7 @@ export const LAND = { x0: -36, x1: 38, z0: -26, z1: 31 };
 // engine's pool water (translucent, caustics, ripples) renders over it and
 // the flat sea sheet is cut out entirely. BAY is the dug beach-entry part.
 export const POOL = { x0: -400, x1: 400, z0: -400, z1: 400, water: -0.32, bed: -3 };
+export const OCEAN = { waveHeight: 0.12, shoreFoam: 0.65 };
 export const BAY = { x0: -36, x1: 36, z0: 29, z1: 56 };
 export const BOARDWALK = { x0: -31, x1: 31, step: 1.5, z: 28.25, width: 1.34, depth: 1.9 };
 // Swimmable water: the bay plus the ocean ring around the island (everything
@@ -51,7 +53,7 @@ export const STATIONS = [
 export const MAILBOX = { x: 0.5, z: 25.5, yaw: Math.PI };
 export const PORTAL = { x: 8, z: 25.5, yaw: Math.PI };
 export const TREES = [
-  [30, -12],  // original
+  [34, -12],
   // North edge (behind buildings, forming a backdrop)
   [-28, -24], [-12, -24], [8, -24], [24, -22],
 ];
@@ -91,7 +93,14 @@ export const LEHUN_ORIGIN = { x: 1, y: 4, z: 34 };
 // its companion furnace tower is left out for now), on the north-west lawn.
 export const ORIGIN_GONGLU = { x: -36, y: 0, z: -16 };
 // The Cinnamoroll ferris wheel, rotated to face the beach, on the east lawn.
-export const ORIGIN_FERRIS = { x: 18, y: 0, z: -14 };
+export const ORIGIN_FERRIS = { x: 18, y: 0, z: -20 };
+export const FERRIS_PLOT = {
+  x0: ORIGIN_FERRIS.x, x1: ORIGIN_FERRIS.x + FERRIS_SIZE[0] * FERRIS_SCALE[0],
+  z0: ORIGIN_FERRIS.z, z1: ORIGIN_FERRIS.z + FERRIS_SIZE[2] * FERRIS_SCALE[2],
+};
+export const inFerrisPlot = (x, z, margin = 0) =>
+  x >= FERRIS_PLOT.x0 - margin && x < FERRIS_PLOT.x1 + margin &&
+  z >= FERRIS_PLOT.z0 - margin && z < FERRIS_PLOT.z1 + margin;
 export function floorAt(x, z) {
   if (x >= QIN_ISLAND.x0) return qinFloorAt(x, z);
   const ikunX = 2 * IKUN_CENTER.x - x - MODEL_ORIGIN.x;

@@ -1,4 +1,4 @@
-// The pool: water to swim in and dive under. One flat sheet draws both sides.
+// The pool: water to swim in and dive under. One surface draws both sides.
 // From above it is clear water over the tiled floor, mirroring the sky more
 // the lower the eye. From below it is Snell's window: overhead the sky, and
 // towards its rim the house, the trees and the mountain, found by marching
@@ -12,11 +12,13 @@
 import * as THREE from 'three';
 import * as L from '@world/layout.js';
 import { rng } from './textures.js';
+import { bakeOceanMap, OCEAN_SHORE, OCEAN_VERTEX } from './ocean.js';
 
 // Loaded only when the world has a POOL (main.js imports it on demand).
 const POOL = L.POOL || { x0: 0, x1: 1, z0: 0, z1: 1, water: 0, bed: -1 };
 
 const WATER = POOL.water, RIPPLES = 8;
+const OCEAN = L.OCEAN || null;
 const CENTRE = new THREE.Vector3((POOL.x0 + POOL.x1) / 2, WATER, (POOL.z0 + POOL.z1) / 2);
 
 // A tileable field of smooth noise (two octaves of value noise). The block
@@ -44,10 +46,17 @@ function causticsTexture(size = 128) {
 
 const WATER_VERTEX = /* glsl */`
   varying vec3 vWorld;
+  #ifdef OCEAN_WAVES
+    ${OCEAN_SHORE}
+    ${OCEAN_VERTEX}
+  #endif
   #include <common>
   #include <fog_pars_vertex>
   void main() {
     vec4 world = modelMatrix * vec4(position, 1.0);
+    #ifdef OCEAN_WAVES
+      oceanDisplace(world, position.xy);
+    #endif
     vWorld = world.xyz;
     vec4 mvPosition = viewMatrix * world;
     gl_Position = projectionMatrix * mvPosition;
@@ -67,6 +76,12 @@ const WATER_FRAGMENT = /* glsl */`
   uniform sampler2D uShelter;
   uniform vec4 uShelterBox;
   varying vec3 vWorld;
+
+  #ifdef OCEAN_WAVES
+    ${OCEAN_SHORE}
+    uniform float uOceanFoam;
+    varying vec2 vOceanSlope;
+  #endif
 
   vec2 hash22(vec2 p) {
     vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
@@ -142,8 +157,17 @@ const WATER_FRAGMENT = /* glsl */`
     vec2 p = vWorld.xz;
     float detail = 1.0 - smoothstep(0.004, 0.012, length(fwidth(p)));
     vec4 wave = vec4(swell(p, detail) + wakes(p), 0.0, 0.0);
+    #ifdef OCEAN_WAVES
+      wave.xy += vOceanSlope;
+      vec3 shore = oceanShore(p);
+      float shoreDistance = shore.r * 24.0;
+    #endif
     float glitter = 0.0;
-    if (uRain > 0.0) {
+    if (uRain > 0.0
+      #ifdef OCEAN_WAVES
+        && detail > 0.01
+      #endif
+    ) {
       rainRings(p, 0.42, clamp(0.12 + uRain * 0.6, 0.0, 0.8), detail, wave);
       #if LAYERS > 1
       if (uRain > 0.8) rainRings(p + 17.3, 0.3, (uRain - 0.8) * 2.5, detail, wave);
@@ -165,8 +189,26 @@ const WATER_FRAGMENT = /* glsl */`
       vec3 mirrored = skyAlong(R) + uSunColor * uSun * pow(max(dot(R, uSunDir), 0.0), 600.0) * 5.0 + uFlash * vec3(0.4);
       vec3 body = mix(uShallow, uDeep, slant) * uLight + uGlowColor * uGlow * 0.7;
       float a = mix(0.36, 0.84, smoothstep(0.05, 0.9, slant));
+      #ifdef OCEAN_WAVES
+        float depth = max(shore.g * 8.0, smoothstep(1.0, 24.0, shoreDistance) * 6.5);
+        float depthBlend = 1.0 - exp(-depth * 0.24);
+        body = mix(uShallow, uDeep, clamp(depthBlend + slant * 0.2, 0.0, 1.0)) * uLight + uGlowColor * uGlow * 0.35;
+        a = mix(0.24, 0.86, clamp(depthBlend + slant * 0.25, 0.0, 1.0));
+      #endif
       alpha = a + (1.0 - a) * fresnel;
       col = (body * a * (1.0 - fresnel) + mirrored * fresnel * mix(1.0, lens, 0.5)) / alpha + wave.w * 0.6 * uLight;
+      #ifdef OCEAN_WAVES
+        if (shoreDistance < 3.5 && shore.b > 0.01 && uOceanFoam > 0.0) {
+          float grain = vnoise(p * 2.1 + vec2(uTime * 0.08, -uTime * 0.05));
+          float arrival = sin(shoreDistance * 3.6 + uTime * 1.1 + grain * 1.8);
+          float crest = smoothstep(0.3, 0.9, arrival);
+          float edge = smoothstep(0.12, 0.55, shoreDistance) * (1.0 - smoothstep(0.7, 3.5, shoreDistance));
+          float foam = crest * edge * smoothstep(0.22, 0.7, grain) * shore.b * uOceanFoam;
+          foam *= 1.0 - smoothstep(0.2, 0.65, length(fwidth(p)));
+          col = mix(col, vec3(0.83, 0.9, 0.85) * uLight + uFlash * 0.15, foam);
+          alpha = mix(alpha, 0.96, foam);
+        }
+      #endif
     } else {
       // From below: Snell's window. The whole sky is squeezed into a cone
       // overhead; outside it the surface mirrors the pool. Each colour leaves
@@ -297,12 +339,34 @@ export function createPool({ stage, world, shelter, quality }) {
     uTop: sky.uTop, uHorizon: sky.uHorizon, uSunDir: sky.uSunDir, uSunColor: sky.uSunColor, uAir: { value: stage.airFog },
     uClouds: sky.uClouds, uCover: sky.uCover, uCloudShift: sky.uCloudShift, uCloudLit: sky.uCloudLit, uCloudShade: sky.uCloudShade, uVeil: sky.uCloud,
   };
+  let oceanMap = null, oceanGeometry = null;
+  if (OCEAN) {
+    const baked = bakeOceanMap(world.grid, L.ISLAND, WATER);
+    oceanMap = new THREE.DataTexture(baked.data, baked.width, baked.height, THREE.RGBAFormat);
+    oceanMap.name = 'ocean-shore'; oceanMap.minFilter = oceanMap.magFilter = THREE.LinearFilter;
+    oceanMap.generateMipmaps = false; oceanMap.needsUpdate = true;
+    Object.assign(uniforms, {
+      uOceanShore: { value: oceanMap }, uOceanMap: { value: new THREE.Vector4(baked.x0, baked.z0, 1 / baked.width, 1 / baked.height) },
+      uOceanBounds: { value: new THREE.Vector4(POOL.x0, POOL.z0, POOL.x1, POOL.z1) },
+      uOceanFocus: { value: new THREE.Vector2() }, uOceanPlayer: { value: new THREE.Vector2() },
+      uOceanHeight: { value: 0 }, uOceanFoam: { value: Math.max(0, Math.min(1, OCEAN.shoreFoam ?? 0.65)) },
+    });
+    uniforms.uDeep.value.setHex(0x175767); uniforms.uShallow.value.setHex(0x69b7ae);
+  }
   const material = new THREE.ShaderMaterial({
     name: 'pool-water', uniforms, vertexShader: WATER_VERTEX, fragmentShader: WATER_FRAGMENT,
-    defines: { RIPPLES, STEPS: quality.mobile ? 9 : 11, LAYERS: quality.mobile ? 1 : 2 },
+    defines: { RIPPLES, STEPS: quality.mobile ? 9 : 11, LAYERS: quality.mobile ? 1 : 2, ...(OCEAN ? { OCEAN_WAVES: quality.mobile ? 2 : 3 } : {}) },
     transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: true,
   });
-  const water = new THREE.Mesh(new THREE.PlaneGeometry(POOL.x1 - POOL.x0, POOL.z1 - POOL.z0), material);
+  const flatGeometry = new THREE.PlaneGeometry(OCEAN ? 2 : POOL.x1 - POOL.x0, OCEAN ? 2 : POOL.z1 - POOL.z0);
+  if (OCEAN) {
+    const segments = quality.mobile ? 20 : 28;
+    oceanGeometry = new THREE.PlaneGeometry(2, 2, segments, segments);
+    const radius = Math.hypot(POOL.x1 - POOL.x0, POOL.z1 - POOL.z0) / 2 + 1;
+    flatGeometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), radius);
+    oceanGeometry.boundingSphere = flatGeometry.boundingSphere;
+  }
+  const water = new THREE.Mesh(flatGeometry, material);
   water.name = 'pool-water'; water.rotation.x = -Math.PI / 2; water.position.copy(CENTRE);
   // After the glass, before the rain, which a surface seen from below hides.
   water.renderOrder = 3;
@@ -356,6 +420,14 @@ export function createPool({ stage, world, shelter, quality }) {
     if (!still) time += dt;
     if (time > 3600) { time -= 3600; for (const r of uniforms.uRipples.value) r.z -= 3600; }
     uniforms.uTime.value = time; blocks.uPoolTime.value = time;
+    if (OCEAN) {
+      const height = Math.abs(camera.position.y - WATER);
+      const strength = still ? 0 : 1 - THREE.MathUtils.smoothstep(height, 12, 36);
+      uniforms.uOceanHeight.value = Math.max(0, Math.min(0.15, OCEAN.waveHeight ?? 0.12)) * strength;
+      uniforms.uOceanFocus.value.set(THREE.MathUtils.clamp(camera.position.x, POOL.x0, POOL.x1), THREE.MathUtils.clamp(camera.position.z, POOL.z0, POOL.z1));
+      uniforms.uOceanPlayer.value.set(player.pos.x, player.pos.z);
+      water.geometry = strength > 0 ? oceanGeometry : flatGeometry;
+    }
 
     // Light and weather, read from the stage and the weather.
     const night = stage.night, hemi = stage.hemi.intensity;
@@ -444,6 +516,7 @@ export function createPool({ stage, world, shelter, quality }) {
     get submerged() { return inside; }, fogColor: waterFog,
     // Draw every piece once under the loading screen so no swim compiles a shader.
     warmup(on) {
+      if (OCEAN) water.geometry = on ? oceanGeometry : flatGeometry;
       for (const p of [under, over]) {
         p.begin(); if (on) p.add(CENTRE.x, -30, CENTRE.z, .1, 1, 0); p.end();
       }

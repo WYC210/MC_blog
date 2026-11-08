@@ -74,7 +74,37 @@ try {
       const clicked = player.leavePool(0, 26);
       for (let frame = 0; frame < 1800 && player.mode !== 'ground'; frame++) player.update(1 / 60, idle, 0);
       const clickedExit = { accepted: clicked, mode: player.mode, z: player.pos.z, stand: home.nav.canStand(player.pos.x, player.pos.z) };
-      const { BOARDWALK } = await import('@world/layout.js');
+      const { BOARDWALK, FERRIS_PLOT, ORIGIN_FERRIS, inFerrisPlot } = await import('@world/layout.js');
+      const { blockFERRIS } = await import('@world/ferris-model.js');
+      const foundationGaps = [], blockedPassage = [];
+      for (let column = FERRIS_PLOT.x0 + 1; column < FERRIS_PLOT.x1 - 1; column++) {
+        for (let row = FERRIS_PLOT.z0 + 1; row < FERRIS_PLOT.z1 - 1; row++) {
+          const source = blockFERRIS(column - ORIGIN_FERRIS.x, 0, row - ORIGIN_FERRIS.z)?.[0];
+          const expected = source === 'minecraft:birch_planks' ? 'f_birch' : source === 'minecraft:sea_lantern' ? 'g_slantern' : null;
+          if (expected && home.world.grid.type(column, ORIGIN_FERRIS.y, row)?.name !== expected) foundationGaps.push([column, row]);
+        }
+      }
+      for (let positionX = FERRIS_PLOT.x0; positionX <= BOARDWALK.x1; positionX += 0.25) {
+        for (const positionZ of [26.5, BOARDWALK.z]) {
+          if (!home.nav.canStand(positionX, positionZ)) blockedPassage.push([positionX, positionZ]);
+        }
+      }
+      const overlappingDecor = home.world.obstacles.filter(obstacle =>
+        obstacle.x0 < FERRIS_PLOT.x1 && obstacle.x1 > FERRIS_PLOT.x0 &&
+        obstacle.z0 < FERRIS_PLOT.z1 && obstacle.z1 > FERRIS_PLOT.z0);
+      const flora = home.stage.scene.getObjectByName('island-flora');
+      const THREE = await import('three'), matrix = new THREE.Matrix4(), overlappingFlora = [];
+      for (let index = 0; index < flora.count; index++) {
+        flora.getMatrixAt(index, matrix);
+        if (inFerrisPlot(matrix.elements[12], matrix.elements[14], 0.6)) overlappingFlora.push(index);
+      }
+      player.teleport(FERRIS_PLOT.x0, BOARDWALK.z);
+      for (let frame = 0; frame < 600 && player.pos.x < 30.5; frame++) player.update(1 / 60, { ...idle, x: 1 }, 0);
+      const ferris = {
+        clearance: BOARDWALK.z - BOARDWALK.depth / 2 - FERRIS_PLOT.z1,
+        foundationGaps, blockedPassage, overlappingDecor, overlappingFlora,
+        walked: player.pos.x >= 30.5 && player.mode === 'ground' && player.floorY < 0.4,
+      };
       const planks = [];
       for (let x = BOARDWALK.x0; x <= BOARDWALK.x1; x += BOARDWALK.step) {
         player.teleport(x, BOARDWALK.z);
@@ -82,7 +112,7 @@ try {
         planks.push({ x, stand: home.nav.canStand(x, BOARDWALK.z), available: !document.querySelector('#fishingPrompt').hidden });
       }
       player.teleport(-10, 28.25);
-      return { results, clickedExit, planks };
+      return { results, clickedExit, planks, ferris };
     });
     for (const test of coast.results) {
       assert.equal(test.start, 'swim', `Not swimming: ${JSON.stringify(test)}`);
@@ -91,7 +121,19 @@ try {
       if (test.south) assert.ok(test.climb.z >= 29.3, `Swam inside the land before climbing: ${JSON.stringify(test)}`);
     }
     assert.ok(coast.clickedExit.accepted && coast.clickedExit.mode === 'ground' && coast.clickedExit.stand, `Click-to-exit failed: ${JSON.stringify(coast.clickedExit)}`);
+    assert.ok(coast.ferris.clearance >= 3, 'The ferris foundation must leave a beach strip before the boardwalk');
+    for (const key of ['foundationGaps', 'blockedPassage', 'overlappingDecor', 'overlappingFlora']) {
+      assert.deepEqual(coast.ferris[key], [], `Ferris/beach overlap: ${key}`);
+    }
+    assert.ok(coast.ferris.walked, 'The east boardwalk must be walkable without climbing an invisible foundation');
     assert.ok(coast.planks.every(plank => plank.stand && plank.available), `Boardwalk not fully fishable: ${JSON.stringify(coast.planks.filter(plank => !plank.stand || !plank.available))}`);
+    await page.evaluate(() => {
+      const home = __home;
+      home.weather.dispose(); home.setTimeMode('day'); home.setWeatherMode('clear'); home.stage.settle(); home.weatherFx.settle();
+      home.rig.showcase([39, 7, 35], [24, 0.8, 22]); home.rig.update(20, home.player);
+    });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: fileURLToPath(new URL(`beach-ferris-${view.name}.png`, output)) });
     await page.waitForFunction(() => !document.querySelector('#fishingPrompt').hidden);
     if (view.hasTouch) await page.locator('#fishingPrompt').tap();
     else await page.keyboard.press('f');
@@ -179,7 +221,7 @@ try {
       }
     }
     assert.deepEqual(errors, []);
-    console.log(`${view.name}: 10 coast exits, clicked shore, ${coast.planks.length} fishing positions, F/touch, catch, early reel, missed bite, cancel, overlays and language passed; ${stats.calls} calls, ${stats.triangles} triangles`);
+    console.log(`${view.name}: ferris/beach clearance and walking, 10 coast exits, clicked shore, ${coast.planks.length} fishing positions, F/touch, catch, early reel, missed bite, cancel, overlays and language passed; ${stats.calls} calls, ${stats.triangles} triangles`);
     await context.close();
   }
 } finally {

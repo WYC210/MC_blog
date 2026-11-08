@@ -1,7 +1,7 @@
 // Small beach details that make the open sand read as a lived-in shoreline.
 // Everything stays in the shared model batch so the decoration costs no extra
 // draw call beyond the existing furniture group.
-import { PORTAL, IKUN_ENTRY, BOARDWALK, FOUNTAIN } from './layout.js';
+import { PORTAL, IKUN_ENTRY, BOARDWALK, FOUNTAIN, inFerrisPlot } from './layout.js';
 import { addRestPoint } from './rest-points.js';
 
 const OAK = { tex: 'oak' };
@@ -35,6 +35,7 @@ export function furnishBeach({ B, obstacles, bakes }) {
   });
 
   function palm(x, z, scale = 1) {
+    if (inFerrisPlot(x, z, 1.7 * scale)) return;
     const height = 2.8 * scale;
     B.box(x, 0, z, 0.24 * scale, height, 0.24 * scale, WALNUT, { rz: -0.06 });
     for (let i = 0; i < 6; i++) {
@@ -93,6 +94,7 @@ export function furnishBeach({ B, obstacles, bakes }) {
 
   // Minecraft-style torch: wood post with flame top
   function torch(x, z) {
+    if (inFerrisPlot(x, z, 0.25)) return;
     B.box(x, 0, z, 0.1, 1.6, 0.1, WALNUT);
     B.box(x, 1.5, z, 0.16, 0.25, 0.16, glow(0xffb04a));   // orange flame
     B.box(x, 1.68, z, 0.1, 0.15, 0.1, glow(0xffe580));    // yellow core
@@ -263,6 +265,7 @@ export function furnishBeach({ B, obstacles, bakes }) {
   // ===== Stone paths connecting areas =====
   // Path stones: irregular stepping stones
   function pathStone(x, z, size = 0.6, ring = false) {
+    if (inFerrisPlot(x, z, size)) return;
     if (!ring && Math.hypot(x - FOUNTAIN.x, z - FOUNTAIN.z) < FOUNTAIN.radius + 1.9) return;
     const s = size * (0.8 + Math.random() * 0.4);
     B.box(x, 0.02, z, s, 0.06, s * (0.85 + Math.random() * 0.3), paver, { ry: Math.random() * 0.5 });
@@ -294,6 +297,7 @@ export function furnishBeach({ B, obstacles, bakes }) {
   // ===== Beach decorations =====
   // Shells scattered on sand
   function shell_decor(x, z) {
+    if (inFerrisPlot(x, z, 0.25)) return;
     const s = 0.12 + Math.random() * 0.1;
     B.box(x, 0.01, z, s, 0.04, s * 0.8, shell, { ry: Math.random() * Math.PI });
   }
@@ -311,9 +315,9 @@ export function furnishBeach({ B, obstacles, bakes }) {
   rock(-29.3, 25.5, 0.45);
   rock(-30.5, 25.2, 0.35);
   // East rock cluster
-  rock(29, 26.5, 0.65);
-  rock(28.2, 26, 0.4);
-  rock(29.5, 25.8, 0.5);
+  rock(31.8, 24.8, 0.65);
+  rock(31.1, 24.3, 0.4);
+  rock(32.3, 24.1, 0.5);
 
   // Small rowboat on beach
   B.at(-14, 0, 26, 0.3, () => {
@@ -331,7 +335,7 @@ export function furnishBeach({ B, obstacles, bakes }) {
   for (const offset of [-0.5, 0.5]) addRestPoint({ id: `beach-boat-${offset}`, name: '小船座位', en: 'Rowboat seat', x: -14 + Math.sin(0.3) * offset, y: 0.44, z: 26 + Math.cos(0.3) * offset, yaw: 0.3 });
 
   // Sand castle
-  B.at(20, 0, 20, 0, () => {
+  B.at(20, 0, 24.5, 0, () => {
     // Base mound
     B.box(0, 0.15, 0, 1.2, 0.3, 1.2, sandstone);
     // Towers
@@ -345,11 +349,11 @@ export function furnishBeach({ B, obstacles, bakes }) {
     B.box(0, 0.85, 0, 0.04, 0.4, 0.04, WALNUT);
     B.box(0.12, 1.1, 0, 0.2, 0.15, 0.02, coral);
   });
-  foot(20, 20, 1.4, 1.4);
+  foot(20, 24.5, 1.4, 1.4);
 
   // Driftwood logs
   B.box(-5, 0.12, 26.5, 0.18, 0.18, 1.8, driftwood, { ry: 0.25 });
-  B.box(25, 0.1, 20, 0.15, 0.15, 1.4, driftwood, { ry: -0.4 });
+  B.box(22.4, 0.1, 24.8, 0.15, 0.15, 1.4, driftwood, { ry: -0.4 });
 
   // Fishing net draped on post
   B.box(30, 0, 24, 0.12, 1.5, 0.12, WALNUT);

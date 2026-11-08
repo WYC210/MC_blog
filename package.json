@@ -25,6 +25,7 @@
     "check:piano": "node tools/check-piano-ui.mjs",
     "check:computer": "node tools/check-computer.mjs",
     "check:beach": "node tools/check-beach.mjs",
+    "check:ocean": "node --test tools/check-ocean-data.test.mjs && node tools/check-ocean.mjs",
     "check:furniture": "node tools/check-furniture.mjs",
     "check:fountain": "node tools/check-fountain.mjs",
     "check:night-lighting": "node tools/check-night-lighting.mjs",

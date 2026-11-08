@@ -1,11 +1,12 @@
 import { BoxBatch } from '@engine/world/blocks.js';
 import { buildIsland } from '@engine/world/terrain.js';
 import { buildForest, buildTufts } from '@engine/world/landscape.js';
-import { ISLAND, LAND, BAY, BOARDWALK, TREES, FOUNTAIN, MODEL_ORIGIN, IKUN_CENTER, IKUN_ENTRY, LEHUN_ORIGIN, ORIGIN_GONGLU, ORIGIN_FERRIS } from './layout.js';
+import { ISLAND, LAND, BAY, BOARDWALK, TREES, FOUNTAIN, MODEL_ORIGIN, IKUN_CENTER, IKUN_ENTRY, LEHUN_ORIGIN, ORIGIN_GONGLU, ORIGIN_FERRIS, inFerrisPlot } from './layout.js';
 import { buildLitematicIKUN } from './ikun-model.js';
 import { buildLitematicLEHUN } from './lehun-model.js';
 import { buildLitematicGONGLU } from './gonglu-model.js';
 import { buildLitematicFERRIS } from './ferris-model.js';
+import { buildFerrisBackFace } from './ferris-face.js';
 import { buildSeaToys } from './sea.js';
 import { furnishGONGLU } from './gonglu-furnish.js';
 import { furnishLeHun } from './lehun-furnish.js';
@@ -51,6 +52,12 @@ export function build({ grid, layer, materials, stage }) {
   for (let x = ISLAND.x0; x < ISLAND.x1; x++) for (let z = ISLAND.z0; z < ISLAND.z1; z++) {
     if (grid.type(x, -1, z)) continue;
     grid.fill(x, -5, z, x + 1, -3, z + 1, 'sand');
+  }
+  for (let x = Math.floor(BOARDWALK.x0 - BOARDWALK.width / 2); x < Math.ceil(BOARDWALK.x1 + BOARDWALK.width / 2); x++) {
+    for (let z = Math.floor(BOARDWALK.z - BOARDWALK.depth / 2); z < BAY.z0; z++) {
+      grid.set(x, -1, z, 'sand');
+      grid.set(x, 0, z, null);
+    }
   }
   const B = new BoxBatch(layer);
   const walk = [], bakes = [], obstacles = [], hotspots = [];
@@ -256,6 +263,7 @@ export function build({ grid, layer, materials, stage }) {
     const mx = wx - ORIGIN_FERRIS.x, my = wy - ORIGIN_FERRIS.y, mz = wz - ORIGIN_FERRIS.z;
     emitShape(name, props, wx, wy, wz, kindFERRIS(name), ferrisLookFor(name, mx, my, mz));
   });
+  buildFerrisBackFace(grid, ORIGIN_FERRIS, mapFERRIS);
   // The wheel sits beyond the original cottage lighting volume. These baked
   // sources keep its structure readable at night without real-time lights.
   const fx = ORIGIN_FERRIS.x + 7.5, fy = ORIGIN_FERRIS.y + 25, fz = ORIGIN_FERRIS.z + 21.5;
@@ -290,7 +298,7 @@ export function build({ grid, layer, materials, stage }) {
   const inBuilding = (x, z) =>
     (x >= -2 && x <= 12 && z >= -12 && z <= 12) ||  // IKUN area
     (x >= -40 && x <= -20 && z >= -24 && z <= 0) || // GONGLU tower
-    (x >= 14 && x <= 30 && z >= -22 && z <= -6) ||  // Ferris wheel
+    inFerrisPlot(x, z, 0.6) ||
     (z >= 32);  // LeHun over bay
   for (let i = 0; i < 100; i++) {
     const x = -32 + rng() * 64;
@@ -305,12 +313,6 @@ export function build({ grid, layer, materials, stage }) {
   // LeHun cottage: a cherry gym below and a leisure loft above — its floor
   // pink lounge floor and stair register site treads into `walk` before the
   // site is built.
-  for (let x = Math.floor(BOARDWALK.x0 - BOARDWALK.width / 2); x < Math.ceil(BOARDWALK.x1 + BOARDWALK.width / 2); x++) {
-    for (let z = Math.floor(BOARDWALK.z - BOARDWALK.depth / 2); z < BAY.z0; z++) {
-      grid.set(x, -1, z, 'sand');
-      grid.set(x, 0, z, null);
-    }
-  }
   const planes = furnishGONGLU({ B, obstacles, bakes, surfaces, hotspots });
   furnishIKUN({ B, obstacles, bakes });
   planes.push(...furnishLeHun({ B, walk, obstacles, bakes }));
