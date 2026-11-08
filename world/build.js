@@ -24,6 +24,9 @@ import { createNightConcert } from './night-concert.js';
 import { createConcertAudio } from './night-concert-audio.js';
 import { createNightNature } from './night-nature.js';
 import { buildLookout, createLookout } from './lookout.js';
+import { buildQinIsland, setupQinIsland, drawQinMap } from './qin-island.js';
+import { registerMapIcons } from './map-icons.js';
+import { createTravelAgency } from './travel-agency.js';
 
 // Two cottages rebuilt one-to-one from litematics. The palette keeps every
 // block's properties, so stairs, slabs, doors, panes and lanterns come out as
@@ -318,6 +321,9 @@ export function build({ grid, layer, materials, stage }) {
   const fountain = buildFountain({ B, layer, materials, obstacles, bakes });
   const concertCrowd = buildConcertCrowd({ layer, materials });
   planes.push(fountain.mesh, concertCrowd.group);
+  const modelSite = makeModelSite(walk, obstacles);
+  const qinIsland = buildQinIsland({ grid, layer, materials, obstacles, hotspots });
+  planes.push(qinIsland.root);
   return {
     batches: { model: B },
     bakes,
@@ -326,13 +332,14 @@ export function build({ grid, layer, materials, stage }) {
     surfaces,
     planes,
     forest,
-    sites: [toys, makeModelSite(walk, obstacles)],
-    named: { fountain, concertCrowd },
+    sites: [toys, modelSite, qinIsland.site],
+    named: { fountain, concertCrowd, qinIsland, drawMap: drawQinMap },
   };
 }
 
 // The floats ride the swell.
 export function setup({ stage, config, player, avatar, rig, sound, world, nav, quality }) {
+  registerMapIcons();
   createComputer(config.computer);
   const fishing = createFishing({ stage, player, avatar, rig, sound });
   const furniture = createFurnitureInteraction({ stage, player, rig, sound, world });
@@ -343,12 +350,16 @@ export function setup({ stage, config, player, avatar, rig, sound, world, nav, q
   const resident = createResident({ stage, world, nav, player, jetSki, config, nightConcert });
   const nightNature = createNightNature({ stage, world, nav, quality });
   const lookout = createLookout({ stage, player, rig });
+  const qinIsland = setupQinIsland({ world, player, avatar, stage, nav, rig, sound });
+  const travelAgency = createTravelAgency({ player, rig, stage, nav, sound, fishing, lookout, qinIsland });
   return {
-    fishing, furniture, jetSki, resident, nightConcert, nightNature, lookout,
-    interact: () => lookout.interact() || jetSki.interact() || furniture.interact() || nightConcert.interact(),
-    tap: (x, y, picked) => lookout.tap() || jetSki.tap(x, y, picked) || furniture.tap(x, y, picked),
+    fishing, furniture, jetSki, resident, nightConcert, nightNature, lookout, qinIsland, travelAgency,
+    warmup(on) { qinIsland.warmup(on); },
+    interact: () => travelAgency.active || qinIsland.encounter.interact() || lookout.interact() || jetSki.interact() || furniture.interact() || nightConcert.interact(),
+    tap: (x, y, picked) => travelAgency.active || qinIsland.encounter.active || lookout.tap() || jetSki.tap(x, y, picked) || furniture.tap(x, y, picked) || qinIsland.tap(x, y, picked),
     pad: jetSki.pad,
     update(dt) {
+      qinIsland.update(dt);
       lookout.update(dt);
       toys?.update(dt, stage.camera);
       nightConcert.update(dt);

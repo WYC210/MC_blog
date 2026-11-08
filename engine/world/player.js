@@ -134,6 +134,8 @@ export function createPlayer({ avatar, nav, grid = null, ground = null, onArrive
   function goTo(x, z, station = null) {
     if (resting && !standUp()) return false;
     if (mode !== 'ground') return false;
+    const sitePath = ground?.route?.(pos, { x, z }, level, station?.floor);
+    if (sitePath) { cancel(); path = sitePath; goal = station; return true; }
     if (island && nav.canStand(pos.x, pos.z, level) && nav.canStand(x, z)) {
       const found = nav.findPath(pos, { x, z });
       if (found) { island = null; standing = null; level = nav.heightAt(pos.x, pos.z); path = found; goal = station; return true; }
@@ -224,11 +226,12 @@ export function createPlayer({ avatar, nav, grid = null, ground = null, onArrive
     return true;
   }
   function teleport(x, z, station = null) {
-    const stand = nav.nearestStand(x, z);
-    if (!stand || !nav.canStand(stand.x, stand.z)) return false;
+    const support = station?.floor !== undefined ? ground?.nearestStand(x, z, station.floor) : null;
+    const stand = support || nav.nearestStand(x, z);
+    if (!stand || !support && !nav.canStand(stand.x, stand.z)) return false;
     cancel(); settle();
-    pos.set(stand.x, 0, stand.z); mode = 'ground'; island = null;
-    y = level = nav.heightAt(pos.x, pos.z);
+    pos.set(stand.x, 0, stand.z); mode = 'ground'; island = support?.site || null; standing = support;
+    y = level = support?.y ?? nav.heightAt(pos.x, pos.z);
     if (station?.look) heading = Math.atan2(station.look[0] - pos.x, station.look[1] - pos.z);
     place(0);
     return true;

@@ -1,0 +1,1544 @@
+{
+  "checkedOn": "2026-11-08",
+  "scope": "当前投影桌20展项；第一阶段资料研究，不是测绘复原或完整文物名录",
+  "counts": {
+    "sourceEntries": 52,
+    "retrieved": 49,
+    "unavailable": 3,
+    "imagesViewed": 51,
+    "sites": 20,
+    "grades": {
+      "A": 10,
+      "C": 4,
+      "B": 6
+    }
+  },
+  "limits": [
+    "A仅表示可开始局部参考建模，不表示整段准确复原。",
+    "发布日期不等于拍摄日期。",
+    "未取得完整DEM、墙线坐标、敌台点位及测绘模型。",
+    "图片只作研究，未获网站再发布授权。",
+    "HTML全景外壳返回成功不等于已经检查全部场景。"
+  ],
+  "sites": [
+    {
+      "id": "laolongtou",
+      "name": "老龙头",
+      "grade": "A",
+      "confirmedScope": "入海石城、靖卤台、宁海城、澄海楼等不能简化为海面上一条细墙；城台、海岸、后方楼阁有明显层次",
+      "sources": [
+        "shg-laolongtou",
+        "shg-laolongtou-route"
+      ],
+      "missingEvidence": "可靠北向、比例尺、城岸线坐标；导览画不是测绘图"
+    },
+    {
+      "id": "south-wing",
+      "name": "南翼长城",
+      "grade": "C",
+      "confirmedScope": "官方保护工作使用“南翼长城段”；历史体系又有“南翼城”，两者不能未经辨析就视为同一矩形城堡",
+      "sources": [
+        "south-wall-protection",
+        "coast-system",
+        "shg-earthen-study"
+      ],
+      "missingEvidence": "明确展示的是关城至海岸的墙段还是南翼城遗址；需对应平面及现存照片"
+    },
+    {
+      "id": "shanhaiguan",
+      "name": "山海关",
+      "grade": "A",
+      "confirmedScope": "镇东楼是东门，厚大城台、拱券门洞、坡道和上部箭楼是主要形态；不能套用普通敌楼",
+      "sources": [
+        "shg-zhendong",
+        "shg-pass"
+      ],
+      "missingEvidence": "完整关城平面、瓮城范围、各朝修缮区别；部分宣传配图不宜推断周边地形"
+    },
+    {
+      "id": "north-wing",
+      "name": "北翼长城",
+      "grade": "B",
+      "confirmedScope": "北营子与北翼城有关；腰铺九号敌台位于北翼城北侧，不能把该敌台直接当成北翼城城门",
+      "sources": [
+        "north-wing",
+        "north-tower"
+      ],
+      "missingEvidence": "北翼城边界/城门遗址实景及敌台各立面；文物局页面原图本次未下载成功"
+    },
+    {
+      "id": "jiaoshan",
+      "name": "角山",
+      "grade": "A",
+      "confirmedScope": "已查看山脊长城和陡阶照片，墙体随裸岩与山脊急剧升降，和普通缓坡丘陵不同",
+      "sources": [
+        "jiaoshan-photo",
+        "jiaoshan-current",
+        "shg-jiaoshan"
+      ],
+      "missingEvidence": "敌台编号与对应位置、局部连续航拍、未拍到的背坡；不能直接把网页山高当模型相对高差"
+    },
+    {
+      "id": "sandaoguan",
+      "name": "三道关",
+      "grade": "B",
+      "confirmedScope": "可确认峡谷绝壁和“倒挂”墙段；已查看巡护报道中的陡墙及残石近景，不能画成三座相同门楼并排",
+      "sources": [
+        "sandaoguan",
+        "shg-sandaoguan"
+      ],
+      "missingEvidence": "三重关口各自的位置、留存状态和完整剖面；巡护者使用无人机不意味着报道照片均为航拍"
+    },
+    {
+      "id": "yiyuankou",
+      "name": "义院口",
+      "grade": "B",
+      "confirmedScope": "景区资料明确提到顶尖楼、关城遗址；保护员报道提及水门与拿子峪的关联",
+      "sources": [
+        "shg-reading-route",
+        "naziyu-photos"
+      ],
+      "missingEvidence": "顶尖楼可识别的正侧面、关城/水门现状及位置；已找到的配图不能逐一绑定到构件"
+    },
+    {
+      "id": "dongjiakou",
+      "name": "董家口",
+      "grade": "A",
+      "confirmedScope": "山脊墙体、密集敌台、堡与村落关系、门额雕花是区分特征；不能只有普通方塔",
+      "sources": [
+        "dongjiakou-village",
+        "dongjiakou-cloud",
+        "dongjiakou-snow"
+      ],
+      "missingEvidence": "雕花门额高清近照、具体敌台编号、堡的可靠平面；文字统计不等于坐标清单"
+    },
+    {
+      "id": "banchangyu",
+      "name": "板厂峪",
+      "grade": "A",
+      "confirmedScope": "险峻山墙、柱状岩壁、砖窑遗址可形成有辨识度的主题；窑址是山下独立对象，不应贴到城楼上",
+      "sources": [
+        "banchangyu-cnr",
+        "banchangyu-snow",
+        "banchangyu-repair"
+      ],
+      "missingEvidence": "代表性墙段完整轮廓、窑址平面和各敌台身份；不同报道范围和统计口径需分开"
+    },
+    {
+      "id": "naziyu",
+      "name": "拿子峪",
+      "grade": "A",
+      "confirmedScope": "“金边”是墙体上部的黄色条石，不是金色金属；小型旱门、山谷通道及不同位置烽火台有文字和照片支持",
+      "sources": [
+        "naziyu",
+        "naziyu-photos"
+      ],
+      "missingEvidence": "条石带具体分布、楼层和各楼坐标；原文对“墙筋”作用是解释/推测，不应写成定论"
+    },
+    {
+      "id": "huachangyu",
+      "name": "花厂峪/花场峪",
+      "grade": "C",
+      "confirmedScope": "找到青龙祖山镇花厂峪的村史、山地节目画面；另有海港段花厂峪—拿子峪—义院口叙述",
+      "sources": [
+        "huachangyu-festival",
+        "huachangyu-hebtv",
+        "naziyu-photos"
+      ],
+      "missingEvidence": "必须先用权威地名/地图区分行政归属、同名/异写、墙段两侧村落，不能把两套资料混做一个景点"
+    },
+    {
+      "id": "chengziyu",
+      "name": "城子峪",
+      "grade": "A",
+      "confirmedScope": "山地空心敌楼、局部残墙与植被有多幅照片；应保留缺损，不统一补齐垛口",
+      "sources": [
+        "chengziyu-cloud",
+        "chengziyu-blossom",
+        "chengziyu-report"
+      ],
+      "missingEvidence": "完整墙线、具体敌台编号及未见立面；云雾遮挡处不能凭想象补出墙体"
+    },
+    {
+      "id": "jielingkou",
+      "name": "界岭口",
+      "grade": "A",
+      "confirmedScope": "洋河峡谷两侧金台/银台的扇形墩台、月城门洞、夯筑/砖石遗存有修缮报道，不能只放一个普通山口城门",
+      "sources": [
+        "jielingkou-2025",
+        "jielingkou-repair",
+        "funing-plan"
+      ],
+      "missingEvidence": "两台相对方向、全平面和尺寸；应确定采用修缮前还是修缮后的一个时间版本"
+    },
+    {
+      "id": "chongyukou",
+      "name": "重峪口",
+      "grade": "B",
+      "confirmedScope": "卢龙专题中的明确图注展示山脊拱门、残墙与残楼，比“果园村落”介绍更直接",
+      "sources": [
+        "lulong",
+        "chongyukou"
+      ],
+      "missingEvidence": "至少另一侧关门照片和附近墙线；不能用果园新闻证明完整关城形制"
+    },
+    {
+      "id": "liujiakou",
+      "name": "刘家口",
+      "grade": "A",
+      "confirmedScope": "有明确图注的水关楼、岭上长城照片；2023 年修缮涉及水关楼、东尖楼及墙体",
+      "sources": [
+        "lulong",
+        "liujiakou-repair"
+      ],
+      "missingEvidence": "页面标注 2022 年，但配图拍摄日期及后续替换情况未核实；需新旧对应，不宣称当前最新外貌"
+    },
+    {
+      "id": "taolinkou",
+      "name": "桃林口",
+      "grade": "B",
+      "confirmedScope": "已查看水面转弯、岸坡与敌楼同框的图注照片，具备水陆相接的景观关系",
+      "sources": [
+        "lulong",
+        "survey"
+      ],
+      "missingEvidence": "关口与水库/湿地的准确范围、真实水门形态；不能因为邻水就给模型加一座水关门楼"
+    },
+    {
+      "id": "lengkou",
+      "name": "冷口",
+      "grade": "C",
+      "confirmedScope": "找到历史与交通走廊叙述，但本次查看的配图是雕像，不能作关门实景",
+      "sources": [
+        "lengkou-history",
+        "lengkou"
+      ],
+      "missingEvidence": "青龙侧/迁安侧遗存分别在哪里、关门是否尚存、对应年月的真实照片"
+    },
+    {
+      "id": "chengzilingkou",
+      "name": "城子岭口",
+      "grade": "C",
+      "confirmedScope": "市域概述把它作为明长城市域范围的西端；不等于已有具体遗存的模型依据",
+      "sources": [
+        "overview"
+      ],
+      "missingEvidence": "确切点位、行政边界、关口残存形态、正侧面/航拍；不得把“城子峪”照片借来代替"
+    },
+    {
+      "id": "luohandong",
+      "name": "罗汉洞",
+      "grade": "B",
+      "confirmedScope": "市政府图文将石碑沟长城又称罗汉洞长城，给出段落范围并配山脊墙照片",
+      "sources": [
+        "luohandong-cloud",
+        "luohandong-repair"
+      ],
+      "missingEvidence": "同名范围与代表性敌楼的对应、连续墙线和更多视角；不应把整个相邻山系都归入该展项"
+    },
+    {
+      "id": "jiumenkou",
+      "name": "九门口",
+      "grade": "A",
+      "confirmedScope": "辽宁文旅资料同时提供结构说明、尺寸和照片；城桥、河道、关城及两侧围城是整体关系",
+      "sources": [
+        "jiumenkou"
+      ],
+      "missingEvidence": "完整测绘平面、各敌楼精确点位和当下修缮情况；地处辽宁，继续单列为周边关联"
+    }
+  ],
+  "sources": [
+    {
+      "id": "overview",
+      "title": "秦皇岛因长城而更加雄奇-秦皇诗画-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=630044",
+      "publishedDate": "2025-07-19",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "chengzilingkou"
+      ]
+    },
+    {
+      "id": "coast-system",
+      "title": "行走万里长城 见证保护传承 长城重要点段媒体采风活动启动-县区动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=535561",
+      "publishedDate": "2023-10-12",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "south-wing"
+      ]
+    },
+    {
+      "id": "jiaoshan-photo",
+      "title": "​探角山之险 寻长城文化-焦点图-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=564890",
+      "publishedDate": "2024-09-09",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "jiaoshan"
+      ]
+    },
+    {
+      "id": "jiaoshan-current",
+      "title": "角山-秦皇诗画-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=630041",
+      "publishedDate": "2025-07-13",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "jiaoshan"
+      ]
+    },
+    {
+      "id": "dongjiakou-village",
+      "title": "董家口村：古村落焕发新生机-本地动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=577102",
+      "publishedDate": "2024-12-06",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "dongjiakou"
+      ]
+    },
+    {
+      "id": "dongjiakou-snow",
+      "title": "冬日长城 雄浑巍峨-焦点图-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=613982",
+      "publishedDate": "2025-12-15",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "dongjiakou"
+      ]
+    },
+    {
+      "id": "dongjiakou-cloud",
+      "title": "长城云海 美景如画-焦点图-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=604954",
+      "publishedDate": "2025-08-18",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "dongjiakou"
+      ]
+    },
+    {
+      "id": "banchangyu-snow",
+      "title": "板厂峪初雪-首页焦点图-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=576102",
+      "publishedDate": "2024-11-29",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "banchangyu"
+      ]
+    },
+    {
+      "id": "banchangyu-repair",
+      "title": "板厂峪长城修缮主体工程完工-本地动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=138038",
+      "publishedDate": "2015-04-14",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "2015年修缮历史记录；敌台总数20与保存状态分项8+4+4不闭合。",
+      "usedFor": [
+        "banchangyu"
+      ]
+    },
+    {
+      "id": "banchangyu-kiln",
+      "title": "在华留学生探访板厂峪明长城砖窑群-县区动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=542694",
+      "publishedDate": "2024-01-25",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": []
+    },
+    {
+      "id": "banchangyu-tower",
+      "title": "板厂峪塔-方志秦皇岛-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=464582",
+      "publishedDate": "2019-06-24",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "古塔资料，不是敌台，作为排除歧义的记录。",
+      "usedFor": []
+    },
+    {
+      "id": "naziyu",
+      "title": "“2024秦皇岛高质量发展媒体行”走进拿子峪村-本地动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=563964",
+      "publishedDate": "2024-09-04",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "naziyu"
+      ]
+    },
+    {
+      "id": "north-wing",
+      "title": "打造“长城人家”主题村落 2024秦皇岛高质量发展媒体行走进北营子村-县区动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=565200",
+      "publishedDate": "2024-09-09",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "north-wing"
+      ]
+    },
+    {
+      "id": "liujiakou-repair",
+      "title": "卢龙县：明长城刘家口关城修缮工程完工-县区动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=539882",
+      "publishedDate": "2023-12-19",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "liujiakou"
+      ]
+    },
+    {
+      "id": "jielingkou-repair",
+      "title": "抚宁区界岭口关城修缮、10号敌台抢险加固、长城砖窑遗址考古勘探同时开工-县区动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=528050",
+      "publishedDate": "2023-04-03",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "jielingkou"
+      ]
+    },
+    {
+      "id": "huachangyu-festival",
+      "title": "青龙县长城旅游文化节在祖山镇花厂峪村开幕-部门动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=520080",
+      "publishedDate": "2022-07-29",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "huachangyu"
+      ]
+    },
+    {
+      "id": "huachangyu-tour",
+      "title": "青龙满族自治县创新乡村旅游宣传模式！祖山镇花厂峪村推出全县首个数字云端浏览小程序-县区动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=599294",
+      "publishedDate": "2025-06-17",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "介绍村落VR小程序，未取得长城场景或测绘数据。",
+      "usedFor": []
+    },
+    {
+      "id": "chengziyu-cloud",
+      "title": "长城云海-焦点图-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=598924",
+      "publishedDate": "2025-06-11",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "chengziyu"
+      ]
+    },
+    {
+      "id": "chengziyu-blossom",
+      "title": "​春到长城花烂漫-焦点图-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=591124",
+      "publishedDate": "2025-04-07",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "chengziyu"
+      ]
+    },
+    {
+      "id": "chongyukou",
+      "title": "媒体看卢龙丨河北卢龙：长城脚下果飘香-县区动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=602276",
+      "publishedDate": "2025-07-09",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "chongyukou"
+      ]
+    },
+    {
+      "id": "survey",
+      "title": "省文物局副局长李恩佳一行调研我市长城保护工作-部门动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=148722",
+      "publishedDate": "2015-10-30",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "taolinkou"
+      ]
+    },
+    {
+      "id": "luohandong-cloud",
+      "title": "云涌如潮 壮美长城-首页焦点图-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=562706",
+      "publishedDate": "2024-08-22",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "luohandong"
+      ]
+    },
+    {
+      "id": "luohandong-repair",
+      "title": "市文广新局安全生产督检组 对罗汉洞长城保护修缮工程地巡查-部门动态-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=184230",
+      "publishedDate": "2017-09-08",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "luohandong"
+      ]
+    },
+    {
+      "id": "lengkou-history",
+      "title": "秦皇岛地区抗日战争系列之重要战事——冷口防御战-方志秦皇岛-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=488528",
+      "publishedDate": "2021-02-05",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "lengkou"
+      ]
+    },
+    {
+      "id": "shg-laolongtou",
+      "title": "老龙头（景点介绍）",
+      "url": "https://www.shgjq.com/jdjs/380.jhtml",
+      "publishedDate": "2026-04-14",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "laolongtou"
+      ]
+    },
+    {
+      "id": "shg-laolongtou-route",
+      "title": "山海关景区·老龙头片区全景路线推荐",
+      "url": "https://www.shgjq.com/ywgl/587.jhtml",
+      "publishedDate": "2019-06-21",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "laolongtou"
+      ]
+    },
+    {
+      "id": "shg-pass",
+      "title": "天下第一关（景点介绍）",
+      "url": "https://www.shgjq.com/jdjs/377.jhtml",
+      "publishedDate": "2026-04-14",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "shanhaiguan"
+      ]
+    },
+    {
+      "id": "shg-jiaoshan",
+      "title": "角山（景点介绍）",
+      "url": "https://www.shgjq.com/jdjs/852.jhtml",
+      "publishedDate": "2026-04-14",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "jiaoshan"
+      ]
+    },
+    {
+      "id": "shg-jiaoshan-old",
+      "title": "角山（周边景点，2018）",
+      "url": "https://www.shgjq.com/zbjd/422.jhtml",
+      "publishedDate": "2018-03-26",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": []
+    },
+    {
+      "id": "shg-reading-route",
+      "title": "秦皇岛最美阅读路线推荐，在字里行间里遇见一路好风景！（山海关篇）",
+      "url": "https://www.shgjq.com/xwzx/865.jhtml",
+      "publishedDate": "2026-05-14",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "多个景点的综合宣传页面，配图只作候选；不能按相邻标题自动定位构件。",
+      "usedFor": [
+        "yiyuankou"
+      ]
+    },
+    {
+      "id": "sandaoguan",
+      "title": "三道关",
+      "url": "https://www.visitbeijing.com.cn/article/4NryJRgg14H?device=amp",
+      "publishedDate": "2024-01-18",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "sandaoguan"
+      ]
+    },
+    {
+      "id": "lengkou",
+      "title": "冷口何人初见月 犹照渔阳塞外秋",
+      "url": "https://www.visitbeijing.com.cn/article/47QkOcZ16mq",
+      "publishedDate": "2021-09-10",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "lengkou"
+      ]
+    },
+    {
+      "id": "lulong",
+      "title": "【长城国家文化公园·秦皇岛这样建 丨卢龙篇】最是家乡长城美",
+      "url": "https://xinwen.bjd.com.cn/content/s6209f677e4b0dc2473e11370.html",
+      "publishedDate": "2022-02-14",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "页面标注2022-02-14；配图URL含202312，拍摄日期未确认。东西顺序前后矛盾，不据此生成地理路线。",
+      "usedFor": [
+        "chongyukou",
+        "liujiakou",
+        "taolinkou"
+      ]
+    },
+    {
+      "id": "jielingkou-2025",
+      "title": "影像河北丨我在界岭口修长城_河北频道_长城网",
+      "url": "https://heb.hebccw.cn/system/2025/12/14/102133555.shtml",
+      "publishedDate": "2025-12-14",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "jielingkou"
+      ]
+    },
+    {
+      "id": "jiumenkou",
+      "title": "九门口长城",
+      "url": "https://whly.ln.gov.cn/whly/wlzt/lnww/zdwwbhdw/F0F4FF30DC5145AEB429C7D3C012C803/index.shtml",
+      "publishedDate": "2020-08-27",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "jiumenkou"
+      ]
+    },
+    {
+      "id": "funing-plan",
+      "title": "抚宁区大新寨镇界岭口村历史文化名村保护规划（2022—2035年）规划文本（征求意见稿）",
+      "url": "https://www.chinafuning.gov.cn/main/file/2023-12-11/1702262981094297ec9de8c54718c285018c56c7c1e614bc.pdf",
+      "publishedDate": "2023-12",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "selected-pdf-pages",
+      "notes": "已查看封面并检索相关段落；25页规划文本征求意见稿，不是批准版或完整测绘图。",
+      "pageCount": 25,
+      "usedFor": [
+        "jielingkou"
+      ]
+    },
+    {
+      "id": "shg-earthen-study",
+      "title": "山海关夯土长城保护棚架及相关问题",
+      "url": "https://www.cactch.org.cn/webfile/upload/2021/02-10/23-48-430658-1470603176.pdf",
+      "publishedDate": null,
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "selected-pdf-pages",
+      "notes": "8页扫描论文，已查看封面正文与缩略页；出版年未核实，上传时间不等于发表年。不是长城认定表。",
+      "pageCount": 8,
+      "usedFor": [
+        "south-wing"
+      ]
+    },
+    {
+      "id": "tju-survey-poster",
+      "title": "研究展板文件线索（未取得原文，标题未核实）",
+      "url": "https://www.greatwallheritage.cn/CCMCMS/files/news/%E6%98%8E%E9%95%BF%E5%9F%8E%E9%98%B2%E5%BE%A1%E4%BD%93%E7%B3%BB%E6%95%B4%E4%BD%93%E6%80%A7%E7%A0%94%E7%A9%B6%20%E5%B1%95%E6%9D%BF8.pdf",
+      "publishedDate": null,
+      "checkedOn": "2026-11-08",
+      "access": "unavailable",
+      "review": "none",
+      "failure": "404 Client Error: Not Found for url: https://www.greatwallheritage.cn/CCMCMS/files/news/%E6%98%8E%E9%95%BF%E5%9F%8E%E9%98%B2%E5%BE%A1%E4%BD%93%E7%B3%BB%E6%95%B4%E4%BD%93%E6%80%A7%E7%A0%94%E7%A9%B6%20%E5%B1%95%E6%9D%BF8.pdf",
+      "usedFor": []
+    },
+    {
+      "id": "tangshan-survey-1998",
+      "title": "历史调查 PDF 镜像线索（未取得原文，题名/年代未核实）",
+      "url": "https://student.hlc.edu.tw/action/file/120/20211005222241148.pdf",
+      "publishedDate": null,
+      "checkedOn": "2026-11-08",
+      "access": "unavailable",
+      "review": "none",
+      "failure": "HTTPSConnectionPool(host='student.hlc.edu.tw', port=443): Max retries exceeded with url: /action/file/120/20211005222241148.pdf (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x0000020CB76FDB20>, 'Connection to student.hlc.edu.tw timed out. (connect timeout=25)'))",
+      "usedFor": []
+    },
+    {
+      "id": "naziyu-photos",
+      "title": "【长城脚下村落】拿子峪村“金边长城”_手机新浪网",
+      "url": "https://finance.sina.cn/2022-06-28/detail-imizmscu9116593.d.html",
+      "publishedDate": "2022-06-28",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "秦皇岛发布账号原发内容，页面显示2022.06.28 11:45。金边作用属于访谈推测；花厂峪关联需地名消歧。",
+      "usedFor": [
+        "yiyuankou",
+        "naziyu",
+        "huachangyu"
+      ]
+    },
+    {
+      "id": "north-tower",
+      "title": "行走长城｜山海关长城的腰铺九号敌台_河北省文物局",
+      "url": "https://wenwu.hebei.gov.cn/system/2023/10/17/030258281.shtml",
+      "publishedDate": "2023-10-17",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "正文已读；两张内容图片直取失败（HTTP567），视频未完整观看。",
+      "usedFor": [
+        "north-wing"
+      ]
+    },
+    {
+      "id": "shg-zhendong",
+      "title": "“美丽河北·最美古建筑”——山海关景区入榜",
+      "url": "https://www.shgjq.com/xwzx/283.jhtml",
+      "publishedDate": "2018-03-26",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "提供单来源尺寸与正面照片；尺寸待交叉核验，部分宣传配图不用于地理关系推断。",
+      "usedFor": [
+        "shanhaiguan"
+      ]
+    },
+    {
+      "id": "banchangyu-cnr",
+      "title": "江山壮丽  我说长城丨长城砖如何烧制？在“宝库长城”板厂峪找到答案_央广网",
+      "url": "https://china.cnr.cn/gdgg/20230516/t20230516_526252934.shtml",
+      "publishedDate": "2023-05-16",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "banchangyu"
+      ]
+    },
+    {
+      "id": "huachangyu-hebtv",
+      "title": "《走遍河北》特别策划《带着方志寻古村·红色印记》第五期： 花厂峪村：铜墙铁壁花厂峪 同仇敌忾铸英魂",
+      "url": "https://web.cmc.hebtv.com/cms/rmt0336/0/0rmhlm/qy/jswh/whdj/11627604.shtml",
+      "publishedDate": "2024-09-21",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "节目配图可确认山地背景，不能解决青龙与海港相关同名/异写点段问题。",
+      "usedFor": [
+        "huachangyu"
+      ]
+    },
+    {
+      "id": "chengziyu-report",
+      "title": "春日行走秦皇岛城子峪长城：穿越时空与现代握手|长城_新浪财经_新浪网",
+      "url": "https://finance.sina.com.cn/jjxw/2023-05-04/doc-imysqnxz3415182.shtml",
+      "publishedDate": "2023-05-04",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "chengziyu"
+      ]
+    },
+    {
+      "id": "shg-vr",
+      "title": "360虚拟游（官方目录）",
+      "url": "https://www.shgjq.com/360xny/index.jhtml",
+      "publishedDate": "2018-03-26",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "index-only",
+      "notes": "目录给出老龙头、天下第一关两处全景链接，未遍历全景节点。",
+      "usedFor": []
+    },
+    {
+      "id": "south-wall-protection",
+      "title": "长城公园专班推进长城本体保护-三统筹三扩大四创建-秦皇岛市人民政府",
+      "url": "https://www.qhd.gov.cn/index/news/details.html?id=518201",
+      "publishedDate": "2022-06-23",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "usedFor": [
+        "south-wing"
+      ]
+    },
+    {
+      "id": "qinglong-plan",
+      "title": "青龙规划文件线索（未取得原文，标题未核实）",
+      "url": "https://www.chinaqinglong.gov.cn/main/file/2024-04-17/17133158786493c83b1828ebbcde029018ee99596f92d48.pdf",
+      "publishedDate": null,
+      "checkedOn": "2026-11-08",
+      "access": "unavailable",
+      "review": "none",
+      "failure": "404 Client Error: Not Found for url: https://www.chinaqinglong.gov.cn/main/file/2024-04-17/17133158786493c83b1828ebbcde029018ee99596f92d48.pdf",
+      "usedFor": []
+    },
+    {
+      "id": "heritage-platform",
+      "title": "中国长城遗产",
+      "url": "https://www.greatwallheritage.cn/",
+      "publishedDate": null,
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "index-only",
+      "notes": "只核实平台主办信息和地图入口，未取得坐标、墙线数据或数据使用许可。",
+      "usedFor": []
+    },
+    {
+      "id": "laolongtou-vr",
+      "title": "老龙头",
+      "url": "https://988pxejfs.wasee.com/wt/988pxejfs",
+      "publishedDate": null,
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "html-shell-only",
+      "notes": "可取得标题为老龙头的HTML外壳；未完成交互场景核验。",
+      "usedFor": []
+    },
+    {
+      "id": "shanhaiguan-vr",
+      "title": "天下第一关",
+      "url": "https://071zzbdtn.wasee.com/wt/071zzbdtn",
+      "publishedDate": null,
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "html-shell-only",
+      "notes": "可取得标题为天下第一关的HTML外壳；未完成交互场景核验。",
+      "usedFor": []
+    },
+    {
+      "id": "shg-sandaoguan",
+      "title": "长城保护员：借助新兴科技 守护古老长城",
+      "url": "https://www.shgjq.com/xwzx/823.jhtml",
+      "publishedDate": "2023-04-26",
+      "checkedOn": "2026-11-08",
+      "access": "retrieved",
+      "review": "text",
+      "notes": "注明2023年4月25日三道关巡护、中新社韩冰摄影。无人机巡护报道不等于所有图均为航拍。",
+      "usedFor": [
+        "sandaoguan"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "id": "jiaoshan-photo-0",
+      "sourceId": "jiaoshan-photo",
+      "url": "https://www.qhd.gov.cn/fileupload/20240909151032_913071.jpg",
+      "pixels": [
+        700,
+        467
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "台阶和急升墙线近景；不从透视图直接推算坡度。"
+    },
+    {
+      "id": "jiaoshan-current-0",
+      "sourceId": "jiaoshan-current",
+      "url": "https://www.qhd.gov.cn/uploads/article.zhuwangzhan/20260908/1752412170878003601.jpg",
+      "pixels": [
+        720,
+        312
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "山脊全景，可参考裸岩与阶梯轮廓；无北向或尺度。"
+    },
+    {
+      "id": "dongjiakou-snow-0",
+      "sourceId": "dongjiakou-snow",
+      "url": "https://www.qhd.gov.cn/fileupload/20251215160530_758852.jpg",
+      "pixels": [
+        700,
+        480
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "dongjiakou-cloud-0",
+      "sourceId": "dongjiakou-cloud",
+      "url": "https://www.qhd.gov.cn/fileupload/20250818113755_743976.jpg",
+      "pixels": [
+        700,
+        459
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "banchangyu-snow-0",
+      "sourceId": "banchangyu-snow",
+      "url": "https://www.qhd.gov.cn/fileupload/20241129134000_399018.jpg",
+      "pixels": [
+        878,
+        390
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "chengziyu-cloud-0",
+      "sourceId": "chengziyu-cloud",
+      "url": "https://www.qhd.gov.cn/fileupload/20250611145118_554337.jpg",
+      "pixels": [
+        700,
+        466
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "chengziyu-blossom-0",
+      "sourceId": "chengziyu-blossom",
+      "url": "https://www.qhd.gov.cn/fileupload/20250407153501_096546.jpg",
+      "pixels": [
+        700,
+        492
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "luohandong-cloud-0",
+      "sourceId": "luohandong-cloud",
+      "url": "https://www.qhd.gov.cn/fileupload/20240822103303_438805.jpg",
+      "pixels": [
+        700,
+        528
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "shg-laolongtou-route-1",
+      "sourceId": "shg-laolongtou-route",
+      "url": "https://www.shgjq.com/update/cms/shg/201906/21100647p1xw.png",
+      "pixels": [
+        441,
+        295
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "shg-laolongtou-route-2",
+      "sourceId": "shg-laolongtou-route",
+      "url": "https://www.shgjq.com/update/cms/shg/201906/21100727bd9z.png",
+      "pixels": [
+        443,
+        350
+      ],
+      "viewed": true,
+      "use": "illustrative-map",
+      "captureDate": null,
+      "notes": "游览导览图，非正射影像或测绘平面，不能量测。"
+    },
+    {
+      "id": "shg-laolongtou-route-3",
+      "sourceId": "shg-laolongtou-route",
+      "url": "https://www.shgjq.com/update/cms/shg/201906/21100812rpzh.png",
+      "pixels": [
+        518,
+        250
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "shg-laolongtou-route-4",
+      "sourceId": "shg-laolongtou-route",
+      "url": "https://www.shgjq.com/update/cms/shg/201906/211008249hjn.png",
+      "pixels": [
+        545,
+        187
+      ],
+      "viewed": true,
+      "use": "exclude-from-geometry",
+      "captureDate": null,
+      "notes": "园林小路，排除出长城构件建模依据。"
+    },
+    {
+      "id": "shg-laolongtou-route-5",
+      "sourceId": "shg-laolongtou-route",
+      "url": "https://www.shgjq.com/update/cms/shg/201906/21100836v4jv.png",
+      "pixels": [
+        478,
+        319
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "碑刻局部，仅作构件环境参考，不是全景。"
+    },
+    {
+      "id": "shg-reading-route-1",
+      "sourceId": "shg-reading-route",
+      "url": "https://www.shgjq.com/update/cms/shg/202605/14152801ikx5.png",
+      "pixels": [
+        988,
+        556
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "老龙头海侧景观；海岸、城台、楼阁可见。"
+    },
+    {
+      "id": "shg-reading-route-2",
+      "sourceId": "shg-reading-route",
+      "url": "https://www.shgjq.com/update/cms/shg/202605/14152831jgr8.png",
+      "pixels": [
+        994,
+        559
+      ],
+      "viewed": true,
+      "use": "exclude-from-geometry",
+      "captureDate": null,
+      "notes": "宣传配图的远近空间关系未核实，不作关城地形控制图。"
+    },
+    {
+      "id": "shg-reading-route-4",
+      "sourceId": "shg-reading-route",
+      "url": "https://www.shgjq.com/update/cms/shg/202605/141529499sud.png",
+      "pixels": [
+        998,
+        748
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "景区门区和墙体画面；须再绑定具体构件身份，不能当连续墙线。"
+    },
+    {
+      "id": "shg-reading-route-7",
+      "sourceId": "shg-reading-route",
+      "url": "https://www.shgjq.com/update/cms/shg/202605/14153120o0b1.png",
+      "pixels": [
+        960,
+        638
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "陡峭石山墙段，文章对应板厂峪主题；具体敌台编号未知。"
+    },
+    {
+      "id": "shg-reading-route-8",
+      "sourceId": "shg-reading-route",
+      "url": "https://www.shgjq.com/update/cms/shg/202605/14153154tj4i.png",
+      "pixels": [
+        1014,
+        641
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "城堡/村落及墙体景观，文章对应董家口主题；不据图量测。"
+    },
+    {
+      "id": "shg-reading-route-9",
+      "sourceId": "shg-reading-route",
+      "url": "https://www.shgjq.com/update/cms/shg/202605/141532250jhx.png",
+      "pixels": [
+        960,
+        667
+      ],
+      "viewed": true,
+      "use": "exclude-from-geometry",
+      "captureDate": null,
+      "notes": "夜景道路与村庄，不能支持义院口具体关门形状。"
+    },
+    {
+      "id": "lulong-3",
+      "sourceId": "lulong",
+      "url": "https://static.bjd.com.cn/dams-res/editing/image/202312/29/658e69c8d5de908f072a8b32.jpeg",
+      "pixels": [
+        500,
+        331
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "图注为桃林口长城湿地：水面、岸坡与敌楼同框；拍摄年份不明。"
+    },
+    {
+      "id": "lulong-4",
+      "sourceId": "lulong",
+      "url": "https://static.bjd.com.cn/dams-res/editing/image/202312/29/658e69c7d5de9bf28162012b.jpeg",
+      "pixels": [
+        500,
+        333
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "图注为刘家口水关：可见残存楼体和过水券洞；不当作2026最新状态。"
+    },
+    {
+      "id": "lulong-6",
+      "sourceId": "lulong",
+      "url": "https://static.bjd.com.cn/dams-res/editing/image/202312/29/658e69c7d5de9bf28162012a.jpeg",
+      "pixels": [
+        500,
+        333
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "图注为刘家口长城：山脊残墙和敌楼。"
+    },
+    {
+      "id": "lulong-9",
+      "sourceId": "lulong",
+      "url": "https://static.bjd.com.cn/dams-res/editing/image/202312/29/658e69c9d5deca83f8f4911d.jpeg",
+      "pixels": [
+        500,
+        333
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "图注为重峪口：拱门、残楼及碎石；不补造完整城堡。"
+    },
+    {
+      "id": "jielingkou-2025-6",
+      "sourceId": "jielingkou-2025",
+      "url": "https://hbappstc.hebrb.cn/assets/20251214/1765669831780_693dfbc73f35af7e2137d901.jpeg",
+      "pixels": [
+        1024,
+        658
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "修缮中的墩台外观，不等于完工后最新外观。"
+    },
+    {
+      "id": "jielingkou-2025-8",
+      "sourceId": "jielingkou-2025",
+      "url": "https://hbappstc.hebrb.cn/assets/20251214/1765669832879_693dfbc83f35af7e2137d902.jpeg",
+      "pixels": [
+        1024,
+        683
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "东月城门洞内侧及支护构件；不把临时支护当历史原构。"
+    },
+    {
+      "id": "jielingkou-2025-10",
+      "sourceId": "jielingkou-2025",
+      "url": "https://hbappstc.hebrb.cn/assets/20251214/1765669831162_693dfbc73f35af7e2137d8fb.jpeg",
+      "pixels": [
+        1024,
+        681
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "门洞和厚重残墙外观；缺背面及可靠尺寸。"
+    },
+    {
+      "id": "jiumenkou-0",
+      "sourceId": "jiumenkou",
+      "url": "https://whly.ln.gov.cn/eportal/fileDir/data/lnswhlyt/W020200827540842005746.png",
+      "pixels": [
+        787,
+        374
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "河道城桥的整体视角，部分水门被遮挡，不只凭照片数孔。"
+    },
+    {
+      "id": "jiumenkou-1",
+      "sourceId": "jiumenkou",
+      "url": "https://whly.ln.gov.cn/eportal/fileDir/data/lnswhlyt/W020200827540842125023.png",
+      "pixels": [
+        1061,
+        796
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "桥墩、拱券和垛口局部；与官方8桥墩9水门文字交叉使用。"
+    },
+    {
+      "id": "jiumenkou-2",
+      "sourceId": "jiumenkou",
+      "url": "https://whly.ln.gov.cn/eportal/fileDir/data/lnswhlyt/W020200827540842275363.png",
+      "pixels": [
+        800,
+        533
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "山墙与过河城桥空间关系，非测绘平面。"
+    },
+    {
+      "id": "lengkou-0",
+      "sourceId": "lengkou",
+      "url": "https://img-rs.visitbeijing.com.cn/image/0d872760d3ecb851ca0cc90e0085c9d4c5.jpg",
+      "pixels": [
+        512,
+        409
+      ],
+      "viewed": true,
+      "use": "exclude-from-geometry",
+      "captureDate": null,
+      "notes": "人物雕像，不是关门/长城遗存，排除出几何依据。"
+    },
+    {
+      "id": "shg-zhendong-1",
+      "sourceId": "shg-zhendong",
+      "url": "https://www.shgjq.com/update/cms/shg/201803/26102710e2h2.jpg",
+      "pixels": [
+        600,
+        689
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "镇东楼近景，可见城台与箭楼关系。"
+    },
+    {
+      "id": "shg-zhendong-2",
+      "sourceId": "shg-zhendong",
+      "url": "https://www.shgjq.com/update/cms/shg/201803/2610273120nd.jpg",
+      "pixels": [
+        480,
+        533
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "镇东楼正面，门洞、城台与单檐屋顶清晰。"
+    },
+    {
+      "id": "shg-zhendong-3",
+      "sourceId": "shg-zhendong",
+      "url": "https://www.shgjq.com/update/cms/shg/201803/26102731j7ln.jpg",
+      "pixels": [
+        1069,
+        1059
+      ],
+      "viewed": true,
+      "use": "exclude-from-geometry",
+      "captureDate": null,
+      "notes": "宣传取景/处理方式不明，不能以背景山体推定关城周边地形。"
+    },
+    {
+      "id": "banchangyu-cnr-1",
+      "sourceId": "banchangyu-cnr",
+      "url": "https://mediabluk.cnr.cn/img/cnr/CNRCDP/2023/0516/408384b4191e5168420144047660027311.jpg?auth=25853e8cb221784422ed3fe9ae8f1b5c",
+      "pixels": [
+        800,
+        533
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "山脊日出远景，局部墙体有云雾遮挡。"
+    },
+    {
+      "id": "banchangyu-cnr-2",
+      "sourceId": "banchangyu-cnr",
+      "url": "https://mediabluk.cnr.cn/img/cnr/CNRCDP/2023/0516/80ab920e056af168420151002470481911.jpg?auth=028f73a3a31c4135e97445e44a7e6d09",
+      "pixels": [
+        798,
+        467
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "可见柱状岩壁及其上墙台，能区别于圆滑丘陵。"
+    },
+    {
+      "id": "banchangyu-cnr-3",
+      "sourceId": "banchangyu-cnr",
+      "url": "https://mediabluk.cnr.cn/img/cnr/CNRCDP/2023/0516/d99f29c172b0a168420155016575592010.png?auth=ee72bac4f4087c9c28f00b4cb3fc6326",
+      "pixels": [
+        640,
+        426
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "砖窑遗址的保护棚和现场，不是完整窑炉剖面。"
+    },
+    {
+      "id": "chengziyu-report-0",
+      "sourceId": "chengziyu-report",
+      "url": "https://n.sinaimg.cn/spider20230504/250/w600h450/20230504/5f5e-5c8ef4f5f3ccd5f868ba6356a0288840.jpg",
+      "pixels": [
+        600,
+        450
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "chengziyu-report-1",
+      "sourceId": "chengziyu-report",
+      "url": "https://n.sinaimg.cn/spider20230504/425/w700h525/20230504/9949-596b801c9e02e1582a061e7941f42dd9.jpg",
+      "pixels": [
+        700,
+        525
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "已查看可见山体、墙线或楼体局部；拍摄时点、编号及精确地形未知，不据此推算完整路线。"
+    },
+    {
+      "id": "huachangyu-hebtv-2",
+      "sourceId": "huachangyu-hebtv",
+      "url": "https://pic.cmc.hebrts.cn/0/0d91d6cfb98f5b206ac1e752757fc5a9/2024/09/20/8a2285e2773c11ef85beca2361d0b397.png",
+      "pixels": [
+        1299,
+        574
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "节目封面山地墙台，点位和编号未知，身份消歧前不移植到模型。"
+    },
+    {
+      "id": "huachangyu-hebtv-4",
+      "sourceId": "huachangyu-hebtv",
+      "url": "https://pic.cmc.hebrts.cn/0/0d91d6cfb98f5b206ac1e752757fc5a9/2024/09/20/8a4f681e773c11ef85beca2361d0b397.png",
+      "pixels": [
+        1300,
+        572
+      ],
+      "viewed": true,
+      "use": "context-only",
+      "captureDate": null,
+      "notes": "山地背景，没有可辨识连续墙线。"
+    },
+    {
+      "id": "huachangyu-hebtv-11",
+      "sourceId": "huachangyu-hebtv",
+      "url": "https://pic.cmc.hebrts.cn/0/0d91d6cfb98f5b206ac1e752757fc5a9/2024/09/20/8c0200cc773c11ef85beca2361d0b397.png",
+      "pixels": [
+        1299,
+        573
+      ],
+      "viewed": true,
+      "use": "exclude-from-geometry",
+      "captureDate": null,
+      "notes": "抗日纪念馆门牌，不是长城遗存，排除出几何依据。"
+    },
+    {
+      "id": "naziyu-photos-4",
+      "sourceId": "naziyu-photos",
+      "url": "https://k.sinaimg.cn/n/sinakd20220628s/141/w1080h661/20220628/a1aa-212a666b7eaf1c6bcb3cb4fa26025048.png/w700d1q75cms.jpg?by=cms_fixed_width",
+      "pixels": [
+        700,
+        429
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "沿山墙线和楼体，可见局部构造；不推定全部点位。"
+    },
+    {
+      "id": "naziyu-photos-6",
+      "sourceId": "naziyu-photos",
+      "url": "https://k.sinaimg.cn/n/sinakd20220628s/77/w1080h597/20220628/398c-b3b87169c562c67e89876890c2af6671.png/w700d1q75cms.jpg?by=cms_fixed_width",
+      "pixels": [
+        700,
+        387
+      ],
+      "viewed": true,
+      "use": "context-only",
+      "captureDate": null,
+      "notes": "山谷村落与通道环境，没有标定尺度。"
+    },
+    {
+      "id": "naziyu-photos-8",
+      "sourceId": "naziyu-photos",
+      "url": "https://k.sinaimg.cn/n/sinakd20220628s/726/w622h904/20220628/d7c0-77db91cc679ee35acecfcc219011d5cd.png/w700d1q75cms.jpg?by=cms_fixed_width",
+      "pixels": [
+        622,
+        904
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "小型拱券旱门，不能放大成多层关楼。"
+    },
+    {
+      "id": "naziyu-photos-12",
+      "sourceId": "naziyu-photos",
+      "url": "https://k.sinaimg.cn/n/sinakd20220628s/142/w1080h662/20220628/59a7-892d27f0f2869005e8559fd98a61aa93.png/w700d1q75cms.jpg?by=cms_fixed_width",
+      "pixels": [
+        700,
+        429
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "墙体、垛口和条石层位参考；不能把金边做成真实金属。"
+    },
+    {
+      "id": "naziyu-photos-16",
+      "sourceId": "naziyu-photos",
+      "url": "https://k.sinaimg.cn/n/sinakd20220628s/743/w659h884/20220628/a65a-f51e13bc3ffc9baa15ea07bef801d647.png/w700d1q75cms.jpg?by=cms_fixed_width",
+      "pixels": [
+        659,
+        884
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": null,
+      "notes": "门洞内部砖券和残墙局部，不足以确定完整敌楼立面。"
+    },
+    {
+      "id": "shg-sandaoguan-1",
+      "sourceId": "shg-sandaoguan",
+      "url": "https://www.shgjq.com/update/cms/shg/202304/26140350jlkn.jpg",
+      "pixels": [
+        799,
+        534
+      ],
+      "viewed": true,
+      "use": "context-only",
+      "captureDate": "2023-04-25",
+      "notes": "巡护者与山地背景，主要是身份及环境证据。"
+    },
+    {
+      "id": "shg-sandaoguan-2",
+      "sourceId": "shg-sandaoguan",
+      "url": "https://www.shgjq.com/update/cms/shg/202304/261403500ypx.jpg",
+      "pixels": [
+        799,
+        529
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": "2023-04-25",
+      "notes": "残石墙和地形近景；保留破损状态。"
+    },
+    {
+      "id": "shg-sandaoguan-3",
+      "sourceId": "shg-sandaoguan",
+      "url": "https://www.shgjq.com/update/cms/shg/202304/261403509q7j.jpg",
+      "pixels": [
+        799,
+        563
+      ],
+      "viewed": true,
+      "use": "visible-detail-reference",
+      "captureDate": "2023-04-25",
+      "notes": "陡壁下落差较大的墙段，是形态参考；三关完整布局仍不明。"
+    },
+    {
+      "id": "shg-sandaoguan-4",
+      "sourceId": "shg-sandaoguan",
+      "url": "https://www.shgjq.com/update/cms/shg/202304/26140350jqgo.jpg",
+      "pixels": [
+        799,
+        523
+      ],
+      "viewed": true,
+      "use": "context-only",
+      "captureDate": "2023-04-25",
+      "notes": "无人机巡护者，非墙体测绘照片。"
+    },
+    {
+      "id": "shg-sandaoguan-5",
+      "sourceId": "shg-sandaoguan",
+      "url": "https://www.shgjq.com/update/cms/shg/202304/26140350naar.jpg",
+      "pixels": [
+        800,
+        522
+      ],
+      "viewed": true,
+      "use": "context-only",
+      "captureDate": "2023-04-25",
+      "notes": "无人机和山体背景，不能提取完整墙线。"
+    }
+  ]
+}

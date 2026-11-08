@@ -23,6 +23,11 @@
 <link rel="stylesheet" href="world/resident.css">
 <link rel="stylesheet" href="world/night-concert.css">
 <link rel="stylesheet" href="world/lookout.css">
+<link rel="stylesheet" href="world/qin-guide.css">
+<link rel="stylesheet" href="world/qin-great-wall.css">
+<link rel="stylesheet" href="world/qin-cinema.css">
+<link rel="stylesheet" href="world/qin-emperor-encounter.css">
+<link rel="stylesheet" href="world/travel-agency.css">
 <script type="importmap">{"imports":{
   "three":"./vendor/three/three.module.min.js",
   "@engine/":"./engine/",
@@ -66,7 +71,7 @@
     </a></div>
   </article>
 
-  <article class="page" data-station="computer" data-icon="works">
+  <article class="page" data-station="computer" data-icon="computer">
     <h2 data-zh="电脑">Computer</h2>
     <section class="computer-desktop" data-computer-desktop aria-label="Computer desktop" data-zh-label="电脑桌面">
       <div class="computer-wallpaper" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -89,7 +94,7 @@
     </section>
   </article>
 
-  <article class="page" data-station="piano" data-icon="works" data-piano>
+  <article class="page" data-station="piano" data-icon="piano" data-piano>
     <h2 data-zh="钢琴">Piano</h2>
     <div class="piano-app" data-piano-app>
       <noscript>Enable JavaScript to play the piano.</noscript>
@@ -103,10 +108,11 @@
       <li data-app="github"><span>GitHub</span><a href="https://github.com/WYC210" target="_blank" rel="noopener">@WYC210</a><p data-zh="我的开源项目">My open-source projects</p></li>
       <li data-app="site"><span data-zh="余烬行囊">Ember Satchel</span><a href="https://game.wyc21.com/" target="_blank" rel="noopener">game.wyc21.com</a><p data-zh="我的游戏：余烬行囊">My game: Ember Satchel</p></li>
       <li data-app="blog"><span>echoes</span><a href="https://blog.wyc21.com/" target="_blank" rel="noopener">blog.wyc21.com</a><p data-zh="我的个人博客">My personal blog</p></li>
+      <li data-app="travel"><span data-zh="旅行社">Travel Agency</span><a data-open="phone" data-zh="打开手机">Open phone</a><p data-zh="一键瞬移到求仙岛各景点，也可返回主岛。">Instant travel to Qin Sanctuary landmarks and back to the home island.</p></li>
     </ul>
   </article>
 
-  <article class="page" id="mailbox" data-station="mailbox">
+  <article class="page" id="mailbox" data-station="mailbox" data-icon="mailbox">
     <h2 data-zh="留言">Mailbox</h2>
     <form class="mailbox" method="post" enctype="text/plain">
       <textarea name="message" rows="6" maxlength="1000" required placeholder="Write something" aria-label="Write something" data-zh-placeholder="输入文字" data-zh-label="输入文字"></textarea>
@@ -115,6 +121,256 @@
       <div class="mailbox-foot"><button class="mc-button" type="submit" data-zh="发送" disabled>Send</button></div>
       <p class="mailbox-status" role="status" aria-live="polite"></p>
     </form>
+  </article>
+
+  <article class="page" data-station="qin-island" data-icon="qin-island">
+    <h2 data-zh="求仙岛 · 游览指南">Qin Sanctuary · Island Guide</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>主岛东侧是一座独立的求仙岛，以秦皇岛「秦皇求仙入海处」为原型。这里不是单独一座牌坊：中轴景观、帝王塑像、求仙殿、战国风情与求仙苑共同组成可步行游览的园区。</p>
+        <p>从主岛东岸向东游泳，或驾驶原有快艇穿过海峡，到西岸游客码头附近下船，再游到沙岸上岸。船会留在下船处，可以游回去再次登船。桌面按 F 上下船，W/S 驾驶、A/D 转向；手机使用快艇按钮和摇杆。</p>
+        <p>推荐路线：西岸码头 → 沿西侧步道向南 → 秦风阙门 → 始皇碣石行 → 秦始皇像 → 求仙殿 → 东侧求仙苑 → 西侧战国风情。按 M 打开地图；景点附近按 F 查看介绍。</p>
+        <p>这是依据公开景区资料与照片制作的完整主题园区，建筑细节采用方块风格。岛屿布局与部分尺寸为本项目设计，并非实地测绘的一比一复原。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>An independent island east of your home, inspired by Qinhuangdao’s Qin Emperor’s Sea Expedition site. Explore the gateway, imperial procession, emperor statue, palace, Seven States precinct and seaside gardens.</p>
+        <p>Swim east from the main island or use the existing jet ski. Dismount near the west visitor dock, swim ashore, then return to your parked boat. Press F to board or leave; use W/S and A/D to drive, or the mobile joystick.</p>
+        <p>Follow the west path south to the gateway, then north along the ceremonial axis. Press M for the map and F at a landmark for its guide. This is a photo-informed voxel interpretation, not a surveyed one-to-one replica.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-gate" data-icon="qin-gate">
+    <h2 data-zh="秦风阙门与始皇碣石行">Qin Gateway &amp; Imperial Procession</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>四阙三门以逐层收分的石质台身、承托檐口、灰瓦重檐和金字匾额组成。正背面均有完整门额和题字，上层设凹窗与格栅；两侧门扇沿门洞打开，中央与两侧共三处门洞均可步行通过。</p>
+        <p>门前两侧的翼兽采用宽额、兽爪、层叠羽翼和卷尾造型，不再以马匹代替。浅石色台基与铺装连成入口前场，石兽避开三条入园通道。夜间使用局部暖色补光，照亮阙身、檐下和石雕细节。这是参照景区照片创作的体素门楼，并非测绘复原。</p>
+        <p>入园后是横向展开的「始皇碣石行」群雕：40 米长的基座上布置 32 位人物、20 匹马和两乘车辇，表现帝王出巡。请从群雕两侧绕行，继续前往秦始皇像。</p>
+        <p>西侧为史记刻石，东侧为望海祈福景观；两翼步道分别通往战国风情和求仙苑。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>Four tapered stone towers frame three walk-through gates, with corbelled eaves, layered tiled roofs and inscriptions on both faces. Recessed upper windows, latticework and open side doors complete the gatehouse.</p>
+        <p>Paired winged guardians have broad heads, carved paws, layered wings and curled tails rather than horse bodies. Their pale stone plinths sit beside the paved forecourt, clear of all three entry routes. Warm baked lighting reveals the towers, eaves and sculpture at night. This voxel interpretation follows reference photographs, not a measured reconstruction.</p>
+        <p>The 40-metre procession base carries 32 figures, 20 horses and two chariots. Walk around either end to continue to the emperor. The historical inscription and seaside blessing monuments flank the plaza.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-bianque" data-icon="qin-bianque">
+    <h2 data-zh="扁鹊行医 · 诊脉与药香">Bian Que Healing · The Physician's Visit</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>这里以扁鹊行医为主题，表现医者为病人诊察的情景：浅青衣袍的医者坐在榻旁，一手托住手腕，另一手以三指搭脉；病人仰卧在浅色枕褥上，手臂伸向带软垫的小案。</p>
+        <p>身后的侍药者双手捧起药碗与药包。后侧是抽屉式药柜和陶罐，侧面的小桌上摆着药臼、药杵与草药托盘。可以从正面看清人物关系，也可沿两侧绕行，观察手部动作和器物。</p>
+        <p>这个场景是围绕古代行医主题创作的方块群像，并非某次诊疗的历史复原；人物服饰、药柜和器具用于讲述场景，不作为具体年代的考古依据。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>This scene imagines a physician's visit in the tradition of Bian Que. The seated doctor in a pale sage robe supports the patient's wrist with one hand and rests three fingers on it with the other. The reclining patient extends an arm onto a cushioned side table.</p>
+        <p>An attendant carries a bowl and a wrapped packet. A drawer cabinet and ceramic jars stand behind them, while a side table holds a mortar, pestle and herbs. Walk around either side to see the hands and tools without blocking the front view.</p>
+        <p>This voxel group is a thematic interpretation, not a reconstruction of a documented treatment. Its clothing, cabinet and utensils support the story rather than establish an archaeological date.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-procession" data-icon="qin-procession">
+    <h2 data-zh="始皇碣石行 · 东巡与求仙">Journey to Jieshi · Procession &amp; Quest</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>这组车马与军士群雕表现秦始皇东巡临海的仪仗。沿正面可以观察列队军士、战马和车驾，再从两侧绕行，比较人物的铠甲、衣袍与姿态。</p>
+        <p>《史记·秦始皇本纪》记载始皇到过碣石，并派燕人卢生寻访仙人。这里用出巡队伍连接前方阙门、秦始皇像与后方求仙殿，将巡行与求仙串联成一条主题游线。</p>
+        <p>群雕是景区主题的方块化艺术呈现，不是某次出巡人数、车制或军阵的考古复原；碣石求仙的卢生记载，也不应与徐福的海上求仙故事混作同一事件。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>Soldiers, horses and chariots evoke Qin Shi Huang's eastern procession toward the coast. View the formation from the front, then walk around its sides to compare armor, robes and poses.</p>
+        <p>The First Emperor's annals in the Shiji record his visit to Jieshi and his dispatch of Lu Sheng of Yan to seek immortals. This installation links the gateway, imperial statue and palace into a themed route.</p>
+        <p>The voxel procession is an artistic interpretation, not an archaeological reconstruction of a specific entourage or formation. The Jieshi account involving Lu Sheng should not be confused with Xu Fu's separate maritime quest.</p>
+      </div>
+    </div>
+    <div class="qin-army-controls" data-qin-army-controls hidden>
+      <p></p>
+      <button type="button" class="gui" data-qin-awaken disabled>唤醒军队</button>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-quyuan" data-icon="qin-quyuan">
+    <h2 data-zh="屈原 · 楚辞与家国之思">Qu Yuan · Poetry &amp; Devotion</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>屈原是战国时期楚国的诗人与政治人物。《史记·屈原贾生列传》记述他关心楚国政事、遭受排挤，以及在忧愤中创作《离骚》的经历。</p>
+        <p>他的诗文寄托了对理想、操守与故国的执着。这座人物像属于东侧的历史文化陈列，与西侧学宫、诸子和战国故事相呼应。</p>
+        <p>屈原生活在秦统一之前，不是秦始皇东巡或求仙的随行者。这里将不同时代的人物放在同一主题园区展示，不表示他们曾在此相遇。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>Qu Yuan was a poet and political figure of Chu during the Warring States period. His biography in the Shiji describes his service, exclusion from court and composition of Li Sao amid sorrow and frustration.</p>
+        <p>His writing expresses devotion to his homeland, ideals and integrity. This statue belongs to the eastern historical displays and complements the scholars and stories in the western precinct.</p>
+        <p>Qu Yuan lived before Qin's unification. He did not accompany the First Emperor's eastern tours or quest for immortality. Presenting these figures in one park does not imply that they met here.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-xufu" data-icon="qin-xufu">
+    <h2 data-zh="徐福像 · 奉命入海求仙">Xu Fu · The Maritime Quest</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>徐福是秦代与海上求仙故事相关的方士。《史记·秦始皇本纪》记载，他向始皇奏称海中有蓬莱、方丈、瀛洲三座神山，随后受命率人入海寻访仙人。</p>
+        <p>这座人物像承接园区的临海求仙主题：从帝王的长生愿望，到方士请命，再到船队驶向远海。求仙殿影院用原创动画演绎这一主题，但不表现真正找到仙人或不死之药。</p>
+        <p>有关徐福航线、最终去向与登陆地点，须区分古代记载和后世传说。本园区不把某一具体登陆地当作已证实史实，也不把此处雕像视为出航遗址的证据。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>Xu Fu was a Qin-era fangshi associated with the maritime search for immortality. The First Emperor's annals in the Shiji describe his report of three sacred islands and his commission to lead a party out to sea.</p>
+        <p>The statue connects imperial hopes, the envoy's commission and a departing fleet. The palace's original animation interprets that theme without claiming that immortals or an elixir were found.</p>
+        <p>Ancient accounts and later traditions must be distinguished when discussing his route and destination. This park does not present a specific landing place as proven, or this statue as evidence of a historical departure site.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-emperor" data-icon="qin-emperor">
+    <h2 data-zh="秦始皇像 · 面海求仙">First Emperor · Facing the Sea</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>浅灰石像面向南侧海面，双手在胸前捧起礼器。宽袖自手臂垂落，交领、腰带、前襟和衣褶逐层展开；面部刻出眉骨、眼睑、鼻梁与分层须髯，冠板前后均有垂旒。</p>
+        <p>雕像立于分层石台和礁石形基座上，与开阔广场、后方求仙殿共同形成园区主轴。可以沿两侧绕到背面观察衣袍；夜间暖色烘焙补光照亮面部、双手与侧背面。这是依据景区照片创作的方块雕塑，并非扫描模型或测绘复原。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>The pale-grey stone emperor faces the southern sea, raising a ceremonial vessel with both hands. Long sleeves fall from the bent arms above a crossed collar, belt, apron and layered robe folds. Sculpted brows, eyelids, nose and beard define the face, with bead strands at the front and back of the crown.</p>
+        <p>A stepped stone plinth and rock-shaped footing anchor the monument on the plaza before the palace. Walk around either side to see the rear drapery. Warm baked lighting reveals the face, hands, sides and back at night. This is a photo-informed voxel sculpture, not a scan or a measured reconstruction.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-great-wall" data-icon="qin-palace">
+    <h2 data-zh="秦皇岛 · 长城投影桌">Qinhuangdao · Great Wall Projection</h2>
+    <div class="wall-exhibit" data-wall-exhibit>
+      <p data-zh="秦皇岛长城全景：走近求仙殿一楼后墙前的长投影桌，按 F 或点互动提示查看。">Explore the Great Wall at the long projection table along the rear wall of the palace ground floor. Press F or tap the interaction prompt.</p>
+    </div>
+  </article>
+  <article class="page" data-station="qin-palace" data-icon="qin-palace">
+    <h2 data-zh="求仙殿 · 两层展馆">Immortality Palace · Two Levels</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>由中轴宽阶登上三米高台，进入重檐殿堂。檐口、脊饰、朱褐色立柱、格栅与石栏共同构成殿前立面。</p>
+        <p>一楼后墙前设有横向长投影桌，青蓝山体上呈现绵延的微缩城墙与关隘。走近按 F 或点互动提示，可搜索城段、查看资料来源，或开启自动巡展。<a data-open="qin-great-wall">查看长城全景</a>。</p>
+        <p>一层西侧的连续弧形环幕循环播放原创像素短片《始皇临海求仙》：秦军东巡、始皇抵海、临海求仙、遣船远航。旌旗、军阵、车驾与冠冕黑袍的秦始皇贯穿故事，结尾由始皇在岸上送船队远航。四幕共 48 秒，字幕随左上角语言开关显示中文或英文。三排座椅分列中央通道两侧，地面灯带引导观影路线。</p>
+        <p>沿东侧楼梯登上二层，全景馆保留海岸望楼、造船工棚、出海船队、海岛山林和港湾五组微缩场景，背后五面动态展板分别呈现东巡、抵海、问仙、请命和远航。中央航船沙盘上的帆船缓缓移动、随波轻摇；后部仍保留 24 座祈福圆梦轮。两层均可步行到达，无需飞行。</p>
+        <p>走近影院座椅按 F，或在手机点“坐下”，即可从第一幕进入全屏沉浸观影；游戏界面会隐藏。左上角切换中英，底部可暂停或从头观看。按 F、Esc 或点“退出观影”起身，回到入座前的通道位置。系统开启减少动态时默认暂停，可主动点播放。</p>
+        <p>短片是围绕求仙主题创作的艺术叙事，不是史实逐幕复原，也不表现真正寻得仙人。这里不包含原景区的授权影片、机械 4D 体验或原版动态全景演出。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>Climb the central stairs to a three-metre terrace and an enterable palace with tiered roofs, timber columns and stone balustrades.</p>
+        <p>A long projection table along the ground-floor rear wall displays winding miniature walls and passes over a blue-green mountain relief. Press F nearby or tap the prompt to search sections, read sources or start a tour. <a data-open="qin-great-wall">Explore the Great Wall</a>.</p>
+        <p>The lower theatre loops an original pixel-art story, The Emperor's Quest by the Sea: the eastern procession, the Emperor's arrival, his quest for immortality, and the fleet's departure. Banners, soldiers, a chariot and the crowned Emperor in black and gold carry the story, which ends with him watching the ships leave from shore. Its four acts run for 48 seconds, with Chinese or English captions following the language switch. Three rows of seats flank a central aisle marked by low guide lights.</p>
+        <p>Take the east staircase to five miniature exhibits: a coastal lookout, a shipyard, a departing fleet, a wooded island and a harbor. Their animated backdrops show the procession, arrival, quest, commission and departure. Model ships move gently across a central maritime display. The 24 wishing wheels remain at the rear, and both levels are reachable on foot.</p>
+        <p>Approach a cinema seat and press F, or tap Sit down on a phone, to watch from the first act in a full-window screening with the game interface hidden. Switch language at the top left, pause or replay below, and press F, Esc or Leave cinema to stand up at your previous aisle position. Reduced-motion preferences start playback paused; select Play to opt in.</p>
+        <p>This is an artistic interpretation of the quest, not a scene-by-scene historical reconstruction or a claim that immortals were found. The original licensed film, mechanical 4D effects and original panorama show are not reproduced.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-seven" data-icon="qin-seven">
+    <h2 data-zh="战国风情 · 诸子与历史">Seven States · Scholars &amp; History</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>西侧园区以七国旗帜、院落、人物与故事浮雕串联历史场景。穿过四柱三间的战国风情牌楼，前方是带前廊、木格窗和开放中门的稷下学宫。</p>
+        <p>由南向北可参观稷下学宫、扁鹊行医、壮士行群雕、赵风综合体与胡服骑射、窃符救赵、黄粱梦、韩非讲学堂。三组故事展陈前设有铭牌，靠近后按 F（手机点右下角提示）可查看典故；两座讲堂可进入，内设讲学人物与书案。</p>
+        <p>东侧另设屈原、徐福像、赑屃残碑和秦皇井，与求仙苑步道相连。</p>
+        <p>稷下学宫内，老师在“百家争鸣”屏前讲学，八位学生分坐四张低书案旁；案上陈列竹简、笔和砚，侧墙设藏简柜。中央通道与两侧过道可步行参观。这里是主题化讲学场景，不是考古测绘复原。</p>
+        <p>壮士行以易水送别为主题：前排两人相向执手，一位束发佩剑，一位着长袍高冠；后方侍者双手捧盘，盘中陈列酒壶与杯盏。浅石色、陶土色与灰青色区分三人的衣袍，低矮河纹背景和芦苇点出水岸意象。这是参照景区主题创作的群像，不是原雕塑的精确复制。</p>
+        <p>韩非讲学堂位于故事庭院北侧独立前院，沿庭院两侧步道可到达。木格门窗围合书斋式讲堂，中央讲案后是持简讲学的先生，两侧四位学生分别读简、执笔，后墙设藏简柜。堂前留出观赏空地、石凳和低花池，后侧步道仍可绕行。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>The western precinct links seven-state banners, courtyards and sculptural scenes: Jixia Academy, Bian Que, the Yi River warriors, Zhao culture, mounted archers, the tiger tally, the Millet Dream and Han Fei Hall.</p>
+        <p>Three story displays have plaques in front: walk close and press F, or tap the lower-right prompt on a phone, to read their legends. Enter both teaching halls to see scholars and desks. Qu Yuan, Xu Fu, the Bixi stele and Emperor Well stand along the eastern paths.</p>
+        <p>A four-column, three-bay gateway leads to Jixia Academy, with a covered portico, timber lattice windows and an open central doorway. Inside, a teacher addresses eight pupils seated at four low writing desks. Bamboo slips, brushes, inkstones and storage cabinets complete the lecture scene. Walk through the central and side aisles. This is a themed interpretation, not an archaeological reconstruction.</p>
+        <p>Farewell at Yi River presents two figures clasping hands: a traveller with a topknot and sheathed sword, and a companion in a long robe and tall crown. Behind them, an attendant holds a tray with a wine vessel and cups. Pale stone, clay and muted sage distinguish their robes; a low river-pattern relief and reeds suggest the riverbank. This is an interpretation of the attraction's theme, not an exact copy of the original sculpture.</p>
+        <p>Han Fei Hall stands beyond a separate forecourt north of the story courtyard, reached by paths along either side. Timber lattice doors and windows enclose a study-like interior. A teacher holds bamboo slips behind the main desk, four pupils read or write at side tables, and cabinets store scrolls along the rear wall. Stone benches and low planters frame the open forecourt; a rear path remains walkable.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-zhao" data-icon="qin-zhao">
+    <h2 data-zh="赵风综合体 · 胡服骑射的时代背景">Zhao Culture Courtyard · The Era of Mounted Reform</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>赵风综合体是以赵国文化为主题的综合展陈，不对应一件单独的历史事件。它把骑射、旌旗、守卫与列阵组合成一个面向观众的方块故事场景。</p>
+        <p>其中的历史背景可追溯到赵武灵王推行的“胡服骑射”：赵国吸收北方骑战方式，改穿便于骑射的服饰，强化骑兵训练，以应对战国时期的军事竞争。《史记·赵世家》记载了这场改革及其争论。</p>
+        <p>正面的三名骑手、两侧守卫和旗帜是对这一主题的视觉化演绎，并非赵国人物的考古复原。靠近前方铭牌按 F，可继续阅读；手机点击右下角提示即可打开。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>Zhao Culture Courtyard is a themed display about the state of Zhao, not a reconstruction of one single historical event. Riders, standards, guards and a formal array turn the theme into a readable voxel scene.</p>
+        <p>Its historical background is the “Hu-style clothing and mounted archery” reform associated with King Wuling of Zhao. Zhao adopted northern riding practices, clothing suited to mounted archery and stronger cavalry training during the military competition of the Warring States period. The reform and its debate are recorded in the <em>Records of the Grand Historian</em>, “House of Zhao.”</p>
+        <p>The three riders, two guards and standards are a visual interpretation of that theme, not an archaeological reconstruction of named individuals. Walk to the plaque and press F; on a phone, tap the lower-right prompt.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-tiger" data-icon="qin-tiger">
+    <h2 data-zh="窃符救赵 · 信陵君的援军">Stealing the Tiger Tally · Lord Xinling’s Rescue</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>战国末年，秦军围攻赵都邯郸。魏公子无忌（信陵君）想出兵援赵，却受到魏王和晋鄙的制约。典故的核心，是用兵符取得调兵的合法凭证。</p>
+        <p>《史记·魏公子列传》记载：如姬帮助信陵君取得虎符，侯嬴设计行动，朱亥随行；信陵君最终接管晋鄙的军队，率魏军前往救赵。故事同时写出谋略、信义与个人抉择之间的冲突。</p>
+        <p>展陈把“交接虎符”放在中心：两人伸手相接，后方以将领、城门和守卫表现调兵出发的紧张时刻。前方铭牌可近距离交互阅读完整典故。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>Late in the Warring States period, Qin forces besieged Handan, the capital of Zhao. Wei prince Wuji, known as Lord Xinling, wanted to send relief but was constrained by the Wei king and the commander Jin Bi. The story turns on the military tally that authorized a troop mobilization.</p>
+        <p>In the <em>Records of the Grand Historian</em>, “Biographical Sketch of the Lord of Wei,” Ru Ji helps Lord Xinling obtain the tiger tally, Hou Ying devises the plan, and Zhu Hai accompanies him. Lord Xinling then takes command of Jin Bi’s army and marches to save Zhao. The episode brings strategy, loyalty and personal choice into one tense decision.</p>
+        <p>The display places the handoff of the tiger tally at its center: two figures reach toward each other, while the general, city gate and guards suggest the army preparing to move. Walk up to the plaque to open the full story.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-dream" data-icon="qin-dream">
+    <h2 data-zh="黄粱梦 · 一枕荣华醒未熟">The Millet Dream · Glory Before the Grain Is Cooked</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>黄粱梦不是战国史实，而是唐代沈既济《枕中记》中的文学故事。故事发生在邯郸旅店：卢生遇到吕翁，借枕入梦，梦见自己经历功名、婚姻、仕途与盛衰。</p>
+        <p>一生荣华转瞬即逝，卢生醒来时，店家的黄粱饭还没有煮熟。这个“黄粱未熟”的结尾，把漫长人生压缩成一场梦，提醒人们反思功名富贵与人生得失。</p>
+        <p>展陈左侧是卧榻上的卢生，旁边是吕翁与炊粱锅；上方的云、宫殿和梦中人物代表被拉长的梦境。这里的吕翁只按《枕中记》表现，不等同于后世传说中的吕洞宾。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>The Millet Dream is not a Warring States historical event. It is the literary tale in Shen Jiji’s Tang-dynasty story <em>枕中记</em> (“The Pillow Record”). At an inn in Handan, Lu Sheng meets Lü Weng, borrows a pillow and dreams through a life of success, marriage, office and reversals of fortune.</p>
+        <p>The entire life passes in an instant. When Lu Sheng wakes, the innkeeper’s millet is still not cooked. That ending compresses a long career into a dream and invites reflection on status, wealth and the measure of a life.</p>
+        <p>The display shows Lu Sheng on the couch, Lü Weng beside the millet pot, and a cloud-borne palace above them for the dream world. Here Lü Weng follows <em>枕中记</em>; he is not identified with the later legendary figure Lü Dongbin.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-hanfei" data-icon="qin-hanfei">
+    <h2 data-zh="韩非讲学堂 · 研读与思辨">Han Fei Hall · Reading &amp; Reflection</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>这座讲堂是战国文化游线中的主题书斋，以研读、讲授和思辨为场景线索，并非韩非真实授课地点的考古复原。</p>
+        <p>中央先生一手持简、一手讲解，案上摆放竹简、笔与砚。两侧四位学生分成读简和执笔两种姿态，后墙藏简柜与“研读 · 思辨”背屏组成完整的讲学空间。</p>
+        <p>沿故事庭院两侧步道进入独立前院，穿过木格门窗之间的中门即可参观。中央通道、两侧过道和堂后步道保持畅通；门前与室内讲案附近均可按 F 打开说明，手机点击右下角提示。左上角语言按钮切换中文或英文。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>This themed study is part of the Warring States cultural route. Its scene focuses on reading, teaching and reflection; it is not an archaeological reconstruction of a place where Han Fei taught.</p>
+        <p>A teacher holds bamboo slips and gestures behind the central desk, with writing slips, a brush and an inkstone laid out in front. Four pupils read or write at two side tables. Storage cabinets and a screen marked “Reading · Reflection” complete the room.</p>
+        <p>Follow either side of the story courtyard to the separate forecourt, then enter through the central doorway. The central aisle, side aisles and rear path remain open. Press F at the entrance or near the teaching desk, or tap the lower-right prompt on a phone. Use the upper-left language button to switch between Chinese and English.</p>
+      </div>
+    </div>
+  </article>
+
+  <article class="page" data-station="qin-garden" data-icon="qin-garden">
+    <h2 data-zh="求仙苑 · 亭桥与海岸">Immortals Garden · Pavilion &amp; Coast</h2>
+    <div class="about qin-guide">
+      <div class="about-text" lang="zh-CN">
+        <p>十字石桥在重檐祈寿亭交汇。亭内有连续石地面、四向入口、石柱础与木梁架、檐下承托、格栅上层及双面题匾；角部座椅和灯笼留出中央通行空间。</p>
+        <p>北侧升仙台以六级缓阶连接观海平台，设石栏、侧边长凳、地面纹样和暖光石灯。题牌置于阶梯旁，不挡登台路线。东侧四十米望海长廊沿海岸展开；亭台细节是本世界的主题化设计，并非原址测绘复原。</p>
+        <p>望海长廊以连续灰瓦顶、木梁架和石柱础串联海岸，设观海坐凳、海侧石栏、南北题匾与暖光灯笼，池边入口保持畅通。秦皇井有下沉井筒、水面、石井沿、木辘轳、摇柄、吊绳与水桶；井口设防跌落碰撞，题牌移至侧前方，不挡步道。</p>
+        <p>园内布置水车、碑林、松树和夜间路灯。南侧的屈原与徐福像、赑屃残碑、秦皇井组成另一条步行游线。</p>
+        <p>屈原像仰首举臂，两侧宽袖随手势垂落；徐福像长髯束发，一手持简，另一手隐于宽袖。两尊均以浅色石雕表现，面部、衣褶、侧背面和夜间补光分别制作，不是同一个人物模型换名。</p>
+        <p>池塘属于观景水景，请沿桥面和园路行走；跨岛游泳请前往外侧海岸。</p>
+      </div>
+      <div class="about-text" lang="en">
+        <p>The cross-shaped bridges meet at a double-roof pavilion with a continuous stone floor, four entrances, timber beams, eave brackets, upper latticework and signs on both sides. Corner benches and hanging lanterns leave the central routes open.</p>
+        <p>Six shallow steps lead to the northern sea-view terrace, with stone railings, side benches, a patterned floor and warm stone lanterns. The name plaque stands beside the stairs rather than across them. A forty-metre corridor follows the eastern coast. These details are a themed design for this world, not a measured reconstruction.</p>
+        <p>The coastal corridor has a continuous tiled roof, timber beams, stone column bases, sea-facing benches, a coastal railing, signs at both ends and warm lanterns. Its pond-side entrance stays open. The Emperor Well has a recessed shaft, water, a stone rim, a timber windlass, a crank, a rope and a bucket. Collision protection keeps visitors out of the shaft, and the name plaque stands beside the path.</p>
+        <p>A waterwheel, steles, pines and warm path lights complete the garden. Follow the paths and bridges around the ornamental pond; use the outer coast for swimming between islands.</p>
+        <p>Qu Yuan lifts his face and both arms, with broad sleeves falling beneath his hands. Xu Fu has a long beard and tied hair, holding bamboo slips in one hand while the other rests inside a sleeve. These distinct pale-stone sculptures have detailed faces, robes, backs and local baked lighting.</p>
+      </div>
+    </div>
   </article>
 
 </section>

@@ -1,10 +1,12 @@
 import { blockGONGLU } from './gonglu-model.js';
 import { IKUN_SIZE, IKUN_SCALE } from './ikun-model.js';
+import { QIN_ISLAND, QIN_STATIONS, qinLandAt, qinFloorAt } from './qin-island-layout.js';
+export { QIN_ISLAND } from './qin-island-layout.js';
 
 // 1 block = 1 m. x east, z south, y up.
 // ISLAND covers the sand island AND the swimming bay south of it (the grid
 // needs cells there for the sea floor); LAND is the terrain/coast itself.
-export const ISLAND = { x0: -60, x1: 62, z0: -50, z1: 62 };
+export const ISLAND = { x0: -60, x1: QIN_ISLAND.x1 + 10, z0: QIN_ISLAND.z0 - 10, z1: QIN_ISLAND.z1 + 12 };
 export const LAND = { x0: -36, x1: 38, z0: -26, z1: 31 };
 // The swimming bay off the south beach: walk off the sand and swim. The
 // engine's pool water renders over this rect (surface = the sea, -0.32) and
@@ -20,6 +22,7 @@ export const BOARDWALK = { x0: -31, x1: 31, step: 1.5, z: 28.25, width: 1.34, de
 // inside the grid but off the sand). The engine reads this for swimming.
 export const inPool = (x, z) => {
   if (x < ISLAND.x0 || x >= ISLAND.x1 || z < ISLAND.z0 || z >= ISLAND.z1) return false;
+  if (qinLandAt(Math.floor(x) + 0.5, Math.floor(z) + 0.5)) return false;
   // the land test is inset one cell: the terrain coast sits just inside the
   // LAND border, and its border row has no blocks — it is open water.
   const inLand = x >= LAND.x0 + 1 && x < LAND.x1 - 1 && z >= LAND.z0 + 1 && z < LAND.z1 - 1;
@@ -38,10 +41,11 @@ export const LOOKOUT = {
 };
 export const COMPUTER = { x: -27.32, z: 9.8, floor: 1 };
 export const STATIONS = [
-  { id: 'lookout', name: '北岸观景点', en: 'North Lookout', icon: 'eye', at: LOOKOUT.at, look: [0.5, 0], floor: LOOKOUT.floor, page: false },
-  { id: 'computer', name: '电脑', en: 'Computer', icon: 'works', at: [COMPUTER.x + 2.2, COMPUTER.z], look: [COMPUTER.x, COMPUTER.z], floor: COMPUTER.floor },
-  { id: 'piano', name: '钢琴', en: 'Piano', icon: 'works', at: [PIANO.x, PIANO.z + 2.2], look: [PIANO.x, PIANO.z] },
-  { id: 'mailbox', name: '留言', en: 'Mailbox', icon: 'mail', at: [0.5, 23.9], look: [0.5, 25.5] },
+  ...QIN_STATIONS,
+  { id: 'lookout', name: '北岸观景点', en: 'North Lookout', icon: 'lookout', at: LOOKOUT.at, look: [0.5, 0], floor: LOOKOUT.floor, page: false },
+  { id: 'computer', name: '电脑', en: 'Computer', icon: 'computer', at: [COMPUTER.x + 2.2, COMPUTER.z], look: [COMPUTER.x, COMPUTER.z], floor: COMPUTER.floor },
+  { id: 'piano', name: '钢琴', en: 'Piano', icon: 'piano', at: [PIANO.x, PIANO.z + 2.2], look: [PIANO.x, PIANO.z] },
+  { id: 'mailbox', name: '留言', en: 'Mailbox', icon: 'mailbox', at: [0.5, 23.9], look: [0.5, 25.5] },
   { id: 'portal', name: '传送门', en: 'Portal', icon: 'portal', at: [8, 23.1], look: [8, 25.5] },
 ];
 export const MAILBOX = { x: 0.5, z: 25.5, yaw: Math.PI };
@@ -89,6 +93,7 @@ export const ORIGIN_GONGLU = { x: -36, y: 0, z: -16 };
 // The Cinnamoroll ferris wheel, rotated to face the beach, on the east lawn.
 export const ORIGIN_FERRIS = { x: 18, y: 0, z: -14 };
 export function floorAt(x, z) {
+  if (x >= QIN_ISLAND.x0) return qinFloorAt(x, z);
   const ikunX = 2 * IKUN_CENTER.x - x - MODEL_ORIGIN.x;
   const ikunZ = 2 * IKUN_CENTER.z - z - MODEL_ORIGIN.z;
   if (ikunX >= 1 && ikunX < 7 && ikunZ >= 5 && ikunZ < 13) return MODEL_ORIGIN.y + 5;

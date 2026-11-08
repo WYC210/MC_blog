@@ -1,0 +1,37 @@
+#phone .travel-open > :not(.back):not(.travel-content) { display: none; }
+#phone .travel-open { padding: 0; --ink: #263938; background: #eef2e6; }
+#phone .travel-open .back { top: 42px; left: 8px; width: 44px; height: 44px; z-index: 2; }
+#phone .travel-content { position: absolute; inset: 44px 10px 24px; display: flex; flex-direction: column; gap: 7px; text-align: left; color: var(--ink); }
+#phone .travel-content[hidden] { display: none; }
+#phone .travel-content header { min-height: 47px; padding-left: 43px; }
+#phone .travel-content h3 { margin: 2px 0 4px; font-size: 16px; }
+#phone .travel-content header p { margin: 0; font-size: 10px; line-height: 1.35; opacity: .78; }
+#phone .travel-content input { box-sizing: border-box; width: 100%; min-height: 44px; flex-shrink: 0; padding: 8px 10px; border: 1px solid #749e99; border-radius: 10px; background: #fffaf0; color: #263938; font: 400 16px/1.2 var(--text); }
+#phone .travel-filters { display: flex; flex-shrink: 0; gap: 5px; overflow-x: auto; scrollbar-width: thin; overscroll-behavior: contain; }
+#phone .travel-filters button { min-height: 44px; flex-shrink: 0; padding: 0 10px; border: 1px solid #749e99; border-radius: 9px; background: #eff4e9; color: #305b59; font: 600 11px/1.2 var(--text); cursor: pointer; }
+#phone .travel-filters button[aria-pressed="true"] { background: #246b70; color: #fff8df; border-color: #246b70; }
+#phone .travel-summary { margin: 0; font-size: 10px; line-height: 1.3; }
+#phone .travel-list { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 2px; scroll-padding: 4px; }
+#phone .travel-stop { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 58px; padding: 7px; margin-bottom: 5px; border: 1px solid #c3cdbd; border-radius: 10px; background: #fffaf0; color: #263938; text-align: left; font-family: var(--text); cursor: pointer; }
+#phone .travel-stop img { width: 32px; height: 32px; flex-shrink: 0; image-rendering: pixelated; }
+#phone .travel-stop > span:not(.travel-arrow) { flex: 1; min-width: 0; }
+#phone .travel-stop strong { display: block; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+#phone .travel-stop small { display: block; margin-top: 3px; font-size: 10px; line-height: 1.3; color: #54706a; }
+#phone .travel-arrow { color: #28777d; font-size: 18px; }
+#phone .travel-stop:hover { border-color: #28777d; background: #edf5eb; }
+#phone .travel-stop:active { transform: translateY(1px); }
+#phone .travel-content footer { flex-shrink: 0; }
+#phone .travel-content footer .travel-stop { margin: 0; background: #dcece2; border-color: #749e99; }
+#phone .travel-message { flex-shrink: 0; margin: 0; padding: 7px; border-radius: 6px; background: #f4dfb9; color: #73411e; font-size: 11px; line-height: 1.4; }
+#phone .travel-message[hidden] { display: none; }
+#phone .travel-empty { padding: 10px 2px; font-size: 12px; line-height: 1.6; }
+#phone:has(.travel-open) .screen { --ink: #263938; background: #eef2e6; }
+#travelArrival { position: fixed; left: 50%; bottom: calc(100px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 25; max-width: calc(100vw - 40px); padding: 12px 18px; border: 1px solid #99bba0; border-radius: 14px; background: #244d47; color: #fff8df; font: 600 14px/1.5 var(--text); text-align: center; pointer-events: none; }
+@media (pointer: coarse) {
+  #phone:has(.travel-open) { --s: 1; right: 16px; height: min(478px, calc(100dvh - 110px - env(safe-area-inset-bottom))); bottom: calc(80px + env(safe-area-inset-bottom)); }
+}
+@media (pointer: coarse) and (max-height: 520px) {
+  #phone:has(.travel-open) { height: calc(100dvh - 28px); bottom: 14px; }
+  #phone .travel-content { overflow-y: auto; overscroll-behavior: contain; }
+  #phone .travel-list { flex: none; min-height: 120px; max-height: 180px; }
+}

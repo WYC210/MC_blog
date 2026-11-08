@@ -1,0 +1,50 @@
+dialog#panel[data-station="qin-great-wall"] { width: min(1040px, calc(100vw - 32px)); }
+.wall-exhibit { padding: 22px; color: var(--ink); background: var(--gui); }
+.wall-exhibit .wall-kicker { margin: 0 0 8px; font-size: 11px; letter-spacing: .12em; opacity: .72; }
+.wall-exhibit .wall-heading { margin: 0 0 8px; font-size: 24px; }
+.wall-exhibit .wall-intro { margin: 0 0 20px; font-size: 14px; line-height: 1.7; }
+.wall-gallery { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(230px, 1fr); gap: 22px; }
+.wall-view, .wall-browser { min-width: 0; }
+.wall-view canvas { width: 100%; height: auto; display: block; border: 2px solid var(--line); box-sizing: border-box; cursor: pointer; }
+.wall-exhibit .wall-map-note { margin: 10px 0 14px; font-size: 12px; line-height: 1.6; opacity: .8; }
+.wall-controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 2px 22px; }
+.wall-controls .mc-button { flex: 1; min-height: 44px; padding: 8px; font-size: 13px; white-space: normal; }
+.wall-controls [data-wall-action="view"] { flex-basis: 100%; }
+.wall-exhibit button:disabled { opacity: .55; cursor: default; }
+.wall-detail { border-top: 2px solid var(--gui-shade); padding-top: 16px; }
+.wall-exhibit .wall-location { margin: 0 0 8px; font-size: 12px; opacity: .75; }
+.wall-detail h3 { margin: 0 0 10px; font-size: 24px; }
+.wall-exhibit .wall-feature { display: inline-block; margin: 0 0 10px; padding: 4px 8px; background: var(--field); border: 1px solid var(--field-edge); font-size: 12px; }
+.wall-exhibit .wall-description { margin: 0 0 18px; font-size: 15px; line-height: 1.85; }
+.wall-detail h4 { margin: 0 0 8px; font-size: 12px; }
+.wall-sources { display: grid; gap: 8px; font-size: 12px; line-height: 1.6; }
+.wall-sources a { overflow-wrap: anywhere; text-underline-offset: 3px; }
+.wall-search-label { display: block; margin-bottom: 8px; font-size: 13px; }
+.wall-browser input { width: 100%; box-sizing: border-box; min-height: 44px; border: 2px solid var(--field-edge); background: var(--field); color: var(--ink); font: inherit; font-size: 16px; padding: 9px 10px; }
+.wall-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 2px 0; }
+.wall-filters .mc-button { min-height: 44px; padding: 6px 10px; font-size: 12px; }
+.wall-filters [aria-pressed="true"] { box-shadow: 0 0 0 2px var(--line), inset 0 -4px #74b3a5; }
+.wall-exhibit .wall-count { font-size: 12px; margin: 16px 0 10px; opacity: .75; }
+.wall-stops { max-height: 380px; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 7px; padding: 2px; }
+.wall-stop { width: 100%; display: flex; align-items: center; gap: 11px; min-height: 64px; text-align: left; padding: 10px; border: 1px solid var(--field-edge); background: var(--field); color: var(--ink); }
+.wall-stop:hover { border-color: var(--ink); }
+.wall-stop[aria-pressed="true"] { border-color: #5c9685; box-shadow: inset 4px 0 #5c9685; }
+.wall-number { flex: none; font-size: 12px; opacity: .65; }
+.wall-stop strong, .wall-stop small { display: block; }
+.wall-stop strong { font-size: 14px; line-height: 1.5; }
+.wall-stop small { font-size: 11px; line-height: 1.5; margin-top: 4px; opacity: .7; }
+.wall-empty { font-size: 14px; line-height: 1.7; }
+.wall-notes { margin-top: 22px; padding-top: 14px; border-top: 2px solid var(--gui-shade); font-size: 12px; line-height: 1.8; }
+.wall-notes summary { cursor: pointer; min-height: 36px; }
+.wall-notes p { margin: 8px 0; font-size: 12px; }
+.wall-exhibit :is(button, input, a, summary):focus-visible { outline: 3px solid #548e83; outline-offset: 3px; }
+@media (max-width: 680px) {
+  .wall-exhibit { padding: 16px 14px; }
+  .wall-gallery { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .wall-exhibit .wall-heading { font-size: 21px; }
+  .wall-browser { border-top: 2px solid var(--gui-shade); padding-top: 18px; }
+  .wall-stops { max-height: 300px; }
+  .wall-controls .mc-button { font-size: 12px; }
+}
+.wall-model-note { padding: 10px 12px; border-left: 3px solid #b5a274; background: #17343a; color: #e2d7b7; line-height: 1.7; }
+.wall-model-note[data-reference="true"] { border-color: #83c6bd; color: #c6e8df; }

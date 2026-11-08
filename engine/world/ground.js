@@ -98,5 +98,12 @@ export function createGround(sources) {
   }
   function ladderAt(x, y, z) { for (const s of sources) { const ladder = s.ladderAt?.(x, y, z); if (ladder) return ladder; } return null; }
   const spots = () => sources.flatMap(s => s.spots?.() ?? []);
-  return { surfaceAt, topAt, canStand, ladderAt, move, nearestStand, collides, pick, spots, setNav(value) { nav = value; } };
+  function route(from, to, near, targetFloor) {
+    for (const source of sources) {
+      const points = source.route?.(from, to, near, targetFloor, nav);
+      if (points?.length) return points;
+    }
+    return null;
+  }
+  return { surfaceAt, topAt, canStand, ladderAt, move, nearestStand, collides, pick, spots, route, setNav(value) { nav = value; } };
 }
