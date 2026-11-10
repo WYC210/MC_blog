@@ -17,7 +17,7 @@ export function createQinArchitecture({ batch, labels, obstacles, solids }) {
     obstacles.push({ ...bounds, floor });
   }
   function sign(text, x, y, z, width = 4, height = 0.8, yaw = 0) {
-    batch.at(x, y, z, yaw, () => box(0, 0, -0.08, width + 0.14, height + 0.12, 0.12, WOOD));
+    batch.at(x, y, z, yaw, () => box(0, 0, -0.07, width + 0.14, height + 0.12, 0.12, WOOD));
     labels.push({ text, x, y: y + height / 2, z, width, height, yaw });
   }
   function roof(x, y, z, width, depth, rise = 2.4, palette = {}) {

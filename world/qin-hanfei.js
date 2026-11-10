@@ -8,7 +8,7 @@ const BLUE = { tex: 'paint', tint: 0x829997 };
 const FACE = { tex: 'paint', tint: 0xf0d6b3 };
 const INK = { tex: 'paint', tint: 0x51463d };
 
-export function buildHanFeiHall({ architecture, batch, obstacles, solids, bakes }) {
+export function buildHanFeiHall({ architecture, batch, obstacles, solids, bakes, lod }) {
   const { x: center, z: row, width, depth } = QIN_HANFEI;
   const { block, roof, sign, looks } = architecture;
   const box = (x, y, z, wide, tall, deep, look = TIMBER, rotation = {}) =>
@@ -31,13 +31,19 @@ export function buildHanFeiHall({ architecture, batch, obstacles, solids, bakes 
     bakes.push({ id: `qin-hanfei-${id}`, position: [x, y + 0.3, z], power, radius: 8, direction: null });
   }
   function lattice(x, z, yaw, wide, bottom = 0.9, tall = 2.7) {
-    batch.at(x, bottom, z, yaw, () => {
+    lod.replace(batch, () => batch.at(x, bottom, z, yaw, () => {
       box(0, 0, 0, wide, tall, 0.12, looks.WOOD);
       box(0, 0.12, 0.075, wide - 0.2, tall - 0.24, 0.04, PAPER, { tag: 'qin-hanfei:window-backing' });
       for (let offset = -wide / 2 + 0.25; offset < wide / 2 - 0.1; offset += 0.38) box(offset, 0.12, 0.13, 0.065, tall - 0.24, 0.065, TIMBER);
       for (let height = 0.45; height < tall - 0.1; height += 0.6) box(0, height, 0.13, wide - 0.18, 0.07, 0.065, TIMBER);
       box(0, -0.12, 0.02, wide + 0.16, 0.14, 0.3, looks.STONE);
-    });
+    }), proxy => proxy.at(x, bottom, z, yaw, () => {
+      proxy.box(0, 0, 0, wide, tall, 0.12, looks.WOOD);
+      proxy.box(0, 0.12, 0.075, wide - 0.2, tall - 0.24, 0.04, PAPER);
+      proxy.box(0, 0.12, 0.13, 0.065, tall - 0.24, 0.065, TIMBER);
+      proxy.box(0, tall / 2, 0.13, wide - 0.18, 0.07, 0.065, TIMBER);
+      proxy.box(0, -0.12, 0.02, wide + 0.16, 0.14, 0.3, looks.STONE);
+    }));
   }
   function slips(x, y, z, wide = 0.65) {
     for (let strip = 0; strip < 9; strip++) box(x - wide / 2 + (strip + 0.5) * wide / 9, y, z, wide / 10, 0.035, 0.4, BAMBOO, { tag: 'qin-hanfei:slips' });

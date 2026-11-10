@@ -16,6 +16,7 @@ import { buildQinGardenLandmarks } from './qin-garden-landmarks.js';
 import { buildQinCoastalLandmarks } from './qin-coastal-landmarks.js';
 import { buildQinWaterwheel } from './qin-waterwheel.js';
 import { buildQinDistanceDetail } from './qin-distance-detail.js';
+import { createQinLodSource } from './qin-lod.js';
 import { buildQinPalaceMedia } from './qin-palace-media.js';
 import { buildQinGreatWall } from './qin-great-wall.js';
 import { createQinGreatWallGuide } from './qin-great-wall-guide.js';
@@ -107,6 +108,7 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
   }
 
   const batch = new BoxBatch(layer), labels = [], bakes = [], solids = [];
+  const lod = createQinLodSource(() => new BoxBatch(layer), new URLSearchParams(location.search).get('qin-lod') !== 'off');
   const root = new THREE.Group(); root.name = 'qin-sanctuary';
   let media = null, greatWall = null, watermill = null;
   let gallerySlab = null;
@@ -190,7 +192,7 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
       solids.push({ x0, y0, z0, x1, y1, z1 });
     }
     function windowPanel(x, y, z, yaw, width = 3.1, height = 1.8) {
-      batch.at(x, y, z, yaw, () => {
+      lod.replace(batch, () => batch.at(x, y, z, yaw, () => {
         box(0, 0, 0, width, height, 0.12, WOOD);
         box(0, 0.16, 0.08, width - 0.3, height - 0.32, 0.06, { tex: 'paint', tint: 0x38494c });
         for (const side of [-1, 1]) box(side * (width / 2 - 0.1), 0, 0.13, 0.15, height, 0.14, WOOD);
@@ -198,7 +200,15 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
         for (const rail of [0.18, height / 2, height - 0.26]) box(0, rail, 0.14, width - 0.3, 0.08, 0.09, WOOD);
         box(0, -0.16, 0.03, width + 0.4, 0.16, 0.3, PALE);
         box(0, height, 0, width + 0.3, 0.18, 0.26, WOOD);
-      });
+      }), proxy => proxy.at(x, y, z, yaw, () => {
+        proxy.box(0, 0, 0, width, height, 0.12, WOOD);
+        proxy.box(0, 0.16, 0.08, width - 0.3, height - 0.32, 0.06, { tex: 'paint', tint: 0x38494c });
+        for (const side of [-1, 1]) proxy.box(side * (width / 2 - 0.1), 0, 0.13, 0.15, height, 0.14, WOOD);
+        proxy.box(0, 0.18, 0.14, 0.07, height - 0.36, 0.09, GOLD);
+        proxy.box(0, height / 2, 0.14, width - 0.3, 0.08, 0.09, WOOD);
+        proxy.box(0, -0.16, 0.03, width + 0.4, 0.16, 0.3, PALE);
+        proxy.box(0, height, 0, width + 0.3, 0.18, 0.26, WOOD);
+      }));
     }
     for (const column of [145, 152, 160, 168, 177]) for (const height of [4, 8]) {
       windowPanel(column, height, -48.03, Math.PI);
@@ -295,7 +305,7 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
       detail: { tex: 'paint', tint: 0x5e5146 },
     };
     buildJixiaAcademy({ architecture, batch, bakes, obstacles, solids });
-    buildHanFeiHall({ architecture, batch, obstacles, solids, bakes });
+    buildHanFeiHall({ architecture, batch, obstacles, solids, bakes, lod });
     for (const wall of QIN_RELIEF_WALLS) {
       const across = Math.abs(Math.cos(wall.yaw)), along = Math.abs(Math.sin(wall.yaw));
       block(wall.x, 0, wall.z, across * wall.length + along * 0.5, 4.7, along * wall.length + across * 0.5, STONE);
@@ -381,6 +391,7 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
   gate(); procession(); emperor(); palace(); sideGardens(); immortalGarden();
   buildQinWanderingEmperor(batch);
   grid.fill(85, -1, 15, 95, 0, 22, 'qin-dock-deck', groupName);
+  grid.fill(85, -1, 22, 91, 0, 25, 'qin-dock-deck', groupName);
   for (const row of [15, 22]) for (const column of [86, 89, 93]) box(column, -1.3, row, 0.2, 1.8, 0.2, WOOD);
   sign('求仙岛 · 游客码头', 94.7, 2.4, 18.5, 5.6, 0.85, -Math.PI / 2);
   for (const row of [15.6, 21.4]) block(94.88, 0, row, 0.2, 3.4, 0.2, WOOD);
@@ -398,8 +409,9 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
   for (const station of QIN_STATIONS) hotspots.push({ id: station.id, box: new THREE.Box3(new THREE.Vector3(station.look[0] - 1.5, station.floor || 0, station.look[1] - 1.5), new THREE.Vector3(station.look[0] + 1.5, (station.floor || 0) + 4, station.look[1] + 1.5)) });
   hotspots.push({ id: 'qin-hanfei', box: new THREE.Box3(new THREE.Vector3(QIN_HANFEI.x - 1.9, 0, QIN_HANFEI.z - 1.5), new THREE.Vector3(QIN_HANFEI.x + 1.9, 3.2, QIN_HANFEI.z + 5.8)) });
   if (labels.length > 64) throw new Error('Qin inscription atlas capacity exceeded');
-  const distanceDetail = buildQinDistanceDetail(batch, materials);
+  const distanceDetail = buildQinDistanceDetail(batch, materials, lod);
   for (const mesh of distanceDetail.meshes) root.add(mesh);
+  for (const mesh of distanceDetail.proxyMeshes) root.add(mesh);
   for (const mesh of roofBatch.build(materials)) palaceRoof.add(mesh);
   root.add(palaceRoof, watermill.wheel, watermill.details);
   root.add(buildLabels(labels));
@@ -476,6 +488,7 @@ export function setupQinIsland({ world, player, avatar, stage, nav, rig, sound }
     cinema, encounter, greatWall,
     tap: (x, y, picked) => sanctuary.lowerFloor.tap(player, picked),
     warmup(on) {
+      sanctuary.distanceDetail.warmup(on);
       if (!on || installed) return;
       installed = true;
       for (const { material, compile, cacheKey } of materials.values()) {
@@ -483,12 +496,18 @@ export function setupQinIsland({ world, player, avatar, stage, nav, rig, sound }
       }
       for (const root of roots) if (root) sanctuary.lighting.apply(root);
     },
+    updateDetail() {
+      stage.camera.updateMatrixWorld();
+      const within = player.pos.x >= QIN_ISLAND.x0 - 5 && player.pos.x <= QIN_ISLAND.x1 + 5
+        && player.pos.z >= QIN_ISLAND.z0 - 5 && player.pos.z <= QIN_ISLAND.z1 + 5;
+      sanctuary.distanceDetail.update(stage.camera, stage.renderer.domElement.height, within || cinema.active || encounter.active);
+    },
     update(dt) {
-      sanctuary.distanceDetail.update(stage.camera);
       encounter.update(dt);
       sanctuary.lighting.uniforms.uInteriorBoost.value = world.lighting.uniforms.uInteriorBoost.value;
       sanctuary.palaceRoof.visible = sanctuary.structure.roofVisible(player, stage.camera);
       cinema.update();
+      stage.camera.updateMatrixWorld();
       frustum.setFromProjectionMatrix(projection.multiplyMatrices(stage.camera.projectionMatrix, stage.camera.matrixWorldInverse));
       sanctuary.watermill.update(dt, stage.camera, frustum, reducedMotion.matches, document.hidden || cinema.active);
       sanctuary.greatWall.update(dt, stage.camera, frustum, player, reducedMotion.matches, document.hidden || cinema.active);

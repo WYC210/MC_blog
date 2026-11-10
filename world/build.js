@@ -376,6 +376,7 @@ export function setup({ stage, config, player, avatar, rig, sound, world, nav, q
       furniture.update(dt);
       jetSki.update(dt);
       resident?.update(dt);
+      qinIsland.updateDetail();
     },
   };
 }

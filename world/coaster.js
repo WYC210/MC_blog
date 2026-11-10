@@ -19,8 +19,6 @@ export function buildCoaster({ B: batch, layer, materials, bakes }) {
     box(column, 5.45, -29, 0.5, 0.2, 0.5, GOLD);
     bakes.push({ id: `coaster-station-${column}`, position: [column, 5.35, -29], power: 2.2, radius: 9, direction: [0, -1, 0] });
   }
-  box(88, -0.18, 23.4, 6, 0.18, 2.8, WOOD);
-  for (const column of [85.3, 90.7]) box(column, -3, 24.6, 0.22, 3, 0.22, WOOD);
   const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 96;
   const context = canvas.getContext('2d');
   context.fillStyle = '#243c38'; context.fillRect(0, 0, 512, 96);

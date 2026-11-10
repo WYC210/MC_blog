@@ -15,6 +15,8 @@ try {
     { name: 'phone', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 },
   ]) {
     const context = await browser.newContext(view), page = await context.newPage(), errors = [];
+    await context.route(/https:\/\/(api\.open-meteo\.com|homecraft\.terryhu\.cn|terryhu7\.github\.io)\//,
+      route => route.fulfill({ json: { worlds: [] }, headers: { 'access-control-allow-origin': '*' } }));
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
     await page.goto(`${base}?lang=zh&debug`);
@@ -22,19 +24,19 @@ try {
     assert.equal(await page.evaluate(() => window.__homeStartupError || null), null);
     const checks = await page.evaluate(async () => {
       const THREE = await import('three'), home = __home, park = home.world.qinIsland, player = home.player;
-      const ground = home.world.groups['qin-ground'];
       home.rig.skipIntro();
       for (let frame = 0; frame < 240; frame++) home.rig.update(1 / 60, player);
       home.setTimeMode('day'); home.setWeatherMode('clear'); home.stage.settle();
-      park.root.updateMatrixWorld(true); ground.updateMatrixWorld(true);
+      player.teleport(90, 23.5); home.extras.update(0); home.stage.scene.updateMatrixWorld(true);
       const floors = [];
-      for (let column = 85; column <= 95; column++) for (let row = 15; row < 22; row++) {
+      for (let column = 85; column <= 95; column++) for (let row = 15; row <= 25; row++) {
         const ray = new THREE.Raycaster(new THREE.Vector3(column + 0.37, 0.1, row + 0.61), new THREE.Vector3(0, -1, 0), 0, 0.2);
-        const hits = ray.intersectObjects([ground, park.root], true).filter(hit => Math.abs(hit.point.y) < 0.001 && hit.face.normal.y > 0.9);
+        const hits = ray.intersectObject(home.stage.scene, true).filter(hit => Math.abs(hit.point.y) < 0.001 && hit.face.normal.y > 0.9);
         const surfaces = new Set(hits.map(hit => `${hit.object.uuid}:${hit.instanceId ?? 'ground'}`));
         floors.push({ position: [column + 0.37, row + 0.61], surfaces: surfaces.size,
           ground: hits.some(hit => !hit.object.isInstancedMesh), material: home.world.grid.type(column, -1, row)?.name,
-          expected: column < 95 ? 'qin-dock-deck' : 'qin-path' });
+          expected: row < 22 ? column < 95 ? 'qin-dock-deck' : 'qin-path'
+            : row < 25 && column < 91 ? 'qin-dock-deck' : column < 89 ? 'qin-sand' : 'qin-grass' });
       }
       const signs = park.root.getObjectByName('qin-inscriptions');
       const labelIndex = signs.userData.labels.findIndex(label => label.text === '求仙岛 · 游客码头');
@@ -51,7 +53,8 @@ try {
       }
       const idle = { x: 0, z: 0, run: false, up: false, down: false }, walks = [];
       player.teleport(86, 18.5);
-      for (const target of [[90, 18.5], [96, 18.5], [100, 18.5], [96, 16.7], [90, 16.7], [86, 18.5], [96, 20.3], [100, 20.3], [90, 18.5], [86, 18.5]]) {
+      for (const target of [[90, 18.5], [96, 18.5], [100, 18.5], [96, 16.7], [90, 16.7], [86, 18.5], [96, 20.3], [100, 20.3],
+        [90, 23.5], [86, 24.3], [88.9, 25.5], [90, 18.5], [86, 18.5]]) {
         const accepted = player.goTo(...target);
         let flew = false, collided = false;
         for (let frame = 0; frame < 12000 && player.travelling; frame++) {
@@ -81,6 +84,7 @@ try {
       { name: 'front', camera: [78, 4.5, 18.5], portrait: [73, 5, 18.5], look: [92, 1.3, 18.5] },
       { name: 'sign', camera: [85.5, 2.4, 18.5], portrait: [78, 2.8, 18.5], look: [94.7, 2.8, 18.5] },
       { name: 'floor', camera: [88, 3.4, 23.7], portrait: [85.5, 3, 18.5], look: [92, 0, 18.5] },
+      { name: 'track-end', camera: [80, 8, 30], portrait: [79, 8, 32], look: [88, 0, 22.2] },
     ];
     const measurements = [];
     for (const time of ['day', 'night']) for (const shot of shots) {
