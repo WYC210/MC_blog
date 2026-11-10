@@ -2,7 +2,7 @@ import { t, onLang, nameOf } from '@engine/lang.js';
 import { icon } from '@engine/ui/icons.js';
 import { TRAVEL_DESTINATIONS, TRAVEL_GROUPS, HOME_DESTINATION, travelLanding } from './travel-destinations.js';
 
-export function createTravelAgency({ player, rig, stage, nav, sound, fishing, lookout, qinIsland }) {
+export function createTravelAgency({ player, rig, stage, nav, sound, fishing, lookout, qinIsland, coaster }) {
   const root = document.querySelector('#phone');
   const toast = document.createElement('div');
   toast.id = 'travelArrival'; toast.setAttribute('role', 'status'); toast.hidden = true;
@@ -72,7 +72,8 @@ export function createTravelAgency({ player, rig, stage, nav, sound, fishing, lo
 
   function showNotice(reason) {
     notice = reason;
-    message.textContent = reason === 'busy' ? t('请先结束剧情、观影或观景，再出发。', 'Finish the scene, screening or lookout before travelling.')
+    message.textContent = reason === 'ride' ? t('请等过山车到站并下车后再传送。', 'Wait for the coaster to arrive and dismount before travelling.')
+      : reason === 'busy' ? t('请先结束剧情、观影或观景，再出发。', 'Finish the scene, screening or lookout before travelling.')
       : reason === 'landing' ? t('落点暂时被占用，请稍后再试。', 'The landing is blocked. Please try again shortly.') : '';
     message.hidden = !reason;
   }
@@ -93,6 +94,7 @@ export function createTravelAgency({ player, rig, stage, nav, sound, fishing, lo
   function travel(id) {
     const destination = id === HOME_DESTINATION.id ? HOME_DESTINATION : TRAVEL_DESTINATIONS.find(stop => stop.id === id);
     if (!destination) return false;
+    if (coaster?.riding) { showNotice('ride'); return false; }
     if (qinIsland.encounter.active || qinIsland.cinema.active || lookout.active || rig.showcaseActive
       || document.querySelector('dialog[open]')) { showNotice('busy'); return false; }
     const landing = travelLanding(nav, destination);

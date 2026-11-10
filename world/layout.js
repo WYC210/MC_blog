@@ -55,7 +55,7 @@ export const PORTAL = { x: 8, z: 25.5, yaw: Math.PI };
 export const TREES = [
   [34, -12],
   // North edge (behind buildings, forming a backdrop)
-  [-28, -24], [-12, -24], [8, -24], [24, -22],
+  [-28, -24], [-12, -24], [4, -23], [24, -22],
 ];
 
 // A dog roams the beach and central area, following visitors around.

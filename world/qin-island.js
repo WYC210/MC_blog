@@ -14,6 +14,8 @@ import { buildQinEmperor } from './qin-emperor.js';
 import { buildQinEastStatues } from './qin-east-statues.js';
 import { buildQinGardenLandmarks } from './qin-garden-landmarks.js';
 import { buildQinCoastalLandmarks } from './qin-coastal-landmarks.js';
+import { buildQinWaterwheel } from './qin-waterwheel.js';
+import { buildQinDistanceDetail } from './qin-distance-detail.js';
 import { buildQinPalaceMedia } from './qin-palace-media.js';
 import { buildQinGreatWall } from './qin-great-wall.js';
 import { createQinGreatWallGuide } from './qin-great-wall-guide.js';
@@ -106,15 +108,12 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
 
   const batch = new BoxBatch(layer), labels = [], bakes = [], solids = [];
   const root = new THREE.Group(); root.name = 'qin-sanctuary';
-  let media = null, greatWall = null;
+  let media = null, greatWall = null, watermill = null;
   let gallerySlab = null;
   const palaceStairs = [];
   const palaceRoof = new THREE.Group(); palaceRoof.name = 'qin-palace-roof';
-  const waterwheel = new THREE.Group(); waterwheel.name = 'qin-waterwheel';
-  waterwheel.position.set(207, 3.1, 19);
-  const roofBatch = new BoxBatch(layer), wheelBatch = new BoxBatch(layer);
+  const roofBatch = new BoxBatch(layer);
   const roofBuilder = createQinArchitecture({ batch: roofBatch, labels, obstacles, solids });
-  const wheelBuilder = createQinArchitecture({ batch: wheelBatch, labels, obstacles, solids });
   const architecture = createQinArchitecture({ batch, labels, obstacles, solids });
   const { box, block, sign, roof, railing, person, horse, wheel, pine, looks } = architecture;
   const { STONE, PALE, WOOD, GOLD, BRONZE, DARK } = looks;
@@ -352,15 +351,7 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
       sign(name, column, 2.5, row + 0.87, 2.4, 1.4);
       for (let line = 0; line < 7; line++) for (let character = 0; character < 6; character++) box(column - 0.9 + character * 0.33, 1 + line * 0.18, row + 0.87, 0.11, 0.1, 0.03, WOOD);
     }
-    wheelBuilder.wheel(0, 0, 0, 2.7, 0, WOOD, 20);
-    for (let paddle = 0; paddle < 20; paddle++) {
-      const angle = paddle * Math.PI / 10;
-      wheelBuilder.box(Math.cos(angle) * 2.7, Math.sin(angle) * 2.7 - 0.12, 0, 0.7, 0.24, 1.1, WOOD, { rz: angle });
-    }
-    for (const side of [-1, 1]) block(207 + side * 3.1, 0, 19, 0.4, 4, 0.6, WOOD);
-    box(207, -0.1, 23, 5, 0.12, 12, { tex: 'water', tint: 0x507c7a });
-    grid.fill(205, -1, 17, 209, 0, 29, null);
-    obstacles.push({ x0: 205, x1: 209, z0: 17, z1: 29, floor: 0 });
+    watermill = buildQinWaterwheel({ batch, layer, materials, grid, obstacles, solids, bakes });
     buildQinEastStatues({ architecture, batch, bakes, obstacles, solids });
     plaque('屈原', 207, 8); plaque('徐福像', 207, -12);
     box(191, 0, -15, 3.6, 0.75, 2.9, STONE);
@@ -407,10 +398,10 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
   for (const station of QIN_STATIONS) hotspots.push({ id: station.id, box: new THREE.Box3(new THREE.Vector3(station.look[0] - 1.5, station.floor || 0, station.look[1] - 1.5), new THREE.Vector3(station.look[0] + 1.5, (station.floor || 0) + 4, station.look[1] + 1.5)) });
   hotspots.push({ id: 'qin-hanfei', box: new THREE.Box3(new THREE.Vector3(QIN_HANFEI.x - 1.9, 0, QIN_HANFEI.z - 1.5), new THREE.Vector3(QIN_HANFEI.x + 1.9, 3.2, QIN_HANFEI.z + 5.8)) });
   if (labels.length > 64) throw new Error('Qin inscription atlas capacity exceeded');
-  for (const mesh of batch.build(materials)) root.add(mesh);
+  const distanceDetail = buildQinDistanceDetail(batch, materials);
+  for (const mesh of distanceDetail.meshes) root.add(mesh);
   for (const mesh of roofBatch.build(materials)) palaceRoof.add(mesh);
-  for (const mesh of wheelBatch.build(materials)) { mesh.castShadow = false; waterwheel.add(mesh); }
-  root.add(palaceRoof, waterwheel);
+  root.add(palaceRoof, watermill.wheel, watermill.details);
   root.add(buildLabels(labels));
   const encounterActors = bindQinEncounterActors(root);
   const protection = { active: false, x: 160, z: 24, radius: 2.95, solids: [] };
@@ -431,10 +422,10 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
   }
   const lowerFloor = createQinPalaceFloor(collides);
   return {
-    root, palaceRoof, structure, waterwheel, media, greatWall, lowerFloor, encounterActors, protection, lighting, bakes, attractions: QIN_ATTRACTIONS, dock: QIN_DOCK,
+    root, palaceRoof, structure, distanceDetail, waterwheel: watermill.wheel, watermill, media, greatWall, lowerFloor, encounterActors, protection, lighting, bakes, attractions: QIN_ATTRACTIONS, dock: QIN_DOCK,
     site: { ...lowerFloor, levels(x, z, out) { lowerFloor.levels(x, z, out); structure.levels(x, z, out); },
       collides, obstructed(x, z, feet) { return collides(x, feet, z); } },
-    stats: { boxes: [batch, roofBatch, wheelBatch].reduce((total, source) => total + Object.values(source.items).reduce((count, items) => count + items.length, 0), 0), signs: labels.length, people: 32, horses: 20, chariots: 2, prayerWheels: 24 },
+    stats: { boxes: watermill.boxes + [batch, roofBatch].reduce((total, source) => total + Object.values(source.items).reduce((count, items) => count + items.length, 0), 0), signs: labels.length, people: 32, horses: 20, chariots: 2, prayerWheels: 24 },
   };
 }
 
@@ -493,11 +484,13 @@ export function setupQinIsland({ world, player, avatar, stage, nav, rig, sound }
       for (const root of roots) if (root) sanctuary.lighting.apply(root);
     },
     update(dt) {
+      sanctuary.distanceDetail.update(stage.camera);
       encounter.update(dt);
       sanctuary.lighting.uniforms.uInteriorBoost.value = world.lighting.uniforms.uInteriorBoost.value;
       sanctuary.palaceRoof.visible = sanctuary.structure.roofVisible(player, stage.camera);
       cinema.update();
       frustum.setFromProjectionMatrix(projection.multiplyMatrices(stage.camera.projectionMatrix, stage.camera.matrixWorldInverse));
+      sanctuary.watermill.update(dt, stage.camera, frustum, reducedMotion.matches, document.hidden || cinema.active);
       sanctuary.greatWall.update(dt, stage.camera, frustum, player, reducedMotion.matches, document.hidden || cinema.active);
       if (cinema.active) {
         if (!document.hidden && cinema.playing) sanctuary.media.update(dt, stage.camera, frustum, true);
@@ -506,7 +499,6 @@ export function setupQinIsland({ world, player, avatar, stage, nav, rig, sound }
       }
       if (document.hidden || reducedMotion.matches || stage.camera.position.distanceToSquared(wheelBounds.center) > 22500) return;
       sanctuary.media.update(dt, stage.camera, frustum);
-      if (frustum.intersectsSphere(wheelBounds)) sanctuary.waterwheel.rotation.z = (sanctuary.waterwheel.rotation.z - dt * 0.18) % (Math.PI * 2);
     },
   };
 }

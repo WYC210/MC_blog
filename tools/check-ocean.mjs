@@ -75,7 +75,7 @@ try {
       const home = __home; home.setWeatherMode('clear'); home.setTimeMode('day'); home.stage.settle(); home.weatherFx.settle();
       home.rig.showcase([-35, 5, 35], [0, -0.32, 28]); home.rig.update(3, home.player);
     });
-    await page.waitForTimeout(300);
+    await page.waitForFunction(() => __home.pool.water.material.uniforms.uOceanHeight.value > 0 && __home.pool.water.geometry.index.count > 6);
     const rendered = await page.evaluate(async () => {
       const THREE = await import('three'), home = __home, renderer = home.stage.renderer;
       const uniforms = home.pool.water.material.uniforms, height = uniforms.uOceanHeight.value, foam = uniforms.uOceanFoam.value;

@@ -1,9 +1,6 @@
-// The bay's toys: a diving tower off the beach's north edge, a duck swim ring
-// and a jet ski bobbing on the water. The tower is ground of its own — walk up
-// its steps and jump — while the floats are built in their own groups so they
-// can rock.
 import * as THREE from 'three';
 import { BoxBatch } from '@engine/world/blocks.js';
+import { COASTER_PLATFORM, COASTER_STEPS } from './coaster-route.js';
 
 const WATER = -0.3; // the open sea surface (engine sea sheet sits at -0.32)
 const OAK = { tex: 'oak' }, WALNUT = { tex: 'walnut' }, STEEL = { tex: 'steel' };
@@ -11,17 +8,7 @@ const paint = tint => ({ tex: 'paint', tint });
 const WHITE = paint(0xf1efe9), RED = paint(0xc94f43), BLACK = paint(0x2f3438);
 const YELLOW = paint(0xf2c53d), ORANGE = paint(0xe8862f);
 
-// The tower's walkable surfaces, beach step first: 0.45 m rises from the sand.
-// It stands at the island's north edge, so a jump off the platform lands in
-// the sea (the island ends at z = 31).
-const TOWER = { x0: 13.5, x1: 16.5 };
-const LEVELS = [
-  { ...TOWER, z0: -25.5, z1: -24.8, y: 0.45 },
-  { ...TOWER, z0: -26.2, z1: -25.5, y: 0.9 },
-  { ...TOWER, z0: -26.9, z1: -26.2, y: 1.35 },
-  { ...TOWER, z0: -27.6, z1: -26.9, y: 1.8 },
-  { ...TOWER, z0: -31.3, z1: -27.6, y: 2.25 },
-];
+const LEVELS = [...COASTER_STEPS, COASTER_PLATFORM];
 
 export function buildSeaToys(layer, materials) {
   const root = new THREE.Group(); root.name = 'sea-toys';
@@ -34,21 +21,26 @@ export function buildSeaToys(layer, materials) {
     B = outer; root.add(group); return group;
   }
 
-  // The diving tower: oak treads on timber piles, rails on three sides.
-  part('sea-tower', 0, 0, 0, () => {
-    for (const [z0, z1, y] of LEVELS.map(({ z0, z1, y }) => [z0, z1, y])) {
-      box(15, y - 0.12, (z0 + z1) / 2, 3, 0.12, z1 - z0, OAK);
-      box(15, y - 0.62, (z0 + z1) / 2, 2.7, 0.5, z1 - z0 - 0.2, WALNUT);
+  part('coaster-station', 0, 0, 0, () => {
+    for (const { x0, x1, z0, z1, y } of LEVELS) {
+      box((x0 + x1) / 2, y - 0.16, (z0 + z1) / 2, x1 - x0, 0.16, z1 - z0, OAK);
+      box((x0 + x1) / 2, y - 0.36, (z0 + z1) / 2, x1 - x0 - 0.2, 0.2, z1 - z0, WALNUT);
     }
-    for (const [px, pz] of [[13.7, -25.3], [16.3, -25.3], [13.7, -31], [16.3, -31]]) box(px, -3, pz, 0.18, 5.35, 0.18, WALNUT);
-    for (const px of [13.65, 16.35]) for (const pz of [-25.2, -27.2]) box(px, -3, pz, 0.15, 3.3, 0.15, WALNUT);
-    for (const px of [13.6, 16.4]) {
-      for (const pz of [-28.5, -31.1]) box(px, 2.25, pz, 0.09, 1.05, 0.09, STEEL);
-      box(px, 3.2, -29.8, 0.07, 0.07, 2.7, STEEL);
+    for (const column of [8.8, 12.2, 17.8, 21.2]) for (const row of [-25.1, -30.6, -36.2]) {
+      box(column, -3, row, 0.28, 5.25, 0.28, WALNUT);
     }
-    for (const px of [13.7, 16.3]) box(px, 3.2, -31.2, 2.8, 0.07, 0.07, STEEL);
-    for (const px of [14.3, 15, 15.7]) box(px, 2.25, -31.15, 0.09, 1.05, 0.09, STEEL);
-    box(15, 3.2, -31.15, 2.9, 0.07, 0.07, STEEL);
+    for (const column of [8.65, 21.35]) {
+      for (const row of [-25, -28.7, -32.4, -36.3]) box(column, 2.25, row, 0.1, 1.05, 0.1, STEEL);
+      for (const height of [2.75, 3.25]) box(column, height, -30.65, 0.08, 0.08, 11.3, STEEL);
+    }
+    for (const column of [12.3, 17.7]) for (const row of [-25.2, -35.8]) box(column, 2.25, row, 0.2, 3.5, 0.2, WALNUT);
+    box(15, 5.75, -30.5, 7.4, 0.22, 11.6, WALNUT);
+    box(15, 5.97, -30.5, 7.7, 0.16, 11.9, { tex: 'paint', tint: 0x405954 });
+    for (const column of [13.85, 16.15]) box(column, 2.252, -30.8, 0.14, 0.025, 10.5, YELLOW);
+    for (const column of [9.1, 20.9]) {
+      box(column, 2.25, -27, 0.36, 0.3, 1.9, WALNUT);
+      box(column, 2.55, -27, 0.52, 0.15, 2.1, OAK);
+    }
   });
 
   // A duck swim ring riding the swell off the beach.
@@ -87,7 +79,7 @@ export function buildSeaToys(layer, materials) {
     group: root,
     ski,
     duck,
-    foot: { x: 15, z: -25.2 },
+    foot: { x: 15, z: -19.6 },
     levels(x, z, out) {
       for (const { rect } of boxes) {
         if (x >= rect.x0 && x <= rect.x1 && z >= rect.z0 && z <= rect.z1) out.push(rect);
@@ -103,7 +95,7 @@ export function buildSeaToys(layer, materials) {
       }
       return best;
     },
-    spots: () => [{ x: 15, z: -25.2 }],
+    spots: () => [{ x: 15, z: -19.6 }],
     update(dt) {
       if (reduced.matches) return;
       t += dt;
