@@ -11,6 +11,8 @@ import { createResidentEventTrigger, RESIDENT_EVENTS } from './resident-events.j
 import { createResidentDialogue } from './resident-dialogue.js';
 
 const WALK_SPEED = 1.35;
+const FLY_SPEED = 4.2;
+const SWORD_LIFT = 0.55;
 const GREETING_DISTANCE = 3.8;
 const BOAT_DOCK = { x: -14, z: -28.5 };
 const FISHING_SPOT = { x: -8, z: 27.35, y: 0.18, yaw: 0 };
@@ -58,6 +60,8 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
   const position = { x: bed.x, z: bed.z };
   const projection = new THREE.Vector3();
   const rod = createFishingRod(avatar.root);
+  const sword = createFlyingSword(avatar.root);
+  let lift = 0;
   let height = bed.y, heading = 0;
   let state = 'sleeping';
   let activity = 'sleeping';
@@ -280,7 +284,7 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     if (!target) { actions[routeDone]?.(); return; }
     const dx = target.x - position.x, dz = target.z - position.z;
     const distance = Math.hypot(dx, dz);
-    const step = Math.min(distance, dt * WALK_SPEED);
+    const step = Math.min(distance, dt * (routeKind === 'land' ? FLY_SPEED : WALK_SPEED));
     if (distance > 0.001) {
       position.x += dx / distance * step;
       position.z += dz / distance * step;
@@ -322,7 +326,7 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
 
   function updateBubble() {
     if (greeting.hidden) return;
-    projection.set(position.x, height + 2.65, position.z).project(stage.camera);
+    projection.set(position.x, height + lift + 2.65, position.z).project(stage.camera);
     if (projection.z < -1 || projection.z > 1 || Math.abs(projection.x) > 1 || Math.abs(projection.y) > 1) {
       greeting.hidden = true;
       return;
@@ -337,7 +341,7 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     dialogue.update(dt);
     if (dialogue.active) {
       greeting.hidden = true;
-      talkingPose.rest = state === 'researching' ? 'sit' : state === 'resting' ? restKind : null;
+      talkingPose.rest = state === 'researching' ? 'sit' : state === 'resting' && activity === 'resting' ? restKind : null;
       talkingPose.lookYaw = clamp(shortestAngle(angleBetween(position, player.pos) - heading), -1.1, 1.1);
       avatar.update(dt, talkingPose);
       return;
@@ -401,10 +405,15 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
       idlePose.lookYaw = Math.sin(eventClock * 0.38) * 0.32;
       avatar.update(dt, idlePose);
       avatar.armR.rotation.set(-0.45 + Math.sin(eventClock * 0.7) * 0.12, 0, 0.15);
-    } else if (state === 'walking') avatar.update(dt, { speed: WALK_SPEED / 3, fly: -1, lookYaw });
+    } else if (state === 'walking') {
+      // Outdoor routes ride a sword; stairs and rooms are still walked.
+      if (routeKind === 'land') avatar.update(dt, { speed: 0, fly: 0.2, lookYaw });
+      else avatar.update(dt, { speed: WALK_SPEED / 3, fly: -1, lookYaw });
+    }
     else if (state === 'sleeping') avatar.update(dt, { speed: 0, fly: -1, rest: 'lie', lookYaw });
     else if (state === 'boating') avatar.update(dt, resident.vehicle?.pose || { speed: 0, fly: -1, ride: true });
-    else if (state === 'resting') avatar.update(dt, { speed: 0, fly: -1, rest: restKind, lookYaw });
+    // Only a seat rest sits down; wandering, or returning from the boat, stands still.
+    else if (state === 'resting') avatar.update(dt, { speed: 0, fly: -1, rest: activity === 'resting' ? restKind : null, lookYaw });
     else if (state === 'fishing') {
       avatar.update(dt, { speed: 0, fly: -1, lookYaw });
       applyFishingPose(avatar);
@@ -418,7 +427,12 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
       }
     }
 
-    avatar.root.position.set(position.x, height, position.z);
+    // Lift the sword rider off the ground while flying; land (snap down) once any other activity starts.
+    const liftTarget = state === 'walking' && routeKind === 'land' ? SWORD_LIFT : 0;
+    if (state !== 'walking') lift = 0;
+    else lift += (liftTarget - lift) * Math.min(1, dt * 6);
+    sword.visible = lift > 0.02;
+    avatar.root.position.set(position.x, height + lift, position.z);
     avatar.root.rotation.y = heading;
     shadow.visible = false;
   }
@@ -575,6 +589,23 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
   addEventListener('pagehide', save);
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
   return resident;
+}
+
+// A plain flying sword hovering under the feet: one blade, a guard and a grip.
+// Built once and only shown while the resident flies a land route.
+function createFlyingSword(root) {
+  const group = new THREE.Group();
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.014, 1.6), new THREE.MeshLambertMaterial({ color: 0xcfefff, emissive: 0x2c7fa0, emissiveIntensity: 0.6 }));
+  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.04), new THREE.MeshLambertMaterial({ color: 0xd8b56a }));
+  const grip = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.04, 0.22), new THREE.MeshLambertMaterial({ color: 0x3a2a24 }));
+  blade.position.set(0, 0, 0.1);
+  guard.position.set(0, 0, -0.7);
+  grip.position.set(0, 0, -0.84);
+  group.add(blade, guard, grip);
+  group.position.set(0, -0.1, 0);
+  group.visible = false;
+  root.add(group);
+  return group;
 }
 
 function createFishingRod(root) {

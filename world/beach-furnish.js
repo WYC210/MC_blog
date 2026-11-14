@@ -71,6 +71,10 @@ export function furnishBeach({ B, obstacles, bakes }) {
     B.box(x, 1.05, z, 2.5, 0.14, 0.95, OAK);
     B.box(x, 0.58, z - 0.82, 2.25, 0.16, 0.34, DECK);
     B.box(x, 0.58, z + 0.82, 2.25, 0.16, 0.34, DECK);
+    // Benches stand on their own legs; without them the seats float in the air.
+    for (const dx of [-0.82, 0.82]) for (const dz of [-0.82, 0.82]) {
+      B.box(x + dx, 0.02, z + dz, 0.12, 0.56, 0.12, WALNUT);
+    }
     for (const dx of [-0.82, 0.82]) for (const dz of [-0.32, 0.32]) {
       B.box(x + dx, 0.02, z + dz, 0.12, 0.62, 0.12, WALNUT, { rz: dx > 0 ? -0.12 : 0.12 });
     }
@@ -127,6 +131,10 @@ export function furnishBeach({ B, obstacles, bakes }) {
     }
     B.box(x, 0.62, z + 0.95, 3.4, 0.16, 0.34, DECK);
     B.box(x, 0.62, z - 0.95, 3.4, 0.16, 0.34, DECK);
+    // Bench legs under each seat, so the benches are supported.
+    for (const dx of [-1.2, 1.2]) for (const dz of [-0.95, 0.95]) {
+      B.box(x + dx, 0.02, z + dz, 0.08, 0.6, 0.08, WALNUT);
+    }
     for (const dz of [-1.35, 1.35]) {
       B.box(x - 1.2, 0.02, z + dz, 0.08, 0.65, 0.08, WALNUT);
       B.box(x + 1.2, 0.02, z + dz, 0.08, 0.65, 0.08, WALNUT);

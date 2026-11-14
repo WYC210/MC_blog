@@ -17,6 +17,7 @@ function face(holder, world) {
   holder.append(img);
 }
 export function createWorldList({ onChoose }) {
+  // Fetch while the visitor is entering the world, before they open the list.
   void getWorlds();
   let root = null, revision = 0;
   const go = world => { if (world && !isCurrentWorld(world.url)) onChoose(world); };
@@ -69,6 +70,7 @@ export function createWorldList({ onChoose }) {
     host.dataset.loaded = String(ready);
     paint(initial, !ready);
     let result = await getWorlds(force);
+    // The startup fetch can lose to a busy first frame. Opening the list tries once more.
     if (result.missed && !force && ticket === revision && root === host) result = await getWorlds(true);
     if (ticket !== revision || root !== host) return;
     host.dataset.loaded = 'true';
@@ -81,7 +83,7 @@ export function createWorldList({ onChoose }) {
     host.setAttribute('aria-busy', String(loading));
     host.replaceChildren(screen);
     if (worlds.length) screen.append(group(t('世界', 'Worlds'), worlds));
-    else if (loading) screen.append(status(t('正在获取世界…', 'Loading worlds…')));
+    else if (loading) screen.append(status(t('正在获取列表…', 'Loading the list…')));
     else screen.append(status(t('暂时没有可访问的世界。', 'No worlds are available right now.')));
     screen.scrollTop = scroll;
     if (focused) [...screen.querySelectorAll('.world-row')].find(el => el.dataset.world === focused)?.focus();

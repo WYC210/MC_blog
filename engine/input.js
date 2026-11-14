@@ -15,6 +15,8 @@ export function createInput(canvas, handlers) {
   let drag = null, pinch = null;
   const blocked = () => handlers.blocked?.();
 
+  // Movement follows physical keys, even when an IME/layout changes `key`
+  // between keydown and keyup. Keep a fallback for keyboards without `code`.
   const keyId = event => event.code && event.code !== 'Unidentified' ? event.code : event.key.toLowerCase();
   const held = (code, fallback) => keys.has(code) || keys.has(fallback);
   const typing = event => event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement ||
@@ -25,6 +27,11 @@ export function createInput(canvas, handlers) {
     if (id === 'ControlLeft' || id === 'ControlRight' || id === 'control') { if (!typing(e) && !blocked()) keys.add(id); return; }
     if (typing(e) || e.metaKey || e.altKey || (e.ctrlKey && !movement)) return;
     if (k === 'escape') { handlers.escape?.(); return; }
+    // P or C opens the photo studio; the phone stays on its button.
+    if ((k === 'p' || k === 'c') && !movement && !e.repeat && !handlers.shortcutsBlocked?.()) {
+      handlers.photo?.();
+      return;
+    }
     if (!movement && /^[1-9]$/.test(k) && !handlers.shortcutsBlocked?.()) {
       if (!e.repeat) handlers.slot?.(Number(k));
       return;
@@ -48,7 +55,6 @@ export function createInput(canvas, handlers) {
         if (k === 'f' || k === 'e' || k === 'enter') handlers.interact?.();
         else if (k === 'm' || k === 'tab') { e.preventDefault(); handlers.map?.(); }
         else if (k === 'v') handlers.view?.();
-        else if (k === 'p') handlers.phone?.();
         else if (k === 'f3') { e.preventDefault(); handlers.debug?.(); }
       }
       handlers.anyKey?.(e);

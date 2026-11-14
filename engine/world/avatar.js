@@ -6,6 +6,8 @@ import { paintSkin, boxRegions, CAT } from './skin.js';
 const PX = 1.8 / 32;
 // In the water the body turns about its middle, this high above the feet.
 export const SWIM_PIVOT = 1.0;
+// Handheld selfie: the arm reaches towards the lens and the face turns to it.
+const SELFIE = { armR: -1.65, armRz: -0.38, armL: 0.08, armLz: 0.12, headYaw: -0.26, headPitch: -0.10 };
 
 function skinnedBox(w, h, d, regions, material, inflate = 0) {
   const g = new THREE.BoxGeometry((w + inflate) * PX, (h + inflate) * PX, (d + inflate) * PX);
@@ -119,7 +121,7 @@ export function createAvatar(skinUrl, { onFace } = {}) {
   // Pose state, eased every frame.
   const pose = { legR: 0, legL: 0, armR: 0, armL: 0, armRz: 0, armLz: 0, legRz: 0, legLz: 0, lean: 0 };
   const target = { ...pose };
-  let phase = 0, idleT = 0, waveT = 0, reachT = 0, reachArm = 'R', phoneOut = false, stroke = 0;
+  let phase = 0, idleT = 0, waveT = 0, reachT = 0, reachArm = 'R', phoneOut = false, selfie = false, stroke = 0;
   const look = { yaw: 0, pitch: 0 };
 
   // In the water: lying on the bottom, climbing out, diving in, treading
@@ -196,6 +198,8 @@ export function createAvatar(skinUrl, { onFace } = {}) {
     }
     // Holding the phone: the right arm forward and in, the head bowed to it.
     if (phoneOut) { target.armR = -1.2; target.armRz = 0.42; }
+    // Selfie: the arm reaches towards the lens, low in the frame.
+    if (selfie) { target.armR = SELFIE.armR; target.armRz = SELFIE.armRz; target.armL = SELFIE.armL; target.armLz = SELFIE.armLz; }
     if (s.rest) {
       const pitch = s.rest === 'recline' ? -0.7 : 0;
       Object.assign(target, { legR: s.rest === 'lie' ? 0 : -Math.PI / 2 - pitch, legL: s.rest === 'lie' ? 0 : -Math.PI / 2 - pitch,
@@ -229,9 +233,9 @@ export function createAvatar(skinUrl, { onFace } = {}) {
     }
     // The head looks where it is told, within a natural range. Swimming on
     // top, it lifts to look ahead over the water.
-    const headPitch = !w ? THREE.MathUtils.clamp(phoneOut ? 0.45 : s.lookPitch ?? 0, -0.5, 0.6)
+    const headPitch = !w ? THREE.MathUtils.clamp(selfie ? SELFIE.headPitch : phoneOut ? 0.45 : s.lookPitch ?? 0, -0.5, 0.6)
       : w.lie > 0.5 || w.dive ? 0 : w.surface ? (w.fast ? -0.2 : -THREE.MathUtils.clamp(w.pitch - 0.25, 0, 1.1)) : -0.35;
-    look.yaw += (THREE.MathUtils.clamp(s.lookYaw ?? 0, -1.1, 1.1) - look.yaw) * k * 0.6;
+    look.yaw += (THREE.MathUtils.clamp(selfie ? SELFIE.headYaw : s.lookYaw ?? 0, -1.1, 1.1) - look.yaw) * k * 0.6;
     look.pitch += (headPitch - look.pitch) * k * 0.6;
     head.rotation.y = look.yaw;
     head.rotation.x = look.pitch;
@@ -239,9 +243,21 @@ export function createAvatar(skinUrl, { onFace } = {}) {
 
   function wave() { waveT = 1.4; }
   function reach(arm = 'R') { reachT = 0.75; reachArm = arm; }
-  function holdPhone(on) { phoneOut = on; handset.visible = on; }
+  function holdPhone(on) { phoneOut = on; handset.visible = phoneOut && !selfie; }
+  // Selfie mode is the view from the phone, so the handset hides and only the
+  // raised arm remains in frame.
+  function poseSelfie(on) { selfie = on; handset.visible = phoneOut && !selfie; }
+  // World-space anchors for the photo camera: the face and the character's axes.
+  function selfieAnchors() {
+    root.updateMatrixWorld(true);
+    return {
+      face: new THREE.Vector3(0, 1.6, 4 * PX).applyMatrix4(root.matrixWorld),
+      forward: new THREE.Vector3(0, 0, 1).transformDirection(root.matrixWorld),
+      right: new THREE.Vector3(1, 0, 0).transformDirection(root.matrixWorld),
+    };
+  }
 
-  return { root, body, head, armR, armL, legR, legL, hand, blob, update, wave, reach, holdPhone, material };
+  return { root, body, head, armR, armL, legR, legL, hand, blob, update, wave, reach, holdPhone, poseSelfie, selfieAnchors, material };
 }
 
 // ---------- Pets ----------
