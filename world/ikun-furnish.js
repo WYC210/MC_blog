@@ -1,8 +1,8 @@
-import { RESIDENT_HOME } from './layout.js';
+import { IKUN_BED } from './layout.js';
 import { addRestPoint } from './rest-points.js';
 
 export function furnishIKUN({ B, obstacles, bakes }) {
-  const { bed } = RESIDENT_HOME;
+  const bed = IKUN_BED;
   const oak = { tex: 'oak' }, linen = { tex: 'linen', tint: 0xe5dfd0 };
   B.box(bed.x, 4.05, bed.z, 1.38, 0.22, 2.2, oak);
   B.box(bed.x, 4.27, bed.z, 1.3, 0.25, 2.12, linen);

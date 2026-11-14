@@ -352,17 +352,17 @@ export function setup({ stage, config, player, avatar, rig, sound, world, nav, q
   const audio = createConcertAudio(sound);
   const nightConcert = createNightConcert({ stage, world, nav, player, avatar, rig, sound, audio });
   nightConcert.update(0);
-  const resident = createResident({ stage, world, nav, player, jetSki, config, nightConcert });
   const nightNature = createNightNature({ stage, world, nav, quality });
   const lookout = createLookout({ stage, player, rig });
   const qinIsland = setupQinIsland({ world, player, avatar, stage, nav, rig, sound });
+  const resident = createResident({ stage, world, nav, player, jetSki, config, nightConcert, qinIsland, rig, sound });
   const coaster = createCoaster({ stage, player, rig, sound, world });
   const travelAgency = createTravelAgency({ player, rig, stage, nav, sound, fishing, lookout, qinIsland, coaster });
   return {
     fishing, furniture, jetSki, resident, nightConcert, nightNature, lookout, qinIsland, travelAgency, coaster,
     warmup(on) { qinIsland.warmup(on); },
-    interact: () => travelAgency.active || coaster.interact() || qinIsland.encounter.interact() || lookout.interact() || jetSki.interact() || furniture.interact() || nightConcert.interact(),
-    tap: (x, y, picked) => travelAgency.active || qinIsland.encounter.active || coaster.tap(x, y, picked) || lookout.tap() || jetSki.tap(x, y, picked) || furniture.tap(x, y, picked) || qinIsland.tap(x, y, picked),
+    interact: () => travelAgency.active || resident?.dialogue.active || coaster.interact() || qinIsland.encounter.interact() || resident?.interact() || lookout.interact() || jetSki.interact() || furniture.interact() || nightConcert.interact(),
+    tap: (x, y, picked) => travelAgency.active || qinIsland.encounter.active || resident?.tap(x, y, picked) || coaster.tap(x, y, picked) || lookout.tap() || jetSki.tap(x, y, picked) || furniture.tap(x, y, picked) || qinIsland.tap(x, y, picked),
     pad: jetSki.pad,
     update(dt) {
       coaster.update(dt);

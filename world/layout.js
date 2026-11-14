@@ -34,7 +34,7 @@ export const inPool = (x, z) => {
   return true; // the ocean ring
 };
 export const SPAWN = { x: 0.5, z: 18, heading: Math.PI };
-export const PIANO = { x: -16.6, z: -0.1 };
+export const PIANO = { x: -16.6, z: -0.1, floor: 1 };
 export const FOUNTAIN = { x: -5, z: -10, radius: 2.75 };
 export const LOOKOUT = {
   at: [0.5, -22.5], floor: 0,
@@ -46,7 +46,8 @@ export const STATIONS = [
   ...QIN_STATIONS,
   { id: 'lookout', name: '北岸观景点', en: 'North Lookout', icon: 'lookout', at: LOOKOUT.at, look: [0.5, 0], floor: LOOKOUT.floor, page: false },
   { id: 'computer', name: '电脑', en: 'Computer', icon: 'computer', at: [COMPUTER.x + 2.2, COMPUTER.z], look: [COMPUTER.x, COMPUTER.z], floor: COMPUTER.floor },
-  { id: 'piano', name: '钢琴', en: 'Piano', icon: 'piano', at: [PIANO.x, PIANO.z + 2.2], look: [PIANO.x, PIANO.z] },
+  { id: 'piano', name: '钢琴', en: 'Piano', icon: 'piano', at: [PIANO.x, PIANO.z + 2.2], look: [PIANO.x, PIANO.z], floor: PIANO.floor },
+  { id: 'lehun', name: '乐魂小屋', en: 'LeHun Cottage', icon: 'lehun', at: [9.8, 46.5], look: [9.8, 43.5], floor: 12, page: false },
   { id: 'mailbox', name: '留言', en: 'Mailbox', icon: 'mailbox', at: [0.5, 23.9], look: [0.5, 25.5] },
   { id: 'portal', name: '传送门', en: 'Portal', icon: 'portal', at: [8, 23.1], look: [8, 25.5] },
 ];
@@ -80,9 +81,11 @@ export const IKUN_CENTER = {
   z: MODEL_ORIGIN.z + IKUN_SIZE[2] * IKUN_SCALE[2] / 2,
 };
 export const IKUN_ENTRY = { x: IKUN_CENTER.x, z: MODEL_ORIGIN.z + IKUN_SIZE[2] * IKUN_SCALE[2] + 0.65 };
+export const IKUN_BED = { id: 'ikun-resident-bed', name: 'IKUN 的床', en: 'IKUN bed', x: IKUN_CENTER.x + 1.45, y: 4.52, z: 0.8, floor: 4, yaw: 0, kind: 'lie' };
 export const RESIDENT_HOME = {
-  approach: { x: IKUN_CENTER.x - 0.1, z: 0.8, y: 4 },
-  bed: { id: 'ikun-resident-bed', name: 'IKUN 的床', en: 'IKUN bed', x: IKUN_CENTER.x + 1.45, y: 4.52, z: 0.8, floor: 4, yaw: 0, kind: 'lie' },
+  entry: { x: -21.5, z: 15.5, y: 0 },
+  approach: { x: -18.9, z: 11.1, y: 1 },
+  bed: { id: 'home-bed', name: '卧室床', en: 'Bed', x: -17.1, y: 1.61, z: 11.45, floor: 1, yaw: Math.PI, kind: 'lie' },
 };
 // The LeHun cottage from a litematic, hovering over the swimming bay: 18
 // wide centred on the bay (x -9..8), base four metres above the water (the

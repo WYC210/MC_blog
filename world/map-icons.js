@@ -115,6 +115,12 @@ const MARKS = {
     for (const column of [4, 7, 10, 13]) paint(column, 11, 1, 3, 'grey');
     paint(4, 4, 8, 1, 'gold');
   },
+  lehun: paint => {
+    paint(1, 14, 14, 1, 'water'); paint(4, 12, 2, 2, 'wood'); paint(10, 12, 2, 2, 'wood');
+    paint(3, 5, 10, 8, 'ink'); paint(4, 6, 8, 6, 'pink');
+    paint(1, 5, 14, 2, 'ink'); paint(3, 3, 10, 2, 'pink'); paint(5, 1, 6, 2, 'pink');
+    paint(5, 8, 2, 2, 'white'); paint(9, 8, 2, 4, 'wood'); paint(10, 9, 1, 1, 'gold');
+  },
   lookout: paint => {
     paint(2, 3, 10, 5, 'ink'); paint(3, 4, 8, 3, 'navy'); paint(1, 4, 2, 3, 'gold');
     paint(11, 2, 3, 7, 'ink'); paint(12, 3, 2, 5, 'blue'); paint(12, 3, 1, 2, 'white');

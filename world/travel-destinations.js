@@ -1,4 +1,4 @@
-import { SPAWN, inPool } from './layout.js';
+import { SPAWN, STATIONS, floorAt, inPool } from './layout.js';
 import { QIN_ATTRACTIONS, QIN_STATIONS } from './qin-island-layout.js';
 
 const EXTRA_STOPS = {
@@ -23,26 +23,31 @@ const EAST = new Set(['qin-blessing', 'qin-waterwheel', 'qin-quyuan', 'qin-xufu'
 
 export const TRAVEL_GROUPS = [
   { id: 'all', name: '全部', en: 'All' },
+  { id: 'home', name: '主岛', en: 'Home Island' },
   { id: 'axis', name: '秦皇游线', en: 'Imperial' },
   { id: 'west', name: '战国风情', en: 'Seven States' },
   { id: 'east', name: '海滨园林', en: 'Coast & Garden' },
 ];
 
 export const TRAVEL_DESTINATIONS = [
-  QIN_STATIONS.find(station => station.id === 'qin-island'),
-  ...QIN_ATTRACTIONS.map(attraction => {
-    const station = QIN_STATIONS.find(entry => entry.id === attraction.id);
-    return station || { id: attraction.id, name: attraction.name, en: attraction.en, ...EXTRA_STOPS[attraction.id] };
-  }),
-  QIN_STATIONS.find(station => station.id === 'qin-garden'),
-].map(station => ({ ...station, floor: station.floor || 0, group: WEST.has(station.id) ? 'west' : EAST.has(station.id) ? 'east' : 'axis' }));
+  ...STATIONS.filter(station => !QIN_STATIONS.some(entry => entry.id === station.id))
+    .map(station => ({ ...station, floor: station.floor ?? 0, group: 'home' })),
+  ...[
+    QIN_STATIONS.find(station => station.id === 'qin-island'),
+    ...QIN_ATTRACTIONS.map(attraction => {
+      const station = QIN_STATIONS.find(entry => entry.id === attraction.id);
+      return station || { id: attraction.id, name: attraction.name, en: attraction.en, ...EXTRA_STOPS[attraction.id] };
+    }),
+    QIN_STATIONS.find(station => station.id === 'qin-garden'),
+  ].map(station => ({ ...station, floor: station.floor ?? 0, group: WEST.has(station.id) ? 'west' : EAST.has(station.id) ? 'east' : 'axis' })),
+];
 
 export const HOME_DESTINATION = { id: 'home-island', name: '返回主岛', en: 'Return Home',
   at: [SPAWN.x, SPAWN.z], look: [SPAWN.x + Math.sin(SPAWN.heading), SPAWN.z + Math.cos(SPAWN.heading)], floor: 0, icon: 'logo' };
 
 export function travelLanding(nav, destination) {
   const stand = nav.nearestStand(...destination.at);
-  if (!stand || !nav.canStand(stand.x, stand.z) || inPool(stand.x, stand.z)
+  if (!stand || !nav.canStand(stand.x, stand.z) || (inPool(stand.x, stand.z) && floorAt(stand.x, stand.z) <= 0)
     || Math.hypot(stand.x - destination.at[0], stand.z - destination.at[1]) > 2.5
     || Math.abs(nav.heightAt(stand.x, stand.z) - destination.floor) > 0.2) return null;
   return stand;

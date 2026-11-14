@@ -5,7 +5,7 @@
 // lighting is baked, and each piece registers an obstacle for the nav.
 import * as THREE from 'three';
 import { canvasTexture } from '@engine/world/textures.js';
-import { PIANO, COMPUTER } from './layout.js';
+import { PIANO, COMPUTER, RESIDENT_HOME } from './layout.js';
 import { addRestPoint } from './rest-points.js';
 
 const FLOOR = 1;
@@ -196,7 +196,7 @@ export function furnishGONGLU({ B, obstacles, bakes, surfaces, hotspots }) {
   B.box(bedX, FLOOR + 0.611, 10.62, 2.02, 0.035, 0.53, accent);
   for (const offset of [-0.99, 0.99]) B.box(bedX + offset, FLOOR + 0.35, 10.62, 0.045, 0.26, 0.53, accent);
   foot(bedX, 11.5, 2.23, 2.65);
-  addRestPoint({ id: 'home-bed', name: '卧室床', en: 'Bed', x: bedX, y: FLOOR + 0.61, z: 11.45, floor: FLOOR, yaw: Math.PI, kind: 'lie' });
+  addRestPoint(RESIDENT_HOME.bed);
   for (const side of [-1, 1]) {
     const nightstandX = bedX + side * 1.5;
     for (const offset of [-0.2, 0.2]) B.box(nightstandX + offset, FLOOR + 0.03, 12.28, 0.045, 0.15, 0.42, L.dark);

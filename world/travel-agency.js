@@ -57,7 +57,7 @@ export function createTravelAgency({ player, rig, stage, nav, sound, fishing, lo
 
   function labels() {
     heading.textContent = t('旅行社', 'Travel Agency');
-    subtitle.textContent = t('求仙之旅，想去就去', 'Your next stop, a tap away');
+    subtitle.textContent = t('主岛与秦岛，想去就去', 'Home or Qin, a tap away');
     search.placeholder = t('搜索景点…', 'Search landmarks…');
     search.setAttribute('aria-label', t('搜索景点', 'Search landmarks'));
     filters.setAttribute('aria-label', t('景点分区', 'Landmark areas'));

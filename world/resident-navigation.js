@@ -1,6 +1,7 @@
-import { IKUN_ENTRY, ISLAND, RESIDENT_HOME } from './layout.js';
+import { ISLAND, RESIDENT_HOME } from './layout.js';
 
 const DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const BOAT_HEADINGS = Array.from({ length: 8 }, (_, index) => index * Math.PI / 4);
 const SHORE_ACCESS = [
   { land: { x: -14, z: -23.5 }, water: { x: -14, z: -28.5 } },
   { land: { x: -32.5, z: 4 }, water: { x: -38.5, z: 4 } },
@@ -9,26 +10,31 @@ const SHORE_ACCESS = [
 ];
 
 export function createResidentNavigation({ nav, world, jetSki }) {
-  const width = ISLAND.x1 - ISLAND.x0, depth = ISLAND.z1 - ISLAND.z0;
-  const size = width * depth;
+  const spanX = ISLAND.x1 - ISLAND.x0, spanZ = ISLAND.z1 - ISLAND.z0;
+  const size = spanX * spanZ;
+  let width = spanX, depth = spanZ, spacing = 1;
   const cache = new Int8Array(size);
   const parent = new Int32Array(size);
   const queue = new Int32Array(size);
+  const cost = new Int32Array(size);
+  const queued = new Int32Array(size);
   const shores = SHORE_ACCESS.filter(shore => nav.canStand(shore.land.x, shore.land.z) && jetSki.canSwim(shore.water.x, shore.water.z));
-  const xOf = index => ISLAND.x0 + index % width + 0.5;
-  const zOf = index => ISLAND.z0 + Math.floor(index / width) + 0.5;
+  const xOf = index => ISLAND.x0 + (index % width + 0.5) * spacing;
+  const zOf = index => ISLAND.z0 + (Math.floor(index / width) + 0.5) * spacing;
 
   function pass(x, z, boat) {
     if (!jetSki.canSwim(x, z)) return false;
     if (!boat) return true;
-    for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) if (!jetSki.canFloat(x, z, yaw)) return false;
+    for (const yaw of BOAT_HEADINGS) if (!jetSki.canFloat(x, z, yaw)) return false;
     return true;
   }
 
   function line(first, second, boat) {
     const steps = Math.max(1, Math.ceil(Math.hypot(second.x - first.x, second.z - first.z) / 0.25));
-    for (let index = 1; index <= steps; index++) {
-      if (!pass(first.x + (second.x - first.x) * index / steps, first.z + (second.z - first.z) * index / steps, boat)) return false;
+    const yaw = Math.atan2(second.x - first.x, second.z - first.z);
+    for (let index = 0; index <= steps; index++) {
+      const column = first.x + (second.x - first.x) * index / steps, row = first.z + (second.z - first.z) * index / steps;
+      if (boat ? !jetSki.canFloat(column, row, yaw) : !jetSki.canSwim(column, row)) return false;
     }
     return true;
   }
@@ -40,47 +46,94 @@ export function createResidentNavigation({ nav, world, jetSki }) {
 
   function nearest(point, boat) {
     let best = -1, distance = 4;
-    const column = Math.floor(point.x - ISLAND.x0), row = Math.floor(point.z - ISLAND.z0);
+    const column = Math.floor((point.x - ISLAND.x0) / spacing), row = Math.floor((point.z - ISLAND.z0) / spacing);
     for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++) {
       const x = column + dx, z = row + dz;
       if (x < 0 || x >= width || z < 0 || z >= depth) continue;
       const index = x + z * width;
       const away = Math.hypot(xOf(index) - point.x, zOf(index) - point.z);
       if (away >= distance || !cellPass(index, boat)) continue;
-      if (!line(point, { x: xOf(index), z: zOf(index) }, false)) continue;
+      if (!line(point, { x: xOf(index), z: zOf(index) }, boat)) continue;
       best = index; distance = away;
     }
     return best;
   }
 
   function waterPath(start, goal, boat = false) {
+    return search(start, goal, boat, boat ? 4 : 1) || (boat ? search(start, goal, true, 1) : null);
+  }
+
+  function search(start, goal, boat, step) {
+    spacing = step; width = Math.ceil(spanX / spacing); depth = Math.ceil(spanZ / spacing);
     cache.fill(0); parent.fill(-2);
+    if (boat && (!pass(start.x, start.z, true) || !pass(goal.x, goal.z, true))) return null;
     if (pass(goal.x, goal.z, boat) && line(start, goal, boat)) return [{ x: goal.x, z: goal.z }];
     const first = nearest(start, boat), last = nearest(goal, boat);
     if (first < 0 || last < 0) return null;
-    let head = 0, tail = 0;
-    queue[tail++] = first; parent[first] = -1;
-    while (head < tail && parent[last] === -2) {
-      const index = queue[head++], column = index % width, row = Math.floor(index / width);
+    const lastColumn = last % width, lastRow = Math.floor(last / width);
+    cost.fill(0x7fffffff); queued.fill(-1);
+    let count = 0;
+    function score(index) {
+      return cost[index] + Math.abs(index % width - lastColumn) + Math.abs(Math.floor(index / width) - lastRow);
+    }
+    function before(first, second) {
+      const difference = score(first) - score(second);
+      return difference < 0 || difference === 0 && cost[first] > cost[second];
+    }
+    function enqueue(index) {
+      let slot = queued[index];
+      if (slot < 0) slot = count++;
+      while (slot > 0) {
+        const above = (slot - 1) >> 1, previous = queue[above];
+        if (!before(index, previous)) break;
+        queue[slot] = previous; queued[previous] = slot; slot = above;
+      }
+      queue[slot] = index; queued[index] = slot;
+    }
+    function dequeue() {
+      const result = queue[0], replacement = queue[--count];
+      let slot = 0;
+      while (slot * 2 + 1 < count) {
+        let child = slot * 2 + 1;
+        if (child + 1 < count && before(queue[child + 1], queue[child])) child++;
+        if (!before(queue[child], replacement)) break;
+        queue[slot] = queue[child]; queued[queue[slot]] = slot; slot = child;
+      }
+      if (count) { queue[slot] = replacement; queued[replacement] = slot; }
+      queued[result] = -2;
+      return result;
+    }
+    cost[first] = 0; parent[first] = -1; enqueue(first);
+    while (count) {
+      const index = dequeue(), column = index % width, row = Math.floor(index / width);
+      if (index === last) break;
       for (const [dx, dz] of DIRECTIONS) {
         const x = column + dx, z = row + dz;
         if (x < 0 || x >= width || z < 0 || z >= depth) continue;
         const next = x + z * width;
-        if (parent[next] !== -2 || !cellPass(next, boat)) continue;
-        parent[next] = index; queue[tail++] = next;
+        if (queued[next] === -2 || cost[next] <= cost[index] + 1 || !cellPass(next, boat)) continue;
+        if (!line({ x: xOf(index), z: zOf(index) }, { x: xOf(next), z: zOf(next) }, boat)) continue;
+        parent[next] = index; cost[next] = cost[index] + 1; enqueue(next);
       }
     }
     if (parent[last] === -2) return null;
     const points = [];
     for (let index = last; index >= 0; index = parent[index]) points.push({ x: xOf(index), z: zOf(index) });
     points.reverse();
-    if (pass(goal.x, goal.z, boat) && line(points[points.length - 1], goal, boat)) points.push({ x: goal.x, z: goal.z });
+    const corners = [points[0]];
+    for (let index = 1; index < points.length - 1; index++) {
+      const previous = points[index - 1], current = points[index], next = points[index + 1];
+      if (current.x - previous.x !== next.x - current.x || current.z - previous.z !== next.z - current.z) corners.push(current);
+    }
+    if (points.length > 1) corners.push(points[points.length - 1]);
+    if (pass(goal.x, goal.z, boat) && line(corners[corners.length - 1], goal, boat)) corners.push({ x: goal.x, z: goal.z });
     const result = [];
     let anchor = start, next = 0;
-    while (next < points.length) {
+    while (next < corners.length) {
       let end = next;
-      while (end + 1 < points.length && line(anchor, points[end + 1], boat)) end++;
-      result.push(points[end]); anchor = points[end]; next = end + 1;
+      if (!line(anchor, corners[next], boat)) return null;
+      while (end + 1 < corners.length && line(anchor, corners[end + 1], boat)) end++;
+      result.push(corners[end]); anchor = corners[end]; next = end + 1;
     }
     return result;
   }
@@ -110,14 +163,11 @@ export function createResidentNavigation({ nav, world, jetSki }) {
 
   function homeRoute(entering) {
     const points = [
-      { x: IKUN_ENTRY.x, z: IKUN_ENTRY.z, y: 0 },
-      { x: IKUN_ENTRY.x, z: 10.5, y: 0 },
-      { x: IKUN_ENTRY.x, z: 9.5, y: 1 },
-      { x: IKUN_ENTRY.x, z: 8.5, y: 2 },
-      { x: IKUN_ENTRY.x, z: 7.5, y: 3 },
-      { x: IKUN_ENTRY.x, z: 6.5, y: 4 },
-      { x: IKUN_ENTRY.x, z: 5.5, y: 4 },
-      { x: RESIDENT_HOME.approach.x, z: RESIDENT_HOME.approach.z, y: 4 },
+      RESIDENT_HOME.entry,
+      { x: -21.5, z: 14.5, y: 0.5 },
+      { x: -21.5, z: 13.5, y: 1 },
+      { x: -20.375, z: 11.625, y: 1 },
+      RESIDENT_HOME.approach,
     ];
     return entering ? points : points.reverse();
   }

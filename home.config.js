@@ -1,13 +1,12 @@
 export default {
   name: 'Wyc',
   // 64×64 PNG, 4px arms, ≤ 18000 bytes. docs/avatar.md
-  skin: '',
+  skin: 'assets/me.png',
   languages: ['zh', 'en'],
   weather: { city: '上海', cityEn: 'Shanghai', latitude: 31.23, longitude: 121.47, timezone: 'Asia/Shanghai' },
   start: { weather: 'auto', time: 'auto' },
   dock: ['blog', 'about', 'mailbox', 'phone'],
-  // Optional NPC based on the showcase character.
-  resident: { enabled: true, name: 'Terry', skin: 'assets/terry-skin.png' },
+  resident: { enabled: true },
   computer: {
     apps: [
       { id: 'github', name: 'GitHub', en: 'GitHub', category: 'dev', icon: 'github', url: 'https://github.com/WYC210' },

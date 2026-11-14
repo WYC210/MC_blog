@@ -1,9 +1,14 @@
 import * as THREE from 'three';
 import { createAvatar } from '@engine/world/avatar.js';
+import { t, onLang } from '@engine/lang.js';
 import { createResidentNavigation } from './resident-navigation.js';
+import { createResidentBoatPilot } from './resident-boat-pilot.js';
+import { createResidentStore, residentStorageKey, RESIDENT_STATE_VERSION } from './resident-state.js';
 import { REST_POINTS } from './rest-points.js';
 import { applyFishingPose } from './fishing.js';
-import { IKUN_ENTRY, RESIDENT_HOME } from './layout.js';
+import { RESIDENT_HOME } from './layout.js';
+import { createResidentEventTrigger, RESIDENT_EVENTS } from './resident-events.js';
+import { createResidentDialogue } from './resident-dialogue.js';
 
 const WALK_SPEED = 1.35;
 const GREETING_DISTANCE = 3.8;
@@ -26,40 +31,45 @@ function shortestAngle(angle) {
   return Math.atan2(Math.sin(angle), Math.cos(angle));
 }
 
-export function createResident({ stage, world, nav, player, jetSki, config, nightConcert }) {
+export function createResident({ stage, world, nav, player, jetSki, config, nightConcert, qinIsland, rig, sound }) {
   const settings = config.resident;
   if (!settings?.enabled) return null;
 
-  const avatar = createAvatar(settings.skin || 'assets/terry-skin.png');
+  const avatar = createAvatar(settings.skin || config.skin);
   const shadow = avatar.blob;
   const navigation = createResidentNavigation({ nav, world, jetSki });
+  const boatPilot = createResidentBoatPilot({ ski: jetSki.ski, canFloat: jetSki.canFloat, findPath: navigation.waterPath });
+  const storageKey = residentStorageKey(location.href);
+  const store = createResidentStore({ key: storageKey });
   const beachSeats = REST_POINTS.filter(point => point.id?.startsWith('beach-'));
   const greeting = document.createElement('div');
   greeting.className = 'resident-greeting';
   greeting.hidden = true;
-  greeting.innerHTML = `<b></b><span>你好！ · Hello!</span>`;
+  greeting.innerHTML = '<b></b><span></span>';
+  const greetingText = greeting.querySelector('span');
+  let spokenLine = ['你好，欢迎来到我的世界，随意参观吧', 'Hello, welcome to my world. Feel free to explore!'];
+  const welcomeLine = spokenLine;
+  const labelGreeting = () => { greetingText.textContent = t(...spokenLine); };
+  labelGreeting(); onLang(labelGreeting);
   document.body.append(greeting);
   stage.scene.add(avatar.root, shadow);
 
   const bed = RESIDENT_HOME.bed;
   const position = { x: bed.x, z: bed.z };
-  const rideInput = { x: 0, z: -1, run: true, up: false, down: false };
   const projection = new THREE.Vector3();
   const rod = createFishingRod(avatar.root);
-  const boatEnd = { x: BOAT_DOCK.x, z: BOAT_DOCK.z };
   let height = bed.y, heading = 0;
   let state = 'sleeping';
   let activity = 'sleeping';
   let route = [];
   let routeIndex = 0;
   let routeDone = null;
+  let routeKind = 'land';
   let restPoint = null;
   let restKind = 'sit';
   let wait = 0;
   let activityClock = 0;
-  let boatRoute = null;
-  let boatIndex = 0;
-  let boatClock = 0;
+  let boatCooldown = 0;
   let greetingClock = 0;
   let greetingCooldown = 0;
   let bubbleClock = 0;
@@ -67,9 +77,16 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
   let lastNight = world.isNight();
   let lookYaw = 0;
   let concertClock = 0;
+  let saveClock = 0;
+  const eventTrigger = createResidentEventTrigger();
+  let sceneEvent = null, suspended = null;
+  let eventVisible = false;
+  let eventClock = 0, speechCooldown = 0, speechIndex = 0;
   const idlePose = { speed: 0, fly: -1, lookYaw: 0 };
+  const researchPose = { speed: 0, fly: -1, rest: 'sit', lookYaw: 0, lookPitch: 0.12 };
+  const talkingPose = { speed: 0, fly: -1, rest: null, lookYaw: 0 };
 
-  greeting.querySelector('b').textContent = settings.name || 'Terry';
+  greeting.querySelector('b').textContent = settings.name || config.name || 'Host';
   avatar.root.position.set(position.x, height, position.z);
   avatar.root.rotation.y = heading;
   avatar.update(0, { speed: 0, fly: -1, rest: 'lie' });
@@ -90,21 +107,20 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     route = path.map(point => ({ x: point.x, z: point.z, y: nav.heightAt(point.x, point.z) }));
     routeIndex = 0;
     routeDone = done;
+    routeKind = 'land';
     state = 'walking';
     return true;
   }
 
   function makeHomeRoute() {
-    const path = nav.findPath(position, IKUN_ENTRY);
-    const stairs = navigation.homeRoute(true);
-    if (!path?.length) return false;
-    route = path.map(point => ({ x: point.x, z: point.z, y: nav.heightAt(point.x, point.z) }));
-    route.push(...stairs.slice(1));
-    routeIndex = 0;
-    routeDone = arriveHome;
-    state = 'walking';
+    if (!makeLandRoute(RESIDENT_HOME.entry, 'enterHome')) return false;
     activity = 'home';
     return true;
+  }
+
+  function enterHome() {
+    route = navigation.homeRoute(true).slice(1);
+    routeIndex = 0; routeDone = 'arriveHome'; routeKind = 'home-enter'; state = 'walking';
   }
 
   function arriveHome() {
@@ -122,7 +138,7 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     const point = beachSeats[Math.floor(Math.random() * beachSeats.length)];
     restPoint = point;
     restKind = point.kind || 'sit';
-    return makeLandRoute(point, beginRest);
+    return makeLandRoute(point, 'beginRest');
   }
 
   function beginRest() {
@@ -147,37 +163,37 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
 
   function beginWander() {
     const target = WANDER_SPOTS[Math.floor(Math.random() * WANDER_SPOTS.length)];
-    return makeLandRoute(target, () => {
-      clearRoute(); state = 'resting'; activity = 'wandering'; wait = 4 + Math.random() * 8;
-    });
+    return makeLandRoute(target, 'finishWander');
+  }
+
+  function finishWander() {
+    clearRoute(); state = 'resting'; activity = 'wandering'; wait = 4 + Math.random() * 8;
   }
 
   function beginBoat() {
-    const path = nav.findPath(position, { x: -14, z: -23.5 });
-    if (!path?.length) return false;
-    route = path.map(point => ({ x: point.x, z: point.z, y: nav.heightAt(point.x, point.z) }));
-    routeIndex = 0;
-    routeDone = boardBoat;
-    state = 'walking';
+    if (boatCooldown > 0 || jetSki.occupied || jetSki.reservedBy) return false;
+    if (!makeLandRoute({ x: -14, z: -23.5 }, 'boardBoat')) return false;
     activity = 'boating';
     return true;
   }
 
   function boardBoat() {
     clearRoute();
+    if (!jetSki.reserve(resident)) { state = 'resting'; boatCooldown = 20; chooseActivity(); return; }
+    const previousX = position.x, previousZ = position.z, previousY = height;
     setPosition(jetSki.ski.position.x, jetSki.ski.position.z, 0);
     state = 'swim';
-    if (!jetSki.reserve(resident)) { chooseActivity(); return; }
-    if (!jetSki.boardNPC(resident, resident)) { jetSki.release(resident); chooseActivity(); return; }
-    boatRoute = navigation.waterPath({ x: jetSki.ski.position.x, z: jetSki.ski.position.z }, boatEnd, true);
-    if (!boatRoute?.length) { dismountBoat(); return; }
-    boatIndex = 0;
-    boatClock = 0;
+    if (!jetSki.boardNPC(resident, resident)) {
+      jetSki.release(resident); setPosition(previousX, previousZ, previousY);
+      state = 'resting'; boatCooldown = 20; chooseActivity(); return;
+    }
+    if (!boatPilot.start(BOAT_DOCK)) { boatCooldown = 90; dismountBoat(); return; }
     state = 'boating';
   }
 
   function dismountBoat() {
     if (!resident.vehicle) return;
+    boatPilot.cancel(); boatCooldown = Math.max(boatCooldown, 30);
     const controller = resident.vehicle;
     controller.stop();
     resident.vehicle = null;
@@ -186,9 +202,13 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     activity = 'boating';
     route = [];
     routeIndex = 0;
-    routeDone = () => { state = 'resting'; wait = 4; };
+    routeDone = 'finishBoatReturn';
     const shore = nav.nearestStand(BOAT_DOCK.x, -26.1);
     if (shore) makeLandRoute(shore, routeDone);
+  }
+
+  function finishBoatReturn() {
+    clearRoute(); state = 'resting'; wait = 4;
   }
 
   function chooseActivity() {
@@ -207,7 +227,7 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
   }
 
   function beginFishingRoute() {
-    return makeLandRoute(FISHING_SPOT, beginFishing);
+    return makeLandRoute(FISHING_SPOT, 'beginFishing');
   }
 
   function beginHome() {
@@ -228,16 +248,21 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     }
     routeIndex = closest;
     routeDone = done;
+    routeKind = 'home-exit';
     state = 'walking';
+  }
+
+  function leaveHome() {
+    setPosition(RESIDENT_HOME.entry.x, RESIDENT_HOME.entry.z, RESIDENT_HOME.entry.y); chooseActivity();
   }
 
   function reachConcert() {
     activity = 'concert';
-    if (!makeLandRoute(nightConcert.target, () => {
-      clearRoute();
-      state = 'concert';
-      heading = -Math.PI / 2;
-    })) beginHome();
+    if (!makeLandRoute(nightConcert.target, 'arriveConcert')) beginHome();
+  }
+
+  function arriveConcert() {
+    clearRoute(); state = 'concert'; heading = -Math.PI / 2;
   }
 
   function beginConcert() {
@@ -246,13 +271,13 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     if (resident.vehicle) dismountBoat();
     if (state === 'swim') setPosition(BOAT_DOCK.x, BOAT_DOCK.z, 0);
     activity = 'concert';
-    if (height > 0.5) exitHome(reachConcert);
+    if (height > 0.5) exitHome('reachConcert');
     else reachConcert();
   }
 
   function updateWalking(dt) {
     const target = route[routeIndex];
-    if (!target) { routeDone?.(); return; }
+    if (!target) { actions[routeDone]?.(); return; }
     const dx = target.x - position.x, dz = target.z - position.z;
     const distance = Math.hypot(dx, dz);
     const step = Math.min(distance, dt * WALK_SPEED);
@@ -264,34 +289,28 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     }
     if (distance <= step + 0.02) {
       position.x = target.x; position.z = target.z; height = target.y;
-      if (++routeIndex >= route.length) { const done = routeDone; clearRoute(); done?.(); }
+      if (++routeIndex >= route.length) { const done = routeDone; clearRoute(); actions[done]?.(); }
     }
   }
 
   function updateBoat(dt) {
-    if (!resident.vehicle || !boatRoute?.length) { dismountBoat(); return; }
-    const target = boatRoute[boatIndex];
-    const dx = target.x - jetSki.ski.position.x, dz = target.z - jetSki.ski.position.z;
-    const distance = Math.hypot(dx, dz);
-    const desired = Math.atan2(dx, dz);
-    rideInput.x = clamp(shortestAngle(desired - jetSki.ski.rotation.y) * 1.8, -1, 1);
-    rideInput.z = -1;
-    resident.vehicle.update(dt, rideInput);
+    if (!resident.vehicle) return;
+    const result = boatPilot.update(dt, resident.vehicle);
     position.x = jetSki.ski.position.x; position.z = jetSki.ski.position.z;
     heading = jetSki.ski.rotation.y; height = resident.vehicle.rider.y;
-    boatClock += dt;
-    if (distance < 1.4 && ++boatIndex >= boatRoute.length || boatClock > 30) dismountBoat();
+    if (result === 'failed') boatCooldown = 90;
+    if (result === 'arrived' || result === 'failed') dismountBoat();
   }
 
   function updateGreeting(dt) {
     greetingCooldown = Math.max(0, greetingCooldown - dt);
     const distance = Math.hypot(player.pos.x - position.x, player.pos.z - position.z);
-    const near = distance < GREETING_DISTANCE && state !== 'sleeping' && state !== 'boating';
+    const near = distance < GREETING_DISTANCE && Math.abs(player.y - height) < 2 && state !== 'sleeping' && state !== 'boating';
     if (near) {
       lookYaw = clamp(shortestAngle(angleBetween(position, player.pos) - heading), -1.1, 1.1);
       if (greetingCooldown <= 0) {
         avatar.wave(); greetingCooldown = 8;
-        bubbleClock = 2.4;
+        bubbleClock = 5;
       }
       if (bubbleClock > 0) bubbleClock -= dt;
       greeting.hidden = bubbleClock <= 0;
@@ -304,12 +323,35 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
   function updateBubble() {
     if (greeting.hidden) return;
     projection.set(position.x, height + 2.65, position.z).project(stage.camera);
-    const x = (projection.x * 0.5 + 0.5) * innerWidth;
-    const y = (-projection.y * 0.5 + 0.5) * innerHeight;
-    greeting.style.transform = `translate(${x}px, ${y}px)`;
+    if (projection.z < -1 || projection.z > 1 || Math.abs(projection.x) > 1 || Math.abs(projection.y) > 1) {
+      greeting.hidden = true;
+      return;
+    }
+    const halfWidth = greeting.offsetWidth / 2;
+    const x = clamp((projection.x * 0.5 + 0.5) * innerWidth, halfWidth + 12, innerWidth - halfWidth - 12);
+    const y = clamp((-projection.y * 0.5 + 0.5) * innerHeight, greeting.offsetHeight + 16, innerHeight - 16);
+    greeting.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
   }
 
   function update(dt) {
+    dialogue.update(dt);
+    if (dialogue.active) {
+      greeting.hidden = true;
+      talkingPose.rest = state === 'researching' ? 'sit' : state === 'resting' ? restKind : null;
+      talkingPose.lookYaw = clamp(shortestAngle(angleBetween(position, player.pos) - heading), -1.1, 1.1);
+      avatar.update(dt, talkingPose);
+      return;
+    }
+    boatCooldown = Math.max(0, boatCooldown - dt);
+    const nextEvent = eventTrigger.update(player, dt);
+    if (nextEvent !== sceneEvent) changeEvent(nextEvent);
+    if (sceneEvent) {
+      updateEvent(dt);
+      updatePose(dt);
+      bubbleClockStep += dt;
+      if (bubbleClockStep > 0.1) { bubbleClockStep = 0; updateBubble(); }
+      return;
+    }
     const night = world.isNight();
     if (night !== lastNight) {
       lastNight = night;
@@ -318,7 +360,7 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
         if (nightConcert?.active) beginConcert();
         else beginHome();
       } else if (state === 'sleeping' || activity === 'home' || activity === 'concert') {
-        if (height > 0.5) exitHome(chooseActivity);
+        if (height > 0.5) exitHome('chooseActivity');
         else chooseActivity();
       }
     }
@@ -337,12 +379,30 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
         if (state === 'fishing') rod.visible = false;
         chooseActivity();
       }
-    } else if (state === 'sleeping') {
-      avatar.update(dt, { speed: 0, fly: -1, rest: 'lie', lookYaw });
     }
 
     updateGreeting(dt);
-    if (state === 'walking') avatar.update(dt, { speed: WALK_SPEED / 3, fly: -1, lookYaw });
+    updatePose(dt);
+    bubbleClockStep += dt;
+    if (bubbleClockStep > 0.1) { bubbleClockStep = 0; updateBubble(); }
+    saveClock += dt;
+    if (saveClock >= 3) { saveClock = 0; save(); }
+  }
+
+  function updatePose(dt) {
+    if (state === 'researching') {
+      if (!eventVisible) return;
+      researchPose.lookYaw = Math.sin(eventClock * 0.48) * 0.18;
+      avatar.update(dt, researchPose);
+      avatar.armR.rotation.set(-1.12 + Math.sin(eventClock * 5) * 0.045, 0, 0.08);
+      avatar.armL.rotation.set(-1.08 + Math.sin(eventClock * 5 + 1.3) * 0.04, 0, -0.08);
+    } else if (state === 'investigating') {
+      if (!eventVisible) return;
+      idlePose.lookYaw = Math.sin(eventClock * 0.38) * 0.32;
+      avatar.update(dt, idlePose);
+      avatar.armR.rotation.set(-0.45 + Math.sin(eventClock * 0.7) * 0.12, 0, 0.15);
+    } else if (state === 'walking') avatar.update(dt, { speed: WALK_SPEED / 3, fly: -1, lookYaw });
+    else if (state === 'sleeping') avatar.update(dt, { speed: 0, fly: -1, rest: 'lie', lookYaw });
     else if (state === 'boating') avatar.update(dt, resident.vehicle?.pose || { speed: 0, fly: -1, ride: true });
     else if (state === 'resting') avatar.update(dt, { speed: 0, fly: -1, rest: restKind, lookYaw });
     else if (state === 'fishing') {
@@ -361,8 +421,127 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     avatar.root.position.set(position.x, height, position.z);
     avatar.root.rotation.y = heading;
     shadow.visible = false;
-    bubbleClockStep += dt;
-    if (bubbleClockStep > 0.1) { bubbleClockStep = 0; updateBubble(); }
+  }
+
+  const actions = { enterHome, arriveHome, beginRest, beginFishing, finishWander, boardBoat,
+    finishBoatReturn, arriveConcert, chooseActivity, reachConcert, leaveHome };
+
+  function changeEvent(next) {
+    if (next) {
+      if (!sceneEvent) suspended = snapshot();
+      if (resident.vehicle) dismountBoat();
+      boatPilot.cancel(); jetSki.release(resident);
+      clearRoute(); rod.visible = false;
+      const event = RESIDENT_EVENTS[next];
+      setPosition(event.position.x, event.position.z, event.position.y);
+      heading = event.heading; state = event.state; activity = event.state;
+      avatar.root.rotation.y = heading;
+    } else {
+      clearRoute();
+      if (!restore(suspended)) {
+        arriveHome(); lastNight = world.isNight();
+        if (!lastNight) { exitHome('leaveHome'); activity = 'home'; }
+        else if (nightConcert?.active) beginConcert();
+      }
+      suspended = null;
+    }
+    sceneEvent = next;
+    eventClock = 0; speechCooldown = 0; speechIndex = 0;
+    bubbleClock = 0; greetingCooldown = 0; lookYaw = 0; greeting.hidden = true;
+    spokenLine = welcomeLine; labelGreeting();
+    save();
+  }
+
+  function updateEvent(dt) {
+    const event = RESIDENT_EVENTS[sceneEvent];
+    eventClock += dt;
+    projection.set(position.x, height + 1, position.z).project(stage.camera);
+    eventVisible = projection.z >= -1 && projection.z <= 1 && Math.abs(projection.x) < 1.2 && Math.abs(projection.y) < 1.2;
+    const distance = Math.hypot(player.pos.x - position.x, player.pos.z - position.z);
+    const blocked = qinIsland?.encounter.active || document.querySelector('dialog[open]');
+    if (distance > event.distance || Math.abs(player.y - height) > 2.5 || blocked) {
+      greeting.hidden = true; bubbleClock = 0; speechCooldown = 0;
+      return;
+    }
+    speechCooldown = Math.max(0, speechCooldown - dt);
+    bubbleClock = Math.max(0, bubbleClock - dt);
+    if (speechCooldown <= 0) {
+      spokenLine = event.lines[speechIndex]; labelGreeting();
+      speechIndex = (speechIndex + 1) % event.lines.length;
+      bubbleClock = 6; speechCooldown = 15;
+    }
+    greeting.hidden = bubbleClock <= 0;
+  }
+
+  function snapshot() {
+    const target = route[route.length - 1];
+    return {
+      version: RESIDENT_STATE_VERSION, position: { x: position.x, y: height, z: position.z }, heading: shortestAngle(heading), state, activity,
+      night: lastNight, restId: restPoint?.id || null, restKind, wait: Math.max(0, wait), activityClock, boatCooldown, concertClock,
+      route: state === 'walking' && target ? { kind: routeKind, index: routeIndex, action: routeDone,
+        target: { x: target.x, y: target.y, z: target.z } } : null,
+      boat: state === 'boating' ? { x: jetSki.ski.position.x, y: jetSki.ski.position.y, z: jetSki.ski.position.z,
+        yaw: shortestAngle(jetSki.ski.rotation.y) } : null,
+    };
+  }
+
+  function save() {
+    if (settings.persistent === false) return false;
+    return store.write(suspended || snapshot());
+  }
+
+  function onHomeSegment(point, points, index, entering) {
+    const target = points[index], previous = points[index - 1] || (entering ? RESIDENT_HOME.entry : bed);
+    if (!target) return false;
+    const dx = target.x - previous.x, dz = target.z - previous.z;
+    const length = dx * dx + dz * dz;
+    const fraction = length ? clamp(((point.x - previous.x) * dx + (point.z - previous.z) * dz) / length, 0, 1) : 1;
+    return Math.hypot(point.x - previous.x - dx * fraction, point.z - previous.z - dz * fraction) < 0.4 &&
+      point.y >= Math.min(previous.y, target.y) - 0.8 && point.y <= Math.max(previous.y, target.y) + 0.8;
+  }
+
+  function restore(saved) {
+    if (!saved) return false;
+    const point = saved.position, seat = beachSeats.find(candidate => candidate.id === saved.restId);
+    let homePath = null;
+    if (saved.state === 'boating') {
+      if (jetSki.occupied || jetSki.reservedBy || !jetSki.canFloat(saved.boat.x, saved.boat.z, saved.boat.yaw)) return false;
+    } else if (saved.state === 'sleeping' || saved.state === 'fishing' || saved.state === 'resting' && saved.activity === 'resting') {
+      const target = saved.state === 'sleeping' ? bed : saved.state === 'fishing' ? FISHING_SPOT : seat;
+      if (!target) return false;
+      const targetY = target === seat && seat.kind !== 'lie' ? seat.y - 0.675 : target.y;
+      if (Math.hypot(point.x - target.x, point.z - target.z, point.y - targetY) > 0.25) return false;
+    } else if (saved.state === 'walking' && saved.route.kind !== 'land') {
+      const entering = saved.route.kind === 'home-enter';
+      homePath = navigation.homeRoute(entering);
+      if (entering) homePath = homePath.slice(1);
+      if (!onHomeSegment(point, homePath, saved.route.index, entering)) return false;
+    } else if (!nav.canStand(point.x, point.z) || Math.abs(point.y - nav.heightAt(point.x, point.z)) > 1.25) return false;
+    if (saved.state === 'concert' && !nightConcert) return false;
+    if (saved.route?.action === 'beginRest' && !seat) return false;
+    if (['reachConcert', 'arriveConcert'].includes(saved.route?.action) && !nightConcert) return false;
+    setPosition(point.x, point.z, point.y);
+    heading = saved.heading; state = saved.state; activity = saved.activity; lastNight = saved.night;
+    restPoint = seat || null; restKind = saved.restKind; wait = saved.wait; activityClock = saved.activityClock;
+    boatCooldown = saved.boatCooldown; concertClock = saved.concertClock;
+    if (state === 'walking') {
+      if (homePath) {
+        route = homePath; routeIndex = saved.route.index; routeDone = saved.route.action; routeKind = saved.route.kind;
+      } else if (!makeLandRoute(saved.route.target, saved.route.action)) return false;
+    } else if (state === 'boating') {
+      const previousX = jetSki.ski.position.x, previousY = jetSki.ski.position.y, previousZ = jetSki.ski.position.z, previousYaw = jetSki.ski.rotation.y;
+      if (!jetSki.reserve(resident)) return false;
+      jetSki.ski.position.set(saved.boat.x, saved.boat.y, saved.boat.z); jetSki.ski.rotation.set(0, saved.boat.yaw, 0);
+      state = 'swim'; height = 0;
+      if (!jetSki.boardNPC(resident, resident) || !boatPilot.start(BOAT_DOCK)) {
+        resident.vehicle?.stop(); resident.vehicle = null; jetSki.release(resident); boatPilot.cancel();
+        jetSki.ski.position.set(previousX, previousY, previousZ); jetSki.ski.rotation.set(0, previousYaw, 0);
+        return false;
+      }
+      height = resident.vehicle.rider.y;
+    }
+    rod.visible = state === 'fishing';
+    return true;
   }
 
   const resident = {
@@ -372,22 +551,29 @@ export function createResident({ stage, world, nav, player, jetSki, config, nigh
     get y() { return height; },
     get mode() { return state === 'boating' ? 'vehicle' : state === 'swim' ? 'swim' : 'ground'; },
     get activity() { return activity; },
+    get state() { return state; },
+    get event() { return sceneEvent; },
+    get dialogue() { return dialogue; },
+    interact: () => dialogue.interact(),
+    tap: (x, y, picked) => dialogue.tap(x, y, picked),
+    get restored() { return restored; },
+    storageKey,
+    save,
     vehicle: null,
     mountVehicle(controller) { this.vehicle = controller; state = 'boating'; return true; },
     dismountVehicle() { dismountBoat(); return true; },
     update,
   };
-  if (lastNight) {
-    if (nightConcert?.active) beginConcert();
-    else arriveHome();
+  const restored = settings.persistent !== false && restore(store.read());
+  const dialogue = createResidentDialogue({ resident, player, stage, rig, sound, qinIsland, name: settings.name || config.name || 'Host' });
+  if (!restored) {
+    arriveHome(); lastNight = world.isNight();
+    if (lastNight) { if (nightConcert?.active) beginConcert(); }
+    else { exitHome('leaveHome'); activity = 'home'; }
   }
-  else {
-    route = navigation.homeRoute(false);
-    routeIndex = 0;
-    routeDone = () => { setPosition(IKUN_ENTRY.x, IKUN_ENTRY.z, 0); chooseActivity(); };
-    state = 'walking';
-    activity = 'home';
-  }
+  updatePose(0);
+  addEventListener('pagehide', save);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
   return resident;
 }
 

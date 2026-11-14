@@ -15,6 +15,8 @@ try {
     { name: 'phone', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 },
   ]) {
     const context = await browser.newContext(view), page = await context.newPage(), errors = [];
+    await context.route(/https:\/\/(api\.open-meteo\.com|homecraft\.terryhu\.cn|terryhu7\.github\.io)\//,
+      route => route.fulfill({ json: { worlds: [] }, headers: { 'access-control-allow-origin': '*' } }));
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
     const press = selector => view.hasTouch ? page.locator(selector).tap() : page.locator(selector).click();
@@ -28,23 +30,79 @@ try {
       await press('[data-travel-app]');
     };
     await page.goto(`${base}?lang=zh&debug`);
-    await page.waitForFunction(() => window.__home?.player || window.__homeStartupError, null, { timeout: 120000 });
+    await page.waitForFunction(() => window.__home?.player || window.__homeStartupError, null, { polling: 250, timeout: 120000 });
     assert.equal(await page.evaluate(() => window.__homeStartupError || null), null);
     await page.evaluate(() => {
       __home.rig.skipIntro(); for (let frame = 0; frame < 240; frame++) __home.rig.update(1 / 60, __home.player);
       __home.setTimeMode('day'); __home.setWeatherMode('clear'); __home.stage.settle();
     });
+    const homeStops = await page.evaluate(async () => {
+      const { STATIONS } = await import('/world/layout.js');
+      const { QIN_STATIONS } = await import('/world/qin-island-layout.js');
+      return STATIONS.filter(station => !QIN_STATIONS.some(entry => entry.id === station.id));
+    });
     await press(phoneButton);
     assert.deepEqual(await page.locator('#phone .app > span').allTextContents(), ['GitHub', '余烬行囊', 'echoes', '旅行社']);
     await shoot('home');
     await press('[data-travel-app]');
-    assert.equal(await page.locator('.travel-list button').count(), 28);
+    assert.equal(await page.locator('.travel-list button').count(), 28 + homeStops.length);
     await shoot('list');
     assert.ok(await page.locator('.travel-list').evaluate(element => element.scrollHeight > element.clientHeight));
     assert.ok(await page.locator('.travel-stop').first().evaluate(element => element.getBoundingClientRect().height >= 44));
     const positionBefore = await page.evaluate(() => [__home.player.pos.x, __home.player.pos.z]);
     await page.keyboard.down('w'); await page.waitForTimeout(120); await page.keyboard.up('w');
     assert.deepEqual(await page.evaluate(() => [__home.player.pos.x, __home.player.pos.z]), positionBefore);
+    await press('[data-travel-group="home"]');
+    assert.deepEqual(await page.locator('.travel-list button').evaluateAll(buttons => buttons.map(button => button.dataset.travelTo)), homeStops.map(station => station.id));
+    assert.deepEqual(await page.locator('.travel-list strong').allTextContents(), homeStops.map(station => station.name));
+    await shoot('home-island');
+    await page.locator('.travel-content input').fill('LeHun');
+    assert.equal(await page.locator('.travel-list button').count(), 1);
+    assert.equal(await page.locator('.travel-list strong').innerText(), '乐魂小屋');
+    assert.ok(homeStops.some(station => station.id === 'lehun' && station.floor === 12));
+    assert.ok(await page.evaluate(async () => {
+      const { icon } = await import('/engine/ui/icons.js');
+      return icon('lehun').url !== icon('map').url && document.querySelector('[data-travel-to="lehun"] img').src === icon('lehun').url;
+    }));
+    await shoot('lehun');
+    await press('[data-travel-to="lehun"]');
+    await page.waitForFunction(() => !document.body.classList.contains('phone-on'));
+    const lehun = await page.evaluate(() => {
+      const home = __home, idle = { x: 0, z: 0, up: false, down: false, run: false };
+      for (let frame = 0; frame < 180; frame++) home.player.update(1 / 60, idle, home.rig.yaw);
+      return { x: home.player.pos.x, z: home.player.pos.z, y: home.player.y, ground: home.player.mode === 'ground', swimming: home.player.swimming,
+        cameraDistance: Math.hypot(home.stage.camera.position.x - home.player.pos.x, home.stage.camera.position.z - home.player.pos.z) };
+    });
+    assert.ok(lehun.ground && !lehun.swimming && Math.abs(lehun.y - 12) < 0.02, JSON.stringify(lehun));
+    assert.ok(Math.hypot(lehun.x - 9.8, lehun.z - 46.5) < 0.01 && lehun.cameraDistance > 2, JSON.stringify(lehun));
+    await shoot('lehun-arrival');
+    await open();
+    await press('[data-travel-to="home-island"]');
+    await open();
+    await press('[data-travel-group="home"]');
+    await page.locator('.travel-content input').fill('北岸');
+    assert.equal(await page.locator('.travel-list button').count(), 1);
+    assert.equal(await page.locator('.travel-list button').getAttribute('data-travel-to'), 'lookout');
+    await page.locator('.travel-content input').fill('Computer');
+    assert.equal(await page.locator('.travel-list button').count(), 1);
+    assert.equal(await page.locator('.travel-list strong').innerText(), '电脑');
+    await page.evaluate(async () => (await import('/engine/lang.js')).setLang('en'));
+    await page.waitForFunction(() => document.querySelector('#travelAgencyTitle').textContent === 'Travel Agency' && !document.querySelector('.travel-content').hidden);
+    assert.equal(await page.locator('[data-travel-group="home"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('.travel-content input').inputValue(), 'Computer');
+    assert.equal(await page.locator('.travel-list strong').innerText(), 'Computer');
+    assert.doesNotMatch(await page.locator('.travel-content').innerText(), /[\u3400-\u9fff]/);
+    await press('[data-travel-to="computer"]');
+    await page.waitForFunction(() => !document.body.classList.contains('phone-on'));
+    const computer = await page.evaluate(() => ({ x: __home.player.pos.x, z: __home.player.pos.z, y: __home.player.y,
+      ground: __home.player.mode === 'ground', valid: __home.nav.canStand(__home.player.pos.x, __home.player.pos.z) }));
+    const computerStop = homeStops.find(station => station.id === 'computer');
+    assert.ok(computer.ground && computer.valid && Math.abs(computer.y - computerStop.floor) < 0.02, JSON.stringify(computer));
+    assert.ok(Math.hypot(computer.x - computerStop.at[0], computer.z - computerStop.at[1]) <= 2.5, JSON.stringify(computer));
+    await page.evaluate(async () => (await import('/engine/lang.js')).setLang('zh'));
+    await open();
+    await press('[data-travel-to="home-island"]');
+    await open();
     await press('[data-travel-group="west"]');
     assert.equal(await page.locator('.travel-list button').count(), 9);
     await page.locator('.travel-content input').fill('Han Fei');
@@ -85,7 +143,9 @@ try {
 
     const landings = await page.evaluate(async () => {
       const { TRAVEL_DESTINATIONS, HOME_DESTINATION, travelLanding } = await import('/world/travel-destinations.js');
-      const { QIN_ATTRACTIONS } = await import('/world/qin-island-layout.js');
+      const { QIN_ATTRACTIONS, QIN_STATIONS } = await import('/world/qin-island-layout.js');
+      const { STATIONS } = await import('/world/layout.js');
+      const mainStations = STATIONS.filter(station => !QIN_STATIONS.some(entry => entry.id === station.id));
       const idle = { x: 0, z: 0, up: false, down: false, run: false }, home = __home;
       const results = [...TRAVEL_DESTINATIONS, HOME_DESTINATION].map(destination => {
         const expected = travelLanding(home.nav, destination), ok = home.extras.travelAgency.travel(destination.id);
@@ -95,12 +155,20 @@ try {
           collided: home.world.qinIsland.site.collides(home.player.pos.x, home.player.y, home.player.pos.z),
           cameraDistance: Math.hypot(home.stage.camera.position.x - home.player.pos.x, home.stage.camera.position.z - home.player.pos.z) };
       });
-      return { results, complete: QIN_ATTRACTIONS.every(attraction => TRAVEL_DESTINATIONS.some(destination => destination.id === attraction.id)),
+      return { results, complete: [...QIN_ATTRACTIONS, ...mainStations].every(attraction => TRAVEL_DESTINATIONS.some(destination => destination.id === attraction.id)),
+        stationsSynced: mainStations.every(station => {
+          const destination = TRAVEL_DESTINATIONS.find(stop => stop.id === station.id);
+          return destination?.at === station.at && destination.look === station.look && destination.name === station.name
+            && destination.en === station.en && destination.icon === station.icon && destination.floor === (station.floor ?? 0);
+        }),
+        unique: new Set(TRAVEL_DESTINATIONS.map(destination => destination.id)).size === TRAVEL_DESTINATIONS.length,
         waterRejected: travelLanding(home.nav, { at: [-45, 0], floor: 0 }) === null,
+        elevatedWaterRejected: travelLanding({ nearestStand: () => ({ x: -45, z: 0 }), canStand: () => true, heightAt: () => 12 }, { at: [-45, 0], floor: 12 }) === null,
+        lehunFloorRejected: travelLanding(home.nav, { at: [9.8, 46.5], floor: 0 }) === null,
         floorRejected: travelLanding(home.nav, { at: [160, -18], floor: 7 }) === null };
     });
-    assert.ok(landings.complete && landings.waterRejected && landings.floorRejected);
-    assert.equal(landings.results.length, 29);
+    for (const check of ['complete', 'stationsSynced', 'unique', 'waterRejected', 'elevatedWaterRejected', 'lehunFloorRejected', 'floorRejected']) assert.ok(landings[check], `${view.name}: ${check}`);
+    assert.equal(landings.results.length, 29 + homeStops.length);
     for (const result of landings.results) {
       assert.ok(result.ok && result.ground && result.valid && !result.travelling && !result.collided, JSON.stringify(result));
       assert.ok(Math.hypot(result.x - result.expected.x, result.z - result.expected.z) < 0.01, JSON.stringify(result));
@@ -183,7 +251,7 @@ try {
     const stats = await page.evaluate(() => __home.stats());
     assert.deepEqual(errors, []);
     report.push({ view: view.name, destinations: landings.results.length, states, army, stats });
-    console.log(`${view.name}: phone app, languages, 29 landings, state transitions and army compatibility passed`);
+    console.log(`${view.name}: phone app, home island, languages, ${landings.results.length} landings, state transitions and army compatibility passed`);
     await context.close();
   }
   writeFileSync(new URL('travel-agency-report.json', output), JSON.stringify(report, null, 2));
