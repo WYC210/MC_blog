@@ -3,30 +3,31 @@
 // draw call beyond the existing furniture group.
 import { PORTAL, IKUN_ENTRY, BOARDWALK, FOUNTAIN, inFerrisPlot } from './layout.js';
 import { addRestPoint } from './rest-points.js';
+import { SURFACE_TILES } from './material-palette.js';
 
 const OAK = { tex: 'oak' };
 const WALNUT = { tex: 'walnut' };
 const DECK = { tex: 'deck' };
 const LEAVES = { tex: 'leaves' };
-const stone = { tex: 'paint', tint: 0x8a8f8a };
+const stone = { tex: SURFACE_TILES.stone, tint: 0x8a8f8a };
 const coral = { tex: 'paint', tint: 0xf07d78 };
 const aqua = { tex: 'paint', tint: 0x72c8c9 };
 const linen = tint => ({ tex: 'linen', tint });
 const glow = tint => ({ tex: 'paint', tint, emissive: 0.95 });
 // Deepslate portal frame materials.
-const deepslate = { tex: 'paint', tint: 0x4a4a52 };
-const obsidian = { tex: 'paint', tint: 0x1a0f29 };
+const deepslate = { tex: SURFACE_TILES.stone, tint: 0x4a4a52 };
+const obsidian = { tex: SURFACE_TILES.smooth, tint: 0x1a0f29 };
 const spruce = { tex: 'walnut' };
 const lanternGlow = { tex: 'paint', tint: 0xffd49c, emissive: 1 };
 const chain = { tex: 'chrome', tint: 0x5a5a5a };
 // Path and beach decoration materials
 const paver = { tex: 'pavers', tint: 0xa8a090 };
-const sandstone = { tex: 'paint', tint: 0xe8dcc8 };
-const shell = { tex: 'paint', tint: 0xf5ebe0 };
+const sandstone = { tex: SURFACE_TILES.sandstone, tint: 0xe8dcc8 };
+const shell = { tex: SURFACE_TILES.smooth, tint: 0xf5ebe0 };
 const driftwood = { tex: 'walnut', tint: 0x9a8a7a };
-const rope = { tex: 'paint', tint: 0xc9b896 };
+const rope = { tex: SURFACE_TILES.rope, tint: 0xc9b896 };
 
-export function furnishBeach({ B, obstacles, bakes }) {
+export function furnishBeach({ B, obstacles, bakes, detail }) {
   const foot = (x, z, w, d) => obstacles.push({
     x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2, level: 0,
   });
@@ -91,8 +92,15 @@ export function furnishBeach({ B, obstacles, bakes }) {
     }
     B.box(x, 0.22, z, 1.25, 0.12, 0.12, WALNUT, { ry: 0.7 });
     B.box(x, 0.3, z, 1.25, 0.12, 0.12, WALNUT, { ry: -0.7 });
-    B.box(x, 0.34, z, 0.3, 0.4, 0.3, glow(0xffa24f));
-    B.box(x, 0.54, z, 0.18, 0.34, 0.18, glow(0xffe5a2));
+    for (let ember = 0; ember < 6; ember++) {
+      const angle = ember * Math.PI / 3;
+      B.box(x + Math.cos(angle) * 0.24, 0.23, z + Math.sin(angle) * 0.24, 0.15, 0.06, 0.13,
+        { tex: 'deepslate', tint: 0x633323, emissive: 0.22 }, { ry: angle });
+    }
+    if (!detail?.fire(x, 0.34, z, 1)) {
+      B.box(x, 0.34, z, 0.3, 0.4, 0.3, glow(0xffa24f));
+      B.box(x, 0.54, z, 0.18, 0.34, 0.18, glow(0xffe5a2));
+    }
     bake('beach-fire-' + x + '-' + z, x, 1.2, z, 4.0, 10);  // enhanced power and radius
   }
 
@@ -100,8 +108,10 @@ export function furnishBeach({ B, obstacles, bakes }) {
   function torch(x, z) {
     if (inFerrisPlot(x, z, 0.25)) return;
     B.box(x, 0, z, 0.1, 1.6, 0.1, WALNUT);
-    B.box(x, 1.5, z, 0.16, 0.25, 0.16, glow(0xffb04a));   // orange flame
-    B.box(x, 1.68, z, 0.1, 0.15, 0.1, glow(0xffe580));    // yellow core
+    if (!detail?.fire(x, 1.5, z, 0.4)) {
+      B.box(x, 1.5, z, 0.16, 0.25, 0.16, glow(0xffb04a));
+      B.box(x, 1.68, z, 0.1, 0.15, 0.1, glow(0xffe580));
+    }
     bake('torch-' + x + '-' + z, x, 1.65, z, 2.2, 6.5);
   }
 

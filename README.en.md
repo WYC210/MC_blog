@@ -1,45 +1,44 @@
-# Homecraft
+# Homecraft — Wyc Home
 
 [中文](README.md) · **English**
 
-## Homepage + Minecraft = Homecraft
+## About
 
-I've always enjoyed building and customizing websites, but even after trying one template after another, I still felt constrained.
+A personal website built as an explorable 3D world with Homecraft and Three.js. Its Minecraft-inspired islands bring the site content into the world: wander the sandy home island, swim along the coast, and visit Qin Island, inspired by Qinhuangdao's maritime quest-for-immortality heritage. Explore its palace, Great Wall gallery and seaside scenery. Day, night and changing weather keep the world in motion; switch between normal and HD materials when you like. Projects, profile and guestbook pages remain accessible in-world, on desktop and mobile.
 
-Inspired by Minecraft, The Matrix and the metaverse, I used AI to turn my personal website from a 2D page into a 3D world.
+## In-game screenshots · [Visit Wyc Home](https://www.wyc21.com/)
 
-You can explore it freely. I've built a basketball court, a gym and a workbench, and added a day–night cycle and a weather system.
+### Normal materials
 
-You can also embed regular web pages and open them by pressing F. The block-based graphics keep rendering demands low, so the site works on phones too.
-
-Exploring the site feels like visiting a friend's home. Compared with a traditional website, it may be a more memorable way to get to know someone.
-
-Once you get used to this kind of personal website, it's hard to go back…
-
-## Screenshots [🔗 Terry's Home](https://terryhu.cn)
-
-<p align="center"><img src="docs/images/cover-en.webp" width="420" alt="Cover"></p>
-
-| Basketball court | Pool | Workbench |
+| Home island | Qin Island | Piano room |
 | :---: | :---: | :---: |
-| <img src="docs/images/terry-court.webp" width="240" alt="Basketball court"> | <img src="docs/images/terry-pool.webp" width="240" alt="Pool"> | <img src="docs/images/terry-desk.webp" width="240" alt="Workbench"> |
-| **Projects** | **Gym** | **Weather** |
-| <img src="docs/images/terry-works-en.webp" width="240" alt="Projects"> | <img src="docs/images/terry-gym.webp" width="240" alt="Gym"> | <img src="docs/images/terry-snow-en.webp" width="240" alt="Snow"> |
+| <img src="docs/images/main-island-normal.webp" width="260" alt="Home island with normal materials"> | <img src="docs/images/qin-island-normal.webp" width="260" alt="Qin Island with normal materials"> | <img src="docs/images/piano-normal.webp" width="260" alt="Piano room with normal materials"> |
 
-## Getting started
+### HD materials
 
-<p align="center"><img src="docs/images/starter.webp" width="640" alt="Starter template"></p>
+| Day | Dusk | Night |
+| :---: | :---: | :---: |
+| <img src="docs/images/main-island-hd-day.webp" width="260" alt="Home island in daylight with HD materials"> | <img src="docs/images/main-island-hd-dusk.webp" width="260" alt="Home island at dusk with HD materials"> | <img src="docs/images/main-island-hd-night.webp" width="260" alt="Home island at night with HD materials"> |
 
-The project includes a starter template, AI prompts and project guidelines. Fork the repository and start vibe coding your own world.
+| Night view | Rain | Snow |
+| :---: | :---: | :---: |
+| <img src="docs/images/main-island-hd-night-view.webp" width="260" alt="HD night view of the home island"> | <img src="docs/images/main-island-hd-rain.webp" width="260" alt="Home island in rain with HD materials"> | <img src="docs/images/main-island-hd-snow.webp" width="260" alt="Home island in snow with HD materials"> |
 
-Run `python3 tools/serve.py` in the project folder. The script finds an available port and opens the site in your browser.
+<p align="center"><img src="docs/images/main-island-hd-selfie.webp" width="320" alt="Selfie view with HD materials"></p>
 
-The full source of Terry's Home is in [examples/terry-home](examples/terry-home).
+### Run locally
 
-## Portal [🔗 Request listing](https://github.com/terryHu7/homecraft/issues/new/choose)
+No build step is required. From the project directory, run:
 
-<p align="center"><img src="docs/images/portal-en.webp" width="640" alt="Portal"></p>
+```sh
+python3 tools/serve.py
+```
 
-The portal lists personal websites and lets visitors travel between them, much like links between blogs.
+On Windows, use `python tools/serve.py`. The script finds an available port and opens the site in your browser. Main customization points are `world/`, `index.html`, `home.config.js` and `homecraft.json`.
 
-## Links [🔗 LINUX DO](https://linux.do)
+
+## Links
+
+- [Visit Wyc Home](https://www.wyc21.com/)
+- [Homecraft project and listing requests](https://github.com/terryHu7/homecraft)
+- [LINUX DO](https://linux.do)

@@ -1,13 +1,14 @@
 import { buildTradingStudio } from './lehun-trading.js';
 import { addRestPoint } from './rest-points.js';
+import { SURFACE_TILES } from './material-palette.js';
 
 const GROUND = 12;
 const FLOOR = 19;
 const ROOM = { x0: 9, x1: 18, z0: 37, z1: 50 };
 
 const L = {
-  cherry: { tex: 'paint', tint: 0xe3b0a4 },
-  cherryLight: { tex: 'paint', tint: 0xefc9bc },
+  cherry: { tex: SURFACE_TILES.wood, tint: 0xe3b0a4 },
+  cherryLight: { tex: SURFACE_TILES.timber, tint: 0xefc9bc },
   pink: { tex: 'paint', tint: 0xf2afc0 },
   pinkFloor: { tex: 'paint', tint: 0xd99aaa },
   pinkDeep: { tex: 'paint', tint: 0xe393a8 },
@@ -18,7 +19,7 @@ const L = {
   steel: { tex: 'steel' },
   linen: { tex: 'linen' },
   leaf: { tex: 'leaves' },
-  terra: { tex: 'paint', tint: 0x876b62 },
+  terra: { tex: SURFACE_TILES.terracotta, tint: 0x876b62 },
   rubber: { tex: 'rubber', tint: 0x35393c },
   gymFloor: { tex: 'paint', tint: 0x718083, emissive: 0.12 },
   gymFrame: { tex: 'paint', tint: 0x93a0a2, emissive: 0.18 },
@@ -121,6 +122,10 @@ export function furnishLeHun({ B, walk, obstacles, bakes }) {
     if (x >= 15) continue;
     tread(x, z, FLOOR);
   }
+  // The upper landing row (z 36..37) sits in front of the stair top; without
+  // this slab the floor ends short of the stairs and leaves a gap to step over.
+  B.box(12.0, FLOOR - 0.04, 36.5, 6.0, 0.08, 1.0, { tex: 'wood_floor', tint: 0xd3c9b4, emissive: 0.18 });
+  for (let x = ROOM.x0; x < 15; x++) tread(x, 36, FLOOR);
 
   // Thirteen half-metre steps use the full east edge of the cottage. Every
   // adjacent cell rises only 0.5 m, so the player can walk from the gym to the

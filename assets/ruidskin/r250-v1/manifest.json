@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "pack": "Ruidskin Ultimate 256x r250-v1",
+  "size": 256,
+  "tiles": [
+    {
+      "targets": [
+        "sand"
+      ],
+      "color": "sand-original.png",
+      "detail": "sand-detail.png"
+    },
+    {
+      "targets": [
+        "stone"
+      ],
+      "color": "stone-original.png",
+      "detail": "stone-detail.png"
+    },
+    {
+      "targets": [
+        "deepslate"
+      ],
+      "color": "deepslate-original.png",
+      "detail": "deepslate-detail.png"
+    },
+    {
+      "targets": [
+        "dirt"
+      ],
+      "color": "dirt-original.png",
+      "detail": "dirt-detail.png"
+    },
+    {
+      "targets": [
+        "gravel"
+      ],
+      "color": "gravel-original.png",
+      "detail": "gravel-detail.png"
+    },
+    {
+      "targets": [
+        "grass_top"
+      ],
+      "color": "grass_block_top-grass.png",
+      "detail": "grass_block_top-detail.png"
+    },
+    {
+      "targets": [
+        "oak",
+        "wood_floor",
+        "wood_panel",
+        "deck"
+      ],
+      "color": "oak_planks-original.png",
+      "detail": "oak_planks-detail.png"
+    },
+    {
+      "targets": [
+        "walnut"
+      ],
+      "color": "dark_oak_planks-original.png",
+      "detail": "dark_oak_planks-detail.png"
+    },
+    {
+      "targets": [
+        "maple"
+      ],
+      "color": "birch_planks-original.png",
+      "detail": "birch_planks-detail.png"
+    },
+    {
+      "targets": [
+        "log"
+      ],
+      "color": "oak_log-original.png",
+      "detail": "oak_log-detail.png"
+    },
+    {
+      "targets": [
+        "log_top"
+      ],
+      "color": "oak_log_top-original.png",
+      "detail": "oak_log_top-detail.png"
+    },
+    {
+      "targets": [
+        "concrete"
+      ],
+      "color": "white_concrete-original.png",
+      "detail": "white_concrete-detail.png"
+    },
+    {
+      "targets": [
+        "terracotta"
+      ],
+      "color": "terracotta-original.png",
+      "detail": "terracotta-detail.png"
+    },
+    {
+      "targets": [
+        "linen",
+        "velvet",
+        "chair_mesh",
+        "surface_cloth"
+      ],
+      "color": "white_wool-neutral.png",
+      "detail": "white_wool-detail.png"
+    },
+    {
+      "targets": [
+        "surface_wood"
+      ],
+      "color": "oak_planks-neutral.png",
+      "detail": "oak_planks-detail.png"
+    },
+    {
+      "targets": [
+        "surface_timber"
+      ],
+      "color": "stripped_oak_log-neutral.png",
+      "detail": "stripped_oak_log-detail.png"
+    },
+    {
+      "targets": [
+        "surface_endgrain"
+      ],
+      "color": "oak_log_top-neutral.png",
+      "detail": "oak_log_top-detail.png"
+    },
+    {
+      "targets": [
+        "surface_stone"
+      ],
+      "color": "stone-neutral.png",
+      "detail": "stone-detail.png"
+    },
+    {
+      "targets": [
+        "surface_smooth"
+      ],
+      "color": "smooth_stone-neutral.png",
+      "detail": "smooth_stone-detail.png"
+    },
+    {
+      "targets": [
+        "surface_sandstone"
+      ],
+      "color": "sandstone-neutral.png",
+      "detail": "sandstone-detail.png"
+    },
+    {
+      "targets": [
+        "surface_concrete"
+      ],
+      "color": "white_concrete-neutral.png",
+      "detail": "white_concrete-detail.png"
+    },
+    {
+      "targets": [
+        "surface_terracotta"
+      ],
+      "color": "terracotta-neutral.png",
+      "detail": "terracotta-detail.png"
+    },
+    {
+      "targets": [
+        "surface_quartz"
+      ],
+      "color": "quartz_block_side-neutral.png",
+      "detail": "quartz_block_side-detail.png"
+    }
+  ]
+}

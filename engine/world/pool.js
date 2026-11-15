@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import * as L from '@world/layout.js';
 import { rng } from './textures.js';
 import { bakeOceanMap, OCEAN_SHORE, OCEAN_VERTEX } from './ocean.js';
+import { ULTRA_ENVIRONMENT, ULTRA_WATER } from './ultra-environment.js';
 
 // Loaded only when the world has a POOL (main.js imports it on demand).
 const POOL = L.POOL || { x0: 0, x1: 1, z0: 0, z1: 1, water: 0, bed: -1 };
@@ -76,6 +77,14 @@ const WATER_FRAGMENT = /* glsl */`
   uniform sampler2D uShelter;
   uniform vec4 uShelterBox;
   varying vec3 vWorld;
+  #ifdef ULTRA
+    uniform sampler2D uReflection;
+    uniform mat4 uReflMatrix;
+    uniform float uReflectOn, uNight, uCloud;
+    uniform sampler2D uSkyNoise;
+    ${ULTRA_ENVIRONMENT}
+    ${ULTRA_WATER}
+  #endif
 
   #ifdef OCEAN_WAVES
     ${OCEAN_SHORE}
@@ -176,6 +185,10 @@ const WATER_FRAGMENT = /* glsl */`
       // a faint dapple that never holds still.
       glitter = (vnoise(p * 6.0 + uTime * vec2(1.3, 0.7)) * vnoise(p * 8.5 - uTime * vec2(0.6, 1.5)) - 0.25) * 0.3 * uRain;
     }
+    #if defined(ULTRA) && defined(OCEAN_WAVES)
+      float gust, roughness;
+      wave.xy += oceanDetail(p, detail, gust, roughness);
+    #endif
     vec3 N = normalize(vec3(-wave.x, 1.0, -wave.y));
     // A ring's crest gathers light like a lens and its trough spreads it.
     float lens = 1.0 + clamp(wave.z * 220.0, -0.3, 0.3) + glitter;
@@ -187,6 +200,16 @@ const WATER_FRAGMENT = /* glsl */`
       R.y = abs(R.y);
       float fresnel = 0.02 + 0.98 * pow(1.0 - max(dot(N, V), 0.0), 5.0), slant = 1.0 - V.y;
       vec3 mirrored = skyAlong(R) + uSunColor * uSun * pow(max(dot(R, uSunDir), 0.0), 600.0) * 5.0 + uFlash * vec3(0.4);
+      #ifdef ULTRA
+        mirrored = environmentSky(R, vWorld, 0.0) + uFlash * vec3(0.4);
+        if (uReflectOn > 0.5) {
+          vec4 reflected = uReflMatrix * vec4(vWorld, 1.0);
+          vec2 reflectionUv = reflected.xy / reflected.w + N.xz * 0.018;
+          float edge = smoothstep(0.0, 0.04, min(min(reflectionUv.x, reflectionUv.y), min(1.0 - reflectionUv.x, 1.0 - reflectionUv.y)));
+          vec4 reflectedScene = texture2D(uReflection, clamp(reflectionUv, 0.001, 0.999));
+          mirrored = mix(mirrored, reflectedScene.rgb, edge * reflectedScene.a);
+        }
+      #endif
       vec3 body = mix(uShallow, uDeep, slant) * uLight + uGlowColor * uGlow * 0.7;
       float a = mix(0.36, 0.84, smoothstep(0.05, 0.9, slant));
       #ifdef OCEAN_WAVES
@@ -194,9 +217,16 @@ const WATER_FRAGMENT = /* glsl */`
         float depthBlend = 1.0 - exp(-depth * 0.24);
         body = mix(uShallow, uDeep, clamp(depthBlend + slant * 0.2, 0.0, 1.0)) * uLight + uGlowColor * uGlow * 0.35;
         a = mix(0.24, 0.86, clamp(depthBlend + slant * 0.25, 0.0, 1.0));
+        #ifdef ULTRA
+          body *= mix(1.0, 0.7, depthBlend) * mix(1.0, 0.82, gust);
+          a = mix(a, 0.99, smoothstep(0.8, 5.0, depth));
+        #endif
       #endif
       alpha = a + (1.0 - a) * fresnel;
       col = (body * a * (1.0 - fresnel) + mirrored * fresnel * mix(1.0, lens, 0.5)) / alpha + wave.w * 0.6 * uLight;
+      #if defined(ULTRA) && defined(OCEAN_WAVES)
+        col += oceanSunlight(N, V, roughness, gust) / alpha;
+      #endif
       #ifdef OCEAN_WAVES
         if (shoreDistance < 3.5 && shore.b > 0.01 && uOceanFoam > 0.0) {
           float grain = vnoise(p * 2.1 + vec2(uTime * 0.08, -uTime * 0.05));
@@ -340,6 +370,10 @@ export function createPool({ stage, world, shelter, quality }) {
     uClouds: sky.uClouds, uCover: sky.uCover, uCloudShift: sky.uCloudShift, uCloudLit: sky.uCloudLit, uCloudShade: sky.uCloudShade, uVeil: sky.uCloud,
   };
   let oceanMap = null, oceanGeometry = null;
+  if (quality.ultra) Object.assign(uniforms, {
+    uReflection: { value: null }, uReflMatrix: { value: new THREE.Matrix4() }, uReflectOn: { value: 0 },
+    uSkyNoise: sky.uSkyNoise, uNight: sky.uNight, uCloud: sky.uCloud,
+  });
   if (OCEAN) {
     const baked = bakeOceanMap(world.grid, L.ISLAND, WATER);
     oceanMap = new THREE.DataTexture(baked.data, baked.width, baked.height, THREE.RGBAFormat);
@@ -355,7 +389,7 @@ export function createPool({ stage, world, shelter, quality }) {
   }
   const material = new THREE.ShaderMaterial({
     name: 'pool-water', uniforms, vertexShader: WATER_VERTEX, fragmentShader: WATER_FRAGMENT,
-    defines: { RIPPLES, STEPS: quality.mobile ? 9 : 11, LAYERS: quality.mobile ? 1 : 2, ...(OCEAN ? { OCEAN_WAVES: quality.mobile ? 2 : 3 } : {}) },
+    defines: { RIPPLES, STEPS: quality.mobile ? 9 : 11, LAYERS: quality.mobile ? 1 : 2, ...(OCEAN ? { OCEAN_WAVES: quality.mobile ? 2 : 3 } : {}), ...(quality.ultra ? { ULTRA: '' } : {}) },
     transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: true,
   });
   const flatGeometry = new THREE.PlaneGeometry(OCEAN ? 2 : POOL.x1 - POOL.x0, OCEAN ? 2 : POOL.z1 - POOL.z0);
@@ -370,6 +404,7 @@ export function createPool({ stage, world, shelter, quality }) {
   water.name = 'pool-water'; water.rotation.x = -Math.PI / 2; water.position.copy(CENTRE);
   // After the glass, before the rain, which a surface seen from below hides.
   water.renderOrder = 3;
+  if (quality.ultra) stage.pipeline.addMirror({ mesh: water, level: WATER, uniforms });
 
   const particleMaterial = new THREE.ShaderMaterial({
     name: 'pool-particles', uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTint: { value: new THREE.Color(0xeefcff) } }]),

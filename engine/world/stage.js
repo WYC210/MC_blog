@@ -3,6 +3,8 @@
 import * as THREE from 'three';
 import * as L from '@world/layout.js';
 import { rng } from './textures.js';
+import { ULTRA } from '../ultra-flag.js';
+import { ULTRA_ENVIRONMENT } from './ultra-environment.js';
 
 export const LAYER_SHADOW_ONLY = 1;
 
@@ -116,6 +118,15 @@ export function detectQuality() {
   const coarse = matchMedia('(pointer: coarse)').matches;
   const small = Math.min(screen.width, screen.height) < 820;
   const mobile = coarse || small;
+  // Ultra renders supersampled into an HDR target with 4× MSAA; the frame
+  // governor in main.js still steps the ratio down if the GPU cannot keep up.
+  if (ULTRA && !mobile) return {
+    mobile, ultra: true,
+    pixelRatio: Math.min(2, Math.max(devicePixelRatio || 1, 1.5)),
+    pixelBudget: 5600000,
+    shadowSize: 4096,
+    maxLights: 2,
+  };
   return {
     mobile,
     pixelRatio: Math.min(devicePixelRatio || 1, mobile ? 1.25 : 1.5),
@@ -140,6 +151,9 @@ const SKY_FRAGMENT = /* glsl */`
   uniform vec2 uCloudShift, uSkyMotion;
   uniform sampler2D uClouds, uSkyNoise;
   varying vec3 vDir;
+  #ifdef ULTRA
+    ${ULTRA_ENVIRONMENT}
+  #endif
   float hash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
   float skyNoise(vec3 position) {
     vec3 cell = floor(position);
@@ -212,6 +226,9 @@ const SKY_FRAGMENT = /* glsl */`
     float skyHeight = h + dot(d, uHorizonOffset);
     vec3 col = mix(uHorizon, uTop, smoothstep(0.0, 0.55, skyHeight));
     col = mix(col, uBottom, 1.0 - smoothstep(-0.35, 0.02, skyHeight));
+    #ifdef ULTRA
+      col = environmentSky(d, uCamPos, 1.0);
+    #else
     // Minecraft's clouds: one flat layer of square puffs drifting with the
     // wind, 160 m up and 16 m to a cell. Coverage chooses how many cells are cloud.
     float puff = 0.0, v = 0.0;
@@ -235,8 +252,20 @@ const SKY_FRAGMENT = /* glsl */`
     float halo = pow(max(facing, 0.0), mix(24.0, 60.0, uNight));
     col += uSunColor * (halo * mix(0.35, 0.25, uNight)) * (1.0-uCloud);
     col = mix(col, uSunColor * mix(1.6, 1.25, uNight), disc * clear);
+    #ifdef ULTRA
+      // HDR sun for bloom and light shafts: a hot disc and a wide aureole.
+      col += uSunColor * (disc * mix(14.0, 2.0, uNight) + pow(max(facing, 0.0), 300.0) * mix(3.0, 0.4, uNight)
+        + pow(max(facing, 0.0), 8.0) * mix(0.18, 0.03, uNight)) * clear;
+    #endif
     col = mix(col, mix(uCloudLit, uCloudShade, smoothstep(1.0 - uCover, 1.0, v) * 0.7), puff * 0.93);
     col = mix(col, uFogColor, 1.0 - smoothstep(0.0, 0.14, skyHeight));
+    #endif
+    #ifdef ULTRA
+      float nightClear = (1.0 - uCloud) * (1.0 - uCover);
+      if (uNight > 0.001 && nightClear > 0.001 && skyHeight > 0.0) {
+        col += nightSky(d) * smoothstep(0.0, 0.85, uNight) * smoothstep(0.015, 0.24, skyHeight) * nightClear;
+      }
+    #endif
     col += vec3(0.22, 0.27, 0.28) * uFlash;
     gl_FragColor = vec4(col, 1.0);
     #include <colorspace_fragment>
@@ -251,7 +280,7 @@ export function createStage(container, quality) {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // Khronos PBR Neutral keeps authored colours: ACES greyed the oak floor and
   // pressed the Prada-green sofa, table and planters towards black in daylight.
-  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMapping = ULTRA ? THREE.NoToneMapping : THREE.NeutralToneMapping;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.shadowMap.autoUpdate = false;
@@ -272,6 +301,7 @@ export function createStage(container, quality) {
       side: THREE.BackSide,
       depthWrite: false,
       fog: false,
+      ...(ULTRA ? { defines: { ULTRA: '' } } : {}),
       uniforms: {
         uTop: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() }, uBottom: { value: new THREE.Color() },
         uSunDir: { value: new THREE.Vector3() }, uSunColor: { value: new THREE.Color() }, uNight: { value: 0 }, uCloud: { value: 0 }, uFlash: { value: 0 },
@@ -313,6 +343,10 @@ export function createStage(container, quality) {
   let baseHemi = 1, flash = 0, settling = false, shadowDirty = false, sunSeen = true;
   // With the camera in the pool, the fog is the water: { color, near, far }.
   let submerged = null;
+  // Ultra's post-processing (ultra.js) takes over drawing and re-balances the
+  // sun against the sky fill; normal mode keeps 1 and 1 and draws directly.
+  let pipeline = null;
+  const lightScale = { sun: 1, hemi: 1 };
   const COLORS = ['top', 'horizon', 'bottom', 'fog', 'cloudLit', 'cloudShade', 'hemiSky', 'hemiGround', 'sun'];
   const AMOUNTS = { sunI: 1, hemiI: 1, near: 100, far: 100, cover: 1, veil: 1, night: 1, exposure: 1 };
   const state = () => ({ ...Object.fromEntries(COLORS.map(k => [k, new THREE.Color()])), sunI: 0, hemiI: 1, near: 80, far: 220, cover: 0, veil: 0, night: 0, exposure: 1 });
@@ -352,8 +386,8 @@ export function createStage(container, quality) {
     scene.fog.near = Math.max(now.near, clearance * 1.3); scene.fog.far = Math.max(now.far, clearance * 2.8);
     if (submerged) { scene.fog.color.copy(submerged.color); scene.fog.near = submerged.near; scene.fog.far = submerged.far; }
     hemi.color.copy(now.hemiSky); hemi.groundColor.copy(now.hemiGround);
-    baseHemi = now.hemiI; hemi.intensity = baseHemi + flash * 0.85;
-    sun.color.copy(now.sun); sun.intensity = now.sunI;
+    baseHemi = now.hemiI * lightScale.hemi; hemi.intensity = baseHemi + flash * 0.85;
+    sun.color.copy(now.sun); sun.intensity = now.sunI * lightScale.sun;
     // Under a full deck there is no direct sun. Dropping the light also drops
     // its shadow lookups, the costliest part of a frame; both shader variants
     // are compiled while loading, so the switch costs nothing.
@@ -444,8 +478,12 @@ export function createStage(container, quality) {
     // pass in the frame the sun returns would compile shaders for a sunless
     // sky. Re-bake one frame later; the sun is still near zero by then.
     if (shadowDirty && sun.visible && sunSeen) { renderer.shadowMap.needsUpdate = true; shadowDirty = false; }
-    renderer.render(scene, camera);
+    if (pipeline) pipeline.render(scene, camera);
+    else renderer.render(scene, camera);
     sunSeen = sun.visible;
+  }
+  function setPipeline(next, scale = { sun: 1, hemi: 1 }) {
+    pipeline = next; Object.assign(lightScale, scale); apply();
   }
 
   camera.layers.set(0);
@@ -459,7 +497,9 @@ export function createStage(container, quality) {
 
   return {
     renderer, scene, camera, sun, hemi, sky, quality, setMood, setWeather, setLightning, setClearance, setSubmerged, update, settle,
-    getMood: () => mood, getMoodName: () => moodName, resize, render, setPixelRatio,
+    getMood: () => mood, getMoodName: () => moodName, resize, render, setPixelRatio, setPipeline,
+    get pipeline() { return pipeline; },
+    get submerged() { return !!submerged; },
     // How much of the sun the cloud hides now, and the fog colour being headed for.
     get veil() { return now.veil; }, get fogTarget() { return goal.fog; },
     // The air's own fog and how dark the hour is; seen from under water, the

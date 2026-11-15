@@ -42,6 +42,22 @@ export function createRig(camera, world) {
   const followTurn = new THREE.Quaternion(), gazeTurn = new THREE.Quaternion();
 
   function orbit(dx, dy) {
+    if (show?.back < 0 && show.orbitable) {
+      if (!show.orbit) {
+        const offset = show.pos.clone().sub(show.look);
+        const radius = Math.max(0.001, offset.length());
+        show.orbit = {
+          target: show.look.clone(),
+          yaw: Math.atan2(offset.x, offset.z),
+          pitch: Math.asin(THREE.MathUtils.clamp(offset.y / radius, -1, 1)),
+          distance: radius,
+        };
+      }
+      show.orbit.yaw -= dx * 0.0052;
+      show.orbit.pitch = THREE.MathUtils.clamp(show.orbit.pitch + dy * 0.0042, 0.12, 1.48);
+      return;
+    }
+    skipIntro();
     if (lying) {
       gaze.yaw -= dx * 0.0042;
       gaze.pitch = THREE.MathUtils.clamp(gaze.pitch - dy * 0.0036, 0.15, 1.55);
@@ -77,10 +93,17 @@ export function createRig(camera, world) {
   }
   function skipIntro() {
     if (intro) intro.t = Math.max(intro.t, INTRO_HOLD + INTRO_SWOOP / 2);
-    if (show && show.back < 0) show.back = 0;
+    if (show && show.back < 0) {
+      if (show.orbit) {
+        show.pos.copy(camera.position);
+        show.look.copy(show.orbit.target);
+        show.orbit = null;
+      }
+      show.back = 0;
+    }
   }
-  function showcase(pos, at) {
-    show = { t: 0, back: -1, pos: new THREE.Vector3(...pos), look: new THREE.Vector3(...at), from: camera.position.clone(), fromLook: focus.clone() };
+  function showcase(pos, at, { orbitable = false } = {}) {
+    show = { t: 0, back: -1, pos: new THREE.Vector3(...pos), look: new THREE.Vector3(...at), from: camera.position.clone(), fromLook: focus.clone(), orbitable, orbit: null };
   }
 
   function placeFollow(out) {
@@ -122,7 +145,16 @@ export function createRig(camera, world) {
     placeFollow(followPos);
 
     if (show) {
-      if (show.back < 0) {
+      if (show.orbit) {
+        const { target, yaw: orbitYaw, pitch: orbitPitch, distance: orbitDistance } = show.orbit;
+        const cp = Math.cos(orbitPitch);
+        camera.position.set(
+          target.x + Math.sin(orbitYaw) * cp * orbitDistance,
+          target.y + Math.sin(orbitPitch) * orbitDistance,
+          target.z + Math.cos(orbitYaw) * cp * orbitDistance,
+        );
+        camera.lookAt(target);
+      } else if (show.back < 0) {
         show.t += dt;
         const p = ease(Math.min(1, show.t / 0.9));
         camera.position.lerpVectors(show.from, show.pos, p); look.lerpVectors(show.fromLook, show.look, p);

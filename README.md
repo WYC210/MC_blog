@@ -1,45 +1,45 @@
-# Homecraft
+# Homecraft · Wyc 的世界
 
 **中文** · [English](README.en.md)
 
-## 个人网站即我的世界
+## 项目简介
 
-过去我是个喜欢折腾网站的人，但模板换了又换，总感觉被什么东西困住了。
+这是一个基于 Homecraft 与 Three.js 打造的可探索个人主页。我把网页内容融入一座 Minecraft 风格的 3D 海岛：你可以在沙岛漫步、沿海游泳，再前往受秦皇岛求仙文化启发的秦岛，探索宫殿、长城展馆与海滨景观。昼夜和天气让世界不断变化，普通与高清材质可以按需切换；作品、个人介绍和留言则能通过游戏内页面访问。电脑和手机都可以直接游览。
 
-受我的世界、黑客帝国和元宇宙的启发，借助 AI，我把个人网站从二维网页建成了三维世界。
+## 实机截图 · [访问 Wyc 的世界](https://www.wyc21.com/)
 
-这个世界包罗万象，可以自由移动，里面建了篮球场，健身房，工作台，甚至还有昼夜交替和天气系统。
+### 普通材质
 
-对于二维网页也完全可以内嵌进来，例如按 F 查看。而且得益于方块风的性能开销小，手机也能轻松访问。
-
-逛上一圈，像是去朋友家做客了一趟。比起传统的网站，这样的相识或许更让人印象深刻。
-
-一旦接受了这个设定，就再也回不去传统个人网站了…
-
-## 实机截图 [🔗 Terry's Home](https://terryhu.cn)
-
-<p align="center"><img src="docs/images/cover.webp" width="420" alt="封面"></p>
-
-| 篮球场 | 泳池 | 工作台 |
+| 沙岛 | 秦岛 | 钢琴空间 |
 | :---: | :---: | :---: |
-| <img src="docs/images/terry-court.webp" width="240" alt="篮球场"> | <img src="docs/images/terry-pool.webp" width="240" alt="泳池"> | <img src="docs/images/terry-desk.webp" width="240" alt="工作台"> |
-| **作品展示** | **健身房** | **天气系统** |
-| <img src="docs/images/terry-works.webp" width="240" alt="作品展示"> | <img src="docs/images/terry-gym.webp" width="240" alt="健身房"> | <img src="docs/images/terry-snow.webp" width="240" alt="下雪"> |
+| <img src="docs/images/main-island-normal.webp" width="260" alt="普通材质下的沙岛全景"> | <img src="docs/images/qin-island-normal.webp" width="260" alt="普通材质下的秦岛全景"> | <img src="docs/images/piano-normal.webp" width="260" alt="普通材质下的钢琴空间"> |
 
-## 开始使用
+### 高清材质
 
-<p align="center"><img src="docs/images/starter.webp" width="640" alt="初始模板"></p>
+| 白天 | 黄昏 | 夜晚 |
+| :---: | :---: | :---: |
+| <img src="docs/images/main-island-hd-day.webp" width="260" alt="高清材质下的主岛白天景色"> | <img src="docs/images/main-island-hd-dusk.webp" width="260" alt="高清材质下的主岛黄昏景色"> | <img src="docs/images/main-island-hd-night.webp" width="260" alt="高清材质下的主岛夜晚景色"> |
 
-项目已内置初始模板、相关提示词与约束，fork 之后即刻 vibe coding “我的世界”。
+| 夜景 | 雨天 | 雪天 |
+| :---: | :---: | :---: |
+| <img src="docs/images/main-island-hd-night-view.webp" width="260" alt="高清材质下的主岛夜景"> | <img src="docs/images/main-island-hd-rain.webp" width="260" alt="高清材质下的主岛雨景"> | <img src="docs/images/main-island-hd-snow.webp" width="260" alt="高清材质下的主岛雪景"> |
 
-在项目目录运行一行命令 `python3 tools/serve.py`，会自动选择可用端口并打开浏览器。
+<p align="center"><img src="docs/images/main-island-hd-selfie.webp" width="320" alt="高清材质下的自拍视角"></p>
 
-Terry's Home 完整实现见 [examples/terry-home](examples/terry-home)。
+### 本地预览
 
-## 传送门 [🔗 申请收录](https://github.com/terryHu7/homecraft/issues/new/choose)
+项目无需构建步骤。在项目目录运行：
 
-<p align="center"><img src="docs/images/portal.webp" width="640" alt="传送门"></p>
+```sh
+python3 tools/serve.py
+```
 
-类似传统博客的友链，传送门收录了大家的个人网站，方便互相“串门”。
+Windows 用户使用 `python tools/serve.py`。脚本会自动选择可用端口并打开浏览器。主要自定义入口是 `world/`、`index.html`、`home.config.js` 和 `homecraft.json`；
 
-## 友情链接 [🔗 LINUX DO](https://linux.do)
+
+
+## 相关链接
+
+- [在线体验：Wyc 的世界](https://www.wyc21.com/)
+- [Homecraft 项目与申请收录](https://github.com/terryHu7/homecraft)
+- [LINUX DO](https://linux.do)

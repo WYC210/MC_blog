@@ -121,7 +121,7 @@ export function createAvatar(skinUrl, { onFace } = {}) {
   // Pose state, eased every frame.
   const pose = { legR: 0, legL: 0, armR: 0, armL: 0, armRz: 0, armLz: 0, legRz: 0, legLz: 0, lean: 0 };
   const target = { ...pose };
-  let phase = 0, idleT = 0, waveT = 0, reachT = 0, reachArm = 'R', phoneOut = false, selfie = false, stroke = 0;
+  let phase = 0, idleT = 0, waveT = 0, reachT = 0, reachArm = 'R', phoneOut = false, selfie = false, photoAction = 'natural', stroke = 0;
   const look = { yaw: 0, pitch: 0 };
 
   // In the water: lying on the bottom, climbing out, diving in, treading
@@ -200,6 +200,13 @@ export function createAvatar(skinUrl, { onFace } = {}) {
     if (phoneOut) { target.armR = -1.2; target.armRz = 0.42; }
     // Selfie: the arm reaches towards the lens, low in the frame.
     if (selfie) { target.armR = SELFIE.armR; target.armRz = SELFIE.armRz; target.armL = SELFIE.armL; target.armLz = SELFIE.armLz; }
+    if (!w && !s.rest && !s.ride) {
+      if (photoAction === 'wave') { target.armR = Math.PI; target.armRz = 0.4 + Math.sin(idleT * 7) * 0.24; }
+      else if (photoAction === 'cheer') Object.assign(target, { armR: Math.PI, armL: Math.PI, armRz: 0.35, armLz: -0.35 });
+      else if (photoAction === 'peace') { target.armR = -2.2; target.armRz = -0.46; }
+      else if (photoAction === 'point') { target.armR = -1.55; target.armRz = -0.12; }
+      else if (photoAction === 'heart') Object.assign(target, { armR: -1.4, armL: -1.4, armRz: -0.3, armLz: 0.3 });
+    }
     if (s.rest) {
       const pitch = s.rest === 'recline' ? -0.7 : 0;
       Object.assign(target, { legR: s.rest === 'lie' ? 0 : -Math.PI / 2 - pitch, legL: s.rest === 'lie' ? 0 : -Math.PI / 2 - pitch,
@@ -247,6 +254,9 @@ export function createAvatar(skinUrl, { onFace } = {}) {
   // Selfie mode is the view from the phone, so the handset hides and only the
   // raised arm remains in frame.
   function poseSelfie(on) { selfie = on; handset.visible = phoneOut && !selfie; }
+  function posePhoto(action = 'natural') {
+    photoAction = ['natural', 'wave', 'cheer', 'peace', 'point', 'heart'].includes(action) ? action : 'natural';
+  }
   // World-space anchors for the photo camera: the face and the character's axes.
   function selfieAnchors() {
     root.updateMatrixWorld(true);
@@ -257,7 +267,7 @@ export function createAvatar(skinUrl, { onFace } = {}) {
     };
   }
 
-  return { root, body, head, armR, armL, legR, legL, hand, blob, update, wave, reach, holdPhone, poseSelfie, selfieAnchors, material };
+  return { root, body, head, armR, armL, legR, legL, hand, blob, update, wave, reach, holdPhone, poseSelfie, posePhoto, selfieAnchors, material };
 }
 
 // ---------- Pets ----------

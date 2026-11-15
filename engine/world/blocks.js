@@ -212,6 +212,8 @@ export function createBlockMaterials(tiles, marble, marbleLayer) {
     if (cutout) material.defines = { CUTOUT: '' };
     if (transparent) material.defines = { BLOCK_GLASS: '' };
     material.onBeforeCompile = shader => {
+      const ground = material.userData.ultraGround;
+      if (ground) Object.assign(shader.uniforms, ground.uniforms);
       for (const name of ['uShelter', 'uShelterBox', 'uWet', 'uSnow', 'uSkyTint', 'uCaustics', 'uPoolLight', 'uPoolTime']) shader.uniforms[name] = uniforms[name];
       shader.uniforms.uTiles = uniforms.uTiles;
       shader.uniforms.uEmissiveBoost = uniforms.uEmissiveBoost;
@@ -221,14 +223,17 @@ export function createBlockMaterials(tiles, marble, marbleLayer) {
       shader.vertexShader = SHARED_VERTEX + VERTEX[kind][0] + shader.vertexShader
         .replace('#include <begin_vertex>', VERTEX[kind][1])
         .replace('#include <project_vertex>', SURFACE_VERTEX);
-      shader.fragmentShader = FRAGMENT_HEAD + shader.fragmentShader
+      if (ground && kind === 'cross') shader.vertexShader = 'uniform float uGroundWind;\n' + shader.vertexShader
+        .replace('transformed.x += sway * uv.y;', 'transformed.x += sway * uv.y * uGroundWind;')
+        .replace('transformed.z += sway * 0.6 * uv.y;', 'transformed.z += sway * 0.6 * uv.y * uGroundWind;');
+      shader.fragmentShader = FRAGMENT_HEAD + (ground?.head || '') + shader.fragmentShader
         .replace('#include <map_fragment>', FRAGMENT_MAP)
-        .replace('#include <emissivemap_fragment>', FRAGMENT_EMISSIVE);
+        .replace('#include <emissivemap_fragment>', ground ? ground.surface + FRAGMENT_POOL : FRAGMENT_EMISSIVE);
       if (transparent) {
         shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', GLASS_FRAGMENT);
-      } else shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', WEATHER_FRAGMENT);
+      } else shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', ground?.light || WEATHER_FRAGMENT);
     };
-    material.customProgramCacheKey = () => `${kind}-${cutout}-${transparent}`;
+    material.customProgramCacheKey = () => `${kind}-${cutout}-${transparent}-${!!material.userData.ultraGround}`;
     return material;
   }
 

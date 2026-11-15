@@ -11,8 +11,8 @@ const HUD = `
     <canvas width="220" height="220" aria-label="小地图，点一下就走过去" data-en-label="Minimap: tap to walk there"></canvas>
     <div class="zoom"><button data-zoom="in" aria-label="放大" data-en-label="Zoom in">+</button><button data-zoom="out" aria-label="缩小" data-en-label="Zoom out">−</button></div>
     <button class="expand" aria-label="打开大地图" data-en-label="Open the map"></button>
-    <a class="badge credit" href="https://bettermapit.terryhu.cn/" target="_blank" rel="noopener" aria-label="BetterMapIt 地图 App" data-en-label="BetterMapIt, a map app"><img src="${BETTERMAPIT}" alt="" width="16" height="16"></a>
-    <a class="badge made" href="https://github.com/terryHu7/homecraft" target="_blank" rel="noopener" aria-label="Made with homecraft"><img data-icon="logo" alt="" width="16" height="16"><b>homecraft</b></a>
+   
+    <a class="badge made" href="https://github.com/WYC210/MC_blog" target="_blank" rel="noopener" aria-label="Made with homecraft"><img data-icon="logo" alt="" width="16" height="16"><b>wyc21</b></a>
   </div>
   <div id="weatherMenu" aria-label="天气与时段" data-en-label="Weather and time" hidden>
     <p class="now">获取天气中</p>
@@ -45,7 +45,8 @@ const HUD = `
     <button id="flyButton" aria-label="飞行" aria-pressed="false"><span></span></button>
     <button id="viewButton" aria-label="第一人称" data-en-label="First person" aria-pressed="false"><span></span></button>
     <button id="photoButton" aria-label="拍照与分享" data-en-label="Photo & Share" aria-pressed="false"><span></span></button>
-    <button id="moodButton" aria-label="天气与时段" aria-expanded="false" aria-controls="weatherMenu"><span></span><b></b></button>
+    <button id="materialPackButton" type="button" data-quality="ultra" aria-label="&#26448;&#36136;&#21253;&#20999;&#25442;&#65306;&#26222;&#36890;&#26448;&#36136;&#21253;" title="&#26448;&#36136;&#21253;&#20999;&#25442;" data-en-label="Material pack switch: Normal Material Pack" data-en-title="Material pack switch"><span>&#26448;&#36136;</span></button>
+    <button id="moodButton" aria-label="天气、时段与画质" data-en-label="Weather, time and graphics" aria-expanded="false" aria-controls="weatherMenu"><span></span><b></b></button>
     <button id="soundButton" aria-label="声音" data-en-label="Sound" aria-pressed="false"><span></span></button>
   </div>
   <div id="tooltip" hidden></div>
@@ -248,6 +249,20 @@ const HUD = `
                     </button>
                   </div>
                 </div>
+
+                <div class="cascade-divider" aria-hidden="true"></div>
+
+                <div class="scene-column">
+                  <span class="column-header" data-en="Pose">&#21160;&#20316;</span>
+                  <div class="scene-list" role="radiogroup" aria-label="&#35282;&#33394;&#21160;&#20316;" data-en-label="Character pose">
+                    <button type="button" class="scene-pill on" data-photo-pose="natural" aria-checked="true"><span class="pill-icon">&#10024;</span><span data-en="Natural">&#33258;&#28982;</span></button>
+                    <button type="button" class="scene-pill" data-photo-pose="wave" aria-checked="false"><span class="pill-icon">&#128075;</span><span data-en="Wave">&#25307;&#25163;</span></button>
+                    <button type="button" class="scene-pill" data-photo-pose="cheer" aria-checked="false"><span class="pill-icon">&#128588;</span><span data-en="Cheer">&#27426;&#21628;</span></button>
+                    <button type="button" class="scene-pill" data-photo-pose="peace" aria-checked="false"><span class="pill-icon">&#9996;</span><span data-en="Peace">&#32988;&#21033;</span></button>
+                    <button type="button" class="scene-pill" data-photo-pose="point" aria-checked="false"><span class="pill-icon">&#9758;</span><span data-en="Point">&#25351;&#21521;</span></button>
+                    <button type="button" class="scene-pill" data-photo-pose="heart" aria-checked="false"><span class="pill-icon">&#128172;</span><span data-en="Heart">&#27604;&#24515;</span></button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -298,6 +313,16 @@ const HUD = `
     <div class="work-tabs"></div>
     <span role="status" aria-live="polite" aria-atomic="true"></span>
     <button type="button" data-direction="1" aria-label="下一个作品" data-en-label="Next work"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
+  </div>
+</dialog>
+
+<dialog id="qualityDialog" aria-labelledby="qualityTitle" aria-describedby="qualityDescription qualityWarning">
+  <h2 id="qualityTitle"></h2>
+  <p id="qualityDescription"></p>
+  <p id="qualityWarning" role="note"></p>
+  <div class="quality-actions">
+    <button id="qualityCancel" type="button" class="mc-button" autofocus></button>
+    <button id="qualityConfirm" type="button" class="mc-button" data-en="Enable & reload">确认开启并刷新</button>
   </div>
 </dialog>
 

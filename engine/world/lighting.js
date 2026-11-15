@@ -102,7 +102,7 @@ export function createInteriorLighting(grid, sources, volume = null) {
   };
   const applied = new WeakSet();
   function applyMaterial(material) {
-    if (!material?.isMeshLambertMaterial || material.transparent || applied.has(material)) return;
+    if (!(material?.isMeshLambertMaterial || material?.isMeshStandardMaterial) || material.transparent || applied.has(material)) return;
     applied.add(material);
     const compile = material.onBeforeCompile, key = material.customProgramCacheKey();
     material.onBeforeCompile = function (shader, renderer) {

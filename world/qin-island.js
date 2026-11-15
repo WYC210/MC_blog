@@ -25,6 +25,8 @@ import { createQinCinema } from './qin-cinema.js';
 import { buildQinWanderingEmperor, bindQinEncounterActors } from './qin-encounter-actors.js';
 import { createQinEmperorEncounter } from './qin-emperor-encounter.js';
 import { QIN_WARRIORS, QIN_HANFEI, QIN_COURTYARD_GATE, qinFloorAt } from './qin-island-layout.js';
+import { ULTRA } from '@engine/ultra-flag.js';
+import { createSceneDetails } from './scene-detail.js';
 
 function buildLabels(labels) {
   const canvas = document.createElement('canvas');
@@ -43,12 +45,12 @@ function buildLabels(labels) {
     const baseline = row + 16 + (metrics ? (metrics.actualBoundingBoxAscent - metrics.actualBoundingBoxDescent) / 2 : 0);
     context.fillText(label.text, column + tileWidth / 2, baseline, banner ? 24 : 118);
     transform.makeRotationY(label.yaw).setPosition(label.x, label.y, label.z);
+    const vertex = positions.length / 3;
     for (const [horizontal, vertical] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
       point.set(horizontal * label.width / 2, vertical * label.height / 2, 0).applyMatrix4(transform);
       positions.push(point.x, point.y, point.z);
       coordinates.push((column + (horizontal + 1) * tileWidth / 2) / 512, 1 - (row + (1 - vertical) * 16) / 512);
     }
-    const vertex = index * 4;
     indices.push(vertex, vertex + 1, vertex + 2, vertex, vertex + 2, vertex + 3);
   });
   const geometry = new THREE.BufferGeometry();
@@ -58,11 +60,13 @@ function buildLabels(labels) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
-  const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }));
+  const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'qin-inscriptions';
   mesh.userData.labels = labels;
   return mesh;
 }
+
 
 export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) {
   grid.define('qin-grass', { tex: { top: 'grass_top', side: 'dirt' }, tint: 0xc3c5ab, merge: true, map: '#7d9666' });
@@ -108,6 +112,7 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
   }
 
   const batch = new BoxBatch(layer), labels = [], bakes = [], solids = [];
+  const detail = createSceneDetails();
   const lod = createQinLodSource(() => new BoxBatch(layer), new URLSearchParams(location.search).get('qin-lod') !== 'off');
   const root = new THREE.Group(); root.name = 'qin-sanctuary';
   let media = null, greatWall = null, watermill = null;
@@ -349,11 +354,14 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
       block(flag.x, 0, flag.z, 0.7, 0.3, 0.7, STONE);
       block(flag.x, 0.3, flag.z, 0.18, 5.9, 0.18, WOOD, 0);
       box(flag.x, 6.2, flag.z, 0.28, 0.25, 0.28, GOLD);
-      box(center, 2.35, flag.z, 1.9, 3.4, 0.08, { tex: 'paint', tint: 0x8f3932 }, { tag: `qin-flag:${flag.state}` });
+      const animated = detail.flag(center, 2.35, flag.z, 1.9, 3.4, 0, 0x8f3932, true, flag.state);
+      if (!animated) box(center, 2.35, flag.z, 1.9, 3.4, 0.08, { tex: 'paint', tint: 0x8f3932 }, { tag: `qin-flag:${flag.state}` });
       box(center, 5.78, flag.z, 2.3, 0.12, 0.16, GOLD);
-      for (const edge of [-1, 1]) box(center + edge * 0.9, 2.35, flag.z, 0.08, 3.4, 0.1, GOLD);
-      for (const height of [2.35, 5.67]) box(center, height, flag.z, 1.9, 0.08, 0.1, GOLD);
-      for (const face of [-1, 1]) labels.push({ text: flag.state, kind: 'banner', x: center, y: 4.25, z: flag.z + face * 0.055, width: 1.25, height: 1.25, yaw: face === 1 ? 0 : Math.PI });
+      if (!animated) {
+        for (const edge of [-1, 1]) box(center + edge * 0.9, 2.35, flag.z, 0.08, 3.4, 0.1, GOLD);
+        for (const height of [2.35, 5.67]) box(center, height, flag.z, 1.9, 0.08, 0.1, GOLD);
+      }
+      if (!animated) for (const face of [-1, 1]) labels.push({ text: flag.state, kind: 'banner', x: center, y: 4.25, z: flag.z + face * 0.055, width: 1.25, height: 1.25, yaw: face === 1 ? 0 : Math.PI });
     }
     for (const [column, row, name, height] of [[128, 48, '史记刻石', 5.1], [204, 54, '望海祈福', 4.5]]) {
       block(column, 0, row, 4, 0.6, 3, STONE);
@@ -415,6 +423,7 @@ export function buildQinIsland({ grid, layer, materials, obstacles, hotspots }) 
   for (const mesh of roofBatch.build(materials)) palaceRoof.add(mesh);
   root.add(palaceRoof, watermill.wheel, watermill.details);
   root.add(buildLabels(labels));
+  if (ULTRA) root.add(detail.build());
   const encounterActors = bindQinEncounterActors(root);
   const protection = { active: false, x: 160, z: 24, radius: 2.95, solids: [] };
   const lighting = createInteriorLighting(grid, bakes, QIN_LIGHT_VOLUME);
@@ -473,12 +482,13 @@ export function setupQinIsland({ world, player, avatar, stage, nav, rig, sound }
   const materials = new Map();
   const roots = [sanctuary.root, world.groups['qin-ground']];
   for (const root of roots) root?.traverse(object => {
-    if (!object.material?.isMeshLambertMaterial) return;
+    if (!(object.material?.isMeshLambertMaterial || object.material?.isMeshStandardMaterial)) return;
     const original = object.material;
     if (!materials.has(original)) {
       const copy = original.clone();
       copy.onBeforeCompile = original.onBeforeCompile;
       copy.customProgramCacheKey = original.customProgramCacheKey;
+      copy.userData.hdMaterialSource = original;
       materials.set(original, { material: copy, compile: copy.onBeforeCompile, cacheKey: copy.customProgramCacheKey });
     }
     object.material = materials.get(original).material;

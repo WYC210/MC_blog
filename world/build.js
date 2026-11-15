@@ -29,6 +29,13 @@ import { buildQinIsland, setupQinIsland, drawQinMap } from './qin-island.js';
 import { registerMapIcons } from './map-icons.js';
 import { createTravelAgency } from './travel-agency.js';
 import { buildCoaster, createCoaster } from './coaster.js';
+import { createSceneDetails } from './scene-detail.js';
+import { installMaterialDetails } from './material-detail.js';
+import { installSurfaceTiles, restoreModelMaterials, materialForBlock } from './material-palette.js';
+import { createMaterialProbe } from './material-probe.js';
+import { buildMaterialReview } from './material-review.js';
+import { ULTRA } from '@engine/ultra-flag.js';
+export { createEnvironment } from './terrain-detail.js';
 
 // Two cottages rebuilt one-to-one from litematics. The palette keeps every
 // block's properties, so stairs, slabs, doors, panes and lanterns come out as
@@ -38,7 +45,10 @@ let toys = null;
 
 export function build({ grid, layer, materials, stage }) {
   REST_POINTS.length = 0;
+  installSurfaceTiles(materials, layer);
+  installMaterialDetails(materials, layer);
   defineModelBlocks(grid);
+  restoreModelMaterials(grid);
   // The whole island is a sand beach; terrain keeps its original coast (LAND)
   // while the grid (ISLAND) reaches further south to hold the bay floor.
   buildIsland(grid, LAND, { surfaceAt: () => 'sand', corner: 10, wobble: 0 });
@@ -61,6 +71,7 @@ export function build({ grid, layer, materials, stage }) {
     }
   }
   const B = new BoxBatch(layer);
+  const detail = createSceneDetails();
   const walk = [], bakes = [], obstacles = [], hotspots = [];
   const surfaces = {};
   const emitShape = (name, props, wx, wy, wz, kind, lookOverride = null) => {
@@ -97,11 +108,11 @@ export function build({ grid, layer, materials, stage }) {
       if (name.endsWith('_banner')) {
         // A standing banner: pole through the cell, flag on the top half.
         B.box(cx, wy, cz, 0.09, 1, 0.09, LOOKS.wood);
-        B.box(cx + 0.2, wy + 0.35, cz, 0.06, 0.5, 0.72, { tex: 'paint', tint });
+        if (!detail.flag(cx + 0.2, wy + 0.35, cz, 0.72, 0.5, Math.PI / 2, tint)) B.box(cx + 0.2, wy + 0.35, cz, 0.06, 0.5, 0.72, { tex: 'paint', tint });
       } else {
         // A wall banner: flag hanging against the wall it is mounted on.
         const [dx, dz] = FACING[props.facing ?? 'north'];
-        B.box(cx - dx * 0.28, wy + 0.05, cz - dz * 0.28, dx ? 0.08 : 0.72, 0.85, dz ? 0.08 : 0.72, { tex: 'paint', tint });
+        if (!detail.flag(cx - dx * 0.28, wy + 0.05, cz - dz * 0.28, 0.72, 0.85, dx ? Math.PI / 2 : 0, tint)) B.box(cx - dx * 0.28, wy + 0.05, cz - dz * 0.28, dx ? 0.08 : 0.72, 0.85, dz ? 0.08 : 0.72, { tex: 'paint', tint });
         B.box(cx - dx * 0.42, wy, cz - dz * 0.42, 0.09, 1, 0.09, LOOKS.wood);
       }
     } else if (kind === 'pane') {
@@ -113,7 +124,7 @@ export function build({ grid, layer, materials, stage }) {
       bakes.push({ id: 'lantern' + bakes.length, position: [cx, wy + 0.7, cz], power: 3, radius: 8, direction: null });
     } else if (kind === 'torch') {
       B.box(cx, wy + 0.15, cz, 0.09, 0.55, 0.09, LOOKS.wood);
-      B.box(cx, wy + 0.7, cz, 0.13, 0.13, 0.13, LOOKS.flame);
+      if (!detail.fire(cx, wy + 0.7, cz, 0.3)) B.box(cx, wy + 0.7, cz, 0.13, 0.13, 0.13, LOOKS.flame);
       bakes.push({ id: 'torch' + bakes.length, position: [cx, wy + 0.75, cz], power: 2, radius: 6, direction: null });
     } else if (kind === 'panel') {
       // A closed trapdoor: a thin panel against the face it is mounted on.
@@ -137,7 +148,7 @@ export function build({ grid, layer, materials, stage }) {
     } else if (kind === 'campfire') {
       B.box(cx, wy, cz, 0.85, 0.18, 0.16, LOOKS.wood);
       B.box(cx, wy, cz, 0.16, 0.18, 0.85, LOOKS.wood);
-      B.box(cx, wy + 0.12, cz, 0.3, 0.18, 0.3, LOOKS.flame);
+      if (!detail.fire(cx, wy + 0.12, cz, 0.65)) B.box(cx, wy + 0.12, cz, 0.3, 0.18, 0.3, LOOKS.flame);
       bakes.push({ id: 'campfire' + bakes.length, position: [cx, wy + 0.3, cz], power: 3, radius: 8, direction: null });
     } else if (kind === 'dripleaf') {
       B.box(cx, wy, cz, 0.1, 0.75, 0.1, LOOKS.dripleaf);
@@ -318,7 +329,7 @@ export function build({ grid, layer, materials, stage }) {
   furnishIKUN({ B, obstacles, bakes });
   planes.push(...furnishLeHun({ B, walk, obstacles, bakes }));
   planes.push(tuftsMesh);
-  furnishBeach({ B, obstacles, bakes });
+  furnishBeach({ B, obstacles, bakes, detail });
   buildNightLighting({ B, obstacles, bakes });
   buildLookout({ grid, B, obstacles, bakes });
   const fountain = buildFountain({ B, layer, materials, obstacles, bakes });
@@ -329,6 +340,10 @@ export function build({ grid, layer, materials, stage }) {
   planes.push(qinIsland.root);
   const coaster = buildCoaster({ B, layer, materials, bakes });
   planes.push(coaster.group);
+  const sceneDetails = detail.build();
+  if (sceneDetails.children.length) planes.push(sceneDetails);
+  const materialReview = buildMaterialReview({ layer, materials });
+  if (materialReview) planes.push(materialReview.root);
   return {
     batches: { model: B },
     bakes,
@@ -338,12 +353,25 @@ export function build({ grid, layer, materials, stage }) {
     planes,
     forest,
     sites: [toys, modelSite, qinIsland.site],
-    named: { fountain, concertCrowd, qinIsland, coaster, drawMap: drawQinMap },
+    named: { fountain, concertCrowd, qinIsland, coaster, sceneDetails, materialReview, drawMap: drawQinMap },
   };
 }
 
 // The floats ride the swell.
 export function setup({ stage, config, player, avatar, rig, sound, world, nav, quality }) {
+  if (ULTRA) {
+    world.hdMaterials = { status: 'loading' };
+    world.hdMaterialsReady = import('./hd-materials.js')
+      .then(({ installHdMaterials }) => installHdMaterials(world, stage.renderer))
+      .then(status => { world.hdMaterials = status; })
+      .catch(error => {
+        world.hdMaterials = { status: 'fallback', reason: error.message };
+        console.warn('HD textures could not load; keeping the original materials.', error);
+      });
+  }
+  const materialProbe = createMaterialProbe(stage, world.materials);
+  world.tiles.data = world.tiles.texture.image.data;
+  if (world.materialReview) world.materialReview.focus(world.materialReview.selected, rig, stage.camera.aspect < 0.8);
   registerMapIcons();
   createComputer(config.computer);
   const fishing = createFishing({ stage, player, avatar, rig, sound });
@@ -359,12 +387,13 @@ export function setup({ stage, config, player, avatar, rig, sound, world, nav, q
   const coaster = createCoaster({ stage, player, rig, sound, world });
   const travelAgency = createTravelAgency({ player, rig, stage, nav, sound, fishing, lookout, qinIsland, coaster });
   return {
-    fishing, furniture, jetSki, resident, nightConcert, nightNature, lookout, qinIsland, travelAgency, coaster,
-    warmup(on) { qinIsland.warmup(on); },
+    fishing, furniture, jetSki, resident, nightConcert, nightNature, lookout, qinIsland, travelAgency, coaster, materialProbe,
+    warmup(on) { qinIsland.warmup(on); if (!on) materialProbe?.capture(); },
     interact: () => travelAgency.active || resident?.dialogue.active || coaster.interact() || qinIsland.encounter.interact() || resident?.interact() || lookout.interact() || jetSki.interact() || furniture.interact() || nightConcert.interact(),
     tap: (x, y, picked) => travelAgency.active || qinIsland.encounter.active || resident?.tap(x, y, picked) || coaster.tap(x, y, picked) || lookout.tap() || jetSki.tap(x, y, picked) || furniture.tap(x, y, picked) || qinIsland.tap(x, y, picked),
     pad: jetSki.pad,
     update(dt) {
+      materialProbe?.update(dt);
       coaster.update(dt);
       qinIsland.update(dt);
       lookout.update(dt);
@@ -753,6 +782,10 @@ const FERRIS_LOOKS = {
 };
 
 function lookFor(name) {
+  return materialForBlock(name, baseLookFor(name));
+}
+
+function baseLookFor(name) {
   if (/yellow_carpet/.test(name)) return LOOKS.ramp;
   if (/cherry_trapdoor|cherry_stairs|cherry_slab/.test(name)) return LOOKS.cherry;
   if (/cobblestone/.test(name)) return LOOKS.cobble;

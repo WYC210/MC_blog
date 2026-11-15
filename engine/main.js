@@ -7,6 +7,8 @@ import * as L from '@world/layout.js';
 import * as W from '@world/build.js';
 import { config } from './config.js';
 import { createStage, detectQuality } from './world/stage.js';
+import { ULTRA, switchUltra } from './ultra-flag.js';
+import { createQualitySettings } from './ui/quality.js';
 import { createWorld } from './world/world.js';
 import { createNav } from './world/nav.js';
 import { createAvatar, readFace, createCat, createDog } from './world/avatar.js';
@@ -30,7 +32,7 @@ import { createFlightPad } from './ui/flightpad.js';
 import { createPortal, arrival, visitWorld, isTravelling, placePortalControls } from './portal.js';
 import { wornSkin } from './traveller.js';
 import { createWorldList } from './ui/worlds.js';
-import { setLoadingProgress as progress, finishLoading, hideLoading } from './ui/loading.js';
+import { setLoadingProgress as progress, setLoadingMessage, finishLoading, hideLoading } from './ui/loading.js';
 import { mountHud } from './hud.js';
 import { t, nameOf, applyLang, onLang, langSwitch } from './lang.js';
 
@@ -110,6 +112,7 @@ $('#retry3D')?.addEventListener('click', () => {
 if (new URLSearchParams(location.search).has('plain')) plain();
 else boot().catch(err => {
   bootFailed = true;
+  if (ULTRA) { switchUltra(false, true); return; }
   console.error('3D startup failed:', bootPhase, err);
   if (bootRenderer) { bootRenderer.dispose(); bootRenderer.forceContextLoss(); }
   $('#world').replaceChildren();
@@ -119,10 +122,16 @@ else boot().catch(err => {
 
 async function boot() {
   const quality = detectQuality();
+  setLoadingMessage(t('世界加载中...', 'Loading world...'));
   progress(0.12);
   await nextFrame();
   const stage = createStage($('#world'), quality);
   bootRenderer = stage.renderer;
+  if (ULTRA) {
+    bootPhase = 'ultra';
+    const { installUltra } = await import('./world/ultra.js');
+    installUltra(stage);
+  }
   bootPhase = 'world';
   progress(0.3);
   await nextFrame();
@@ -255,8 +264,10 @@ async function boot() {
     else if (kind === 'exhale') { pool.exhale(x, y, z); if (pool.submerged) sound.play('bubbles'); }
   }
   const player = createPlayer({ avatar, nav, grid: world.grid, ground: world.ground, onWater });
+  const environmentDetails = ULTRA ? W.createEnvironment?.({ stage, world, weatherFx, player }) : null;
   stage.scene.add(player.web);
   const rig = createRig(stage.camera, world);
+  const qualitySettings = createQualitySettings(stage, () => { toggleWeatherMenu(false); rig.skipIntro(); });
   // The world's own moving parts (a sailboat, a Vertec, …): build.js setup(app).
   const extras = W.setup?.({ stage, world, nav, player, avatar, sound, rig, quality, config }) || {};
   progress(0.85);
@@ -715,7 +726,7 @@ async function boot() {
   const photoButton = $('#photoButton');
   if (photoButton) photoButton.querySelector('span').style.backgroundImage = `url(${icon('camera').url})`;
   const photoStudio = createPhotoStudio({
-    stage, world, rig, player, avatar, sound, setTimeMode, getTimeMode: () => timeMode, setWeatherMode, getWeatherMode: () => weatherMode, config,
+    stage, world, rig, player, avatar, sound, onOpen: () => { togglePhone(false); avatar.holdPhone(false); }, setTimeMode, getTimeMode: () => timeMode, setWeatherMode, getWeatherMode: () => weatherMode, config,
   });
 
   // ---------- Flight ----------
@@ -843,9 +854,9 @@ async function boot() {
 
   // ---------- Input ----------
   const input = createInput(stage.renderer.domElement, {
-    blocked: () => minimap.isBigOpen() || panel.open || weatherMenuOpen() || isTravelling() || !!portal?.busy || photoStudio.isOpen(),
-    shortcutsBlocked: () => minimap.isBigOpen() || weatherMenuOpen() || isTravelling() || !!portal?.busy || photoStudio.isOpen(),
-    escape: () => { if (photoStudio.isOpen()) photoStudio.close(); else if (weatherMenuOpen()) toggleWeatherMenu(false, true); else if (minimap.isBigOpen()) minimap.toggleBig(false); else if (panel.open) closePage(); else if (phone.up) { if (!phone.back()) togglePhone(false); } else if (player.vehicle) player.dismountVehicle(); else if (player.resting) player.standUp(); else toggleWeb(false); },
+    blocked: () => qualitySettings.isOpen() || minimap.isBigOpen() || panel.open || weatherMenuOpen() || isTravelling() || !!portal?.busy,
+    shortcutsBlocked: () => qualitySettings.isOpen() || minimap.isBigOpen() || weatherMenuOpen() || isTravelling() || !!portal?.busy || photoStudio.isOpen(),
+    escape: () => { if (qualitySettings.isOpen()) qualitySettings.close(); else if (photoStudio.isOpen()) photoStudio.close(); else if (weatherMenuOpen()) toggleWeatherMenu(false, true); else if (minimap.isBigOpen()) minimap.toggleBig(false); else if (panel.open) closePage(); else if (phone.up) { if (!phone.back()) togglePhone(false); } else if (player.vehicle) player.dismountVehicle(); else if (player.resting) player.standUp(); else toggleWeb(false); },
     interact: () => {
       if (extras.interact?.()) return;
       const s = nearestTarget();
@@ -864,7 +875,7 @@ async function boot() {
     photo: () => (photoStudio.isOpen() ? photoStudio.close() : photoStudio.open()),
     map: () => minimap.toggleBig(),
     slot: n => hotbar.children[n - 1]?.click(),
-    orbit: (dx, dy) => { rig.skipIntro(); rig.orbit(dx, dy); },
+    orbit: (dx, dy) => rig.orbit(dx, dy),
     zoom: f => rig.zoom(f),
     tap,
     hover: (x, y) => hover(x, y, true),
@@ -876,7 +887,6 @@ async function boot() {
   // ---------- Loop ----------
   // Compile all display materials and the initial shadow map while the loading
   // screen is still up. The first walk should not trigger cold shader work.
-  progress(0.92);
   bootPhase = 'shader-warmup';
   // The same baked field lights furniture, printed artwork, the player and pets.
   // Bind it before warmup so night/day switches never compile another shader.
@@ -888,6 +898,14 @@ async function boot() {
   weatherFx.warmup(true);
   pool.warmup(true);
   extras.warmup?.(true);
+  if (world.hdMaterials?.status === 'loading' && world.hdMaterialsReady) {
+    bootPhase = 'hd-materials';
+    setLoadingMessage(t('更换材质包中...', 'Changing material pack...'));
+    progress(0.88);
+    await world.hdMaterialsReady;
+    bootPhase = 'shader-warmup';
+  }
+  progress(0.92);
   // Compiling a shader alone does not upload off-screen vertex buffers.
   // Draw every batch once under the loading screen, including culled panes
   // and particles, so the first weather preview/camera move stays warm.
@@ -963,7 +981,7 @@ async function boot() {
     const info = stage.renderer.info, frames = [...frameTimes].filter(Boolean);
     const frameMs = frames.length ? frames.reduce((a, b) => a + b, 0) / frames.length : 0;
     return { calls: info.render.calls, triangles: info.render.triangles, textures: info.memory.textures, geometries: info.memory.geometries,
-      programs: info.programs?.length ?? 0, lights: world.lights.length, pixelRatio: +stage.renderer.getPixelRatio().toFixed(2), frameMs: +frameMs.toFixed(1), budget: BUDGET };
+      programs: info.programs?.length ?? 0, lights: world.lights.length, quality: ULTRA ? 'ultra' : 'normal', pixelRatio: +stage.renderer.getPixelRatio().toFixed(2), frameMs: +frameMs.toFixed(1), budget: BUDGET };
   }
   const debugEl = new URLSearchParams(location.search).has('debug') ? document.body.appendChild(Object.assign(document.createElement('pre'), { id: 'debugStats' })) : null;
   let debugClock = 0;
@@ -983,7 +1001,7 @@ async function boot() {
     requestAnimationFrame(loop);
     if (document.hidden) { last = now; return; }
     const elapsed = (now - last) / 1000;
-    const paused = minimap.isBigOpen() || panel.open || weatherMenuOpen() || isTravelling() || photoStudio.isOpen();
+    const paused = qualitySettings.isOpen() || minimap.isBigOpen() || panel.open || weatherMenuOpen() || isTravelling();
     if (paused && !wasPaused) { player.cancel(); input.clear(); }
     wasPaused = paused;
     // Panels pause movement, but the visible world keeps rendering every frame.
@@ -1004,6 +1022,7 @@ async function boot() {
     atmosphere.update(elapsed, now);
     weatherFx.update(elapsed, stage.camera, weatherFocus.set(player.pos.x, player.y + 1, player.pos.z));
     const weatherNow = weatherFx.state, cam = stage.camera.position;
+    environmentDetails?.update(elapsed, weatherNow);
     pool.update(elapsed, stage.camera, player, weatherNow);
     // Under water the view softens; behind its blurred edges is water, not sky.
     if (pool.submerged !== underwater) {
@@ -1072,7 +1091,7 @@ async function boot() {
   addEventListener('resize', () => stage.resize());
   // Handy when poking at it from the console.
   window.__home = {
-    stage, world, player, avatar, rig, nav, pets, cat, dog, extras, portal, worn, atmosphere, weatherFx, pool, weather, config, stats, setWeatherMode, getWeatherMode: () => weatherMode, setTimeMode, getTimeMode: () => timeMode, navigate, openPage, openPortal, go, setMood, photo: photoStudio,
+    stage, world, player, avatar, rig, nav, pets, cat, dog, extras, portal, worn, atmosphere, weatherFx, environmentDetails, pool, weather, config, stats, setWeatherMode, getWeatherMode: () => weatherMode, setTimeMode, getTimeMode: () => timeMode, navigate, openPage, openPortal, go, setMood, photo: photoStudio,
     teleport(x, z) { player.teleport(x, z); rig.recenter(player); },
     project(x, y, z) {
       const v = new THREE.Vector3(x, y, z).project(stage.camera);
@@ -1082,5 +1101,6 @@ async function boot() {
     activate,
   };
   weather.start();
+  qualitySettings.showFallback();
   bootPhase = 'ready';
 }

@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import * as L from '@world/layout.js';
 import { t, onLang } from '../lang.js';
 
-export function createPhotoStudio({ stage, world, rig, player, avatar = null, sound, setTimeMode, getTimeMode, setWeatherMode, getWeatherMode, config = {} }) {
+export function createPhotoStudio({ stage, world, rig, player, avatar = null, sound, onOpen, setTimeMode, getTimeMode, setWeatherMode, getWeatherMode, config = {} }) {
   const root = document.getElementById('photoStudio');
   const trigger = document.getElementById('photoButton');
   if (!root || !trigger) return { open() {}, close() {}, isOpen: () => false };
@@ -18,6 +18,7 @@ export function createPhotoStudio({ stage, world, rig, player, avatar = null, so
 
   let open = false;
   let angle = 'current';
+  let photoAction = 'natural';
   let ratio = innerHeight > innerWidth * 1.1 ? '9:16' : '16:9';
   let activeTime = 'current';
   let activeWeather = 'current';
@@ -39,19 +40,29 @@ export function createPhotoStudio({ stage, world, rig, player, avatar = null, so
   }
 
   // ---------- Camera Angle Calculator ----------
-  const B = L.ISLAND;
-  const span = Math.min(120, Math.max(B.x1 - B.x0, B.z1 - B.z0));
-  const cx = (B.x0 + B.x1) / 2, cz = (B.z0 + B.z1) / 2;
-  const defaultIntro = {
-    pos: [cx + span * 0.62, span * 0.48, cz + span * 0.78],
-    portrait: [cx + span, span * 0.78, cz + span * 1.3],
-    look: [cx, 0, cz],
-  };
-  const intro = L.INTRO || defaultIntro;
+  function aerialForBounds(bounds) {
+    const span = Math.max(bounds.x1 - bounds.x0, bounds.z1 - bounds.z0);
+    const cx = (bounds.x0 + bounds.x1) / 2, cz = (bounds.z0 + bounds.z1) / 2;
+    return {
+      pos: [cx + span * 0.62, span * 0.48, cz + span * 0.78],
+      portrait: [cx + span, span * 0.78, cz + span * 1.3],
+      look: [cx, 0, cz],
+    };
+  }
+  const homeAerial = L.INTRO || aerialForBounds(L.LAND);
+  const qinAerial = aerialForBounds(L.QIN_ISLAND);
+
+  function aerialForPlayer() {
+    const qin = L.QIN_ISLAND;
+    const { x, z } = player.pos;
+    const onQinIsland = x >= qin.x0 && x < qin.x1 && z >= qin.z0 && z < qin.z1;
+    return onQinIsland ? qinAerial : homeAerial;
+  }
 
   function getAnglePreset(id) {
     const isPortrait = ratio === '9:16' || (ratio === '1:1' && innerHeight > innerWidth);
     if (id === 'aerial') {
+      const intro = aerialForPlayer();
       const pos = isPortrait && intro.portrait ? intro.portrait : intro.pos;
       const look = intro.look;
       return { pos, look };
@@ -167,6 +178,9 @@ export function createPhotoStudio({ stage, world, rig, player, avatar = null, so
 
   function applyAngle(id) {
     angle = id;
+    if (cropFrame) cropFrame.title = id === 'aerial'
+      ? t('鸟瞰：按住鼠标右键拖动旋转视角，左键拖动移动取景框', 'Aerial: right-drag to rotate; left-drag to move the frame')
+      : t('按住拖动取景框，双击可重置居中', 'Drag to move the frame; double-click to recenter');
     applyLens();
     updateQuickFlipBtn();
     for (const b of root.querySelectorAll('[data-angle]')) {
@@ -189,7 +203,7 @@ export function createPhotoStudio({ stage, world, rig, player, avatar = null, so
       }
       const preset = getAnglePreset(id);
       if (preset) {
-        rig.showcase(preset.pos, preset.look);
+        rig.showcase(preset.pos, preset.look, { orbitable: id === 'aerial' });
       }
     }
   }
@@ -250,7 +264,7 @@ export function createPhotoStudio({ stage, world, rig, player, avatar = null, so
     }
     if (angle === 'aerial' || angle === 'selfie' || angle === 'spawn') {
       const preset = getAnglePreset(angle);
-      if (preset) rig.showcase(preset.pos, preset.look);
+      if (preset) rig.showcase(preset.pos, preset.look, { orbitable: angle === 'aerial' });
     }
     requestAnimationFrame(updateLiveMacBar);
     closeAllPopovers();
@@ -935,7 +949,32 @@ export function createPhotoStudio({ stage, world, rig, player, avatar = null, so
     }
   }
 
+  let orbitDrag = null;
+
   if (cropFrame) {
+    cropFrame.addEventListener('pointerdown', e => {
+      if (angle !== 'aerial' || e.pointerType !== 'mouse' || e.button !== 2 || e.target.closest('.p-corner, .p-edge')) return;
+      orbitDrag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      cropFrame.setPointerCapture(e.pointerId);
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    });
+    cropFrame.addEventListener('pointermove', e => {
+      if (!orbitDrag || orbitDrag.id !== e.pointerId) return;
+      rig.orbit(e.clientX - orbitDrag.x, e.clientY - orbitDrag.y);
+      orbitDrag.x = e.clientX;
+      orbitDrag.y = e.clientY;
+      e.preventDefault();
+    });
+    const endOrbitDrag = e => {
+      if (!orbitDrag || orbitDrag.id !== e.pointerId) return;
+      orbitDrag = null;
+    };
+    cropFrame.addEventListener('pointerup', endOrbitDrag);
+    cropFrame.addEventListener('pointercancel', endOrbitDrag);
+    cropFrame.addEventListener('contextmenu', e => {
+      if (angle === 'aerial') e.preventDefault();
+    });
     cropFrame.addEventListener('pointerdown', onFramePointerDown);
     cropFrame.addEventListener('pointermove', onFramePointerMove);
     cropFrame.addEventListener('pointerup', onFramePointerUp);
@@ -1020,6 +1059,7 @@ export function createPhotoStudio({ stage, world, rig, player, avatar = null, so
   // ---------- Lifecycle ----------
   function openStudio() {
     if (open) return;
+    onOpen?.();
     open = true;
     closeAllPopovers();
     savedTimeMode = getTimeMode ? getTimeMode() : 'day';
@@ -1050,6 +1090,13 @@ export function createPhotoStudio({ stage, world, rig, player, avatar = null, so
     open = false;
     applyLens();
     avatar?.poseSelfie?.(false);
+    photoAction = 'natural';
+    avatar?.posePhoto?.(photoAction);
+    for (const button of root.querySelectorAll('[data-photo-pose]')) {
+      const active = button.dataset.photoPose === photoAction;
+      button.setAttribute('aria-checked', String(active));
+      button.classList.toggle('on', active);
+    }
     closeAllPopovers();
     document.body.classList.remove('photo-mode');
     root.hidden = true;
@@ -1120,6 +1167,19 @@ export function createPhotoStudio({ stage, world, rig, player, avatar = null, so
     b.addEventListener('click', (e) => {
       e.stopPropagation();
       applyRatio(b.dataset.ratio);
+      sound?.play('click');
+    });
+  }
+  for (const b of root.querySelectorAll('[data-photo-pose]')) {
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      photoAction = b.dataset.photoPose;
+      avatar?.posePhoto?.(photoAction);
+      for (const option of root.querySelectorAll('[data-photo-pose]')) {
+        const active = option === b;
+        option.setAttribute('aria-checked', String(active));
+        option.classList.toggle('on', active);
+      }
       sound?.play('click');
     });
   }

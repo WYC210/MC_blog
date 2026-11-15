@@ -44,6 +44,8 @@ export function buildFountain({ B: batch, layer, materials, obstacles, bakes }) 
     for (const side of [-1, 1]) {
       box(0, bottom + 0.12, side * (size - lip) / 2, size, 0.22, lip, STONE);
       box(side * (size - lip) / 2, bottom + 0.12, 0, lip, 0.22, size - lip * 2, STONE);
+      box(0, bottom + 0.33, side * (size - lip) / 2, size, 0.035, lip + 0.025, TRIM);
+      box(side * (size - lip) / 2, bottom + 0.33, 0, lip + 0.025, 0.035, size - lip * 2, TRIM);
     }
     box(0, waterY - 0.04, 0, size - lip * 2, 0.04, size - lip * 2, WATER, false);
   }

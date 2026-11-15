@@ -12,12 +12,11 @@ export function showLoading(label = '', fraction = .08, image = null) {
     document.body.append(root);
   }
   root.classList.remove('done');
-  let status = root.querySelector('.loading-label');
-  if (label && !status) {
-    status = document.createElement('p'); status.className = 'loading-label';
-    status.setAttribute('role', 'status'); root.append(status);
+  if (label) setLoadingMessage(label);
+  else {
+    const status = root.querySelector('.loading-label');
+    if (status) status.hidden = true;
   }
-  if (status) { status.textContent = label; status.hidden = !label; }
   let picture = root.querySelector('.loading-preview');
   if (image) {
     if (!picture) {
@@ -28,6 +27,28 @@ export function showLoading(label = '', fraction = .08, image = null) {
     picture.src = image;
   } else picture?.remove();
   setLoadingProgress(fraction);
+}
+
+export function setLoadingMessage(label) {
+  const root = document.getElementById('loading');
+  if (!root) return;
+  let status = root.querySelector('.loading-label');
+  if (!status) {
+    status = document.createElement('p');
+    status.className = 'loading-label';
+    status.setAttribute('role', 'status');
+    root.append(status);
+  }
+  status.hidden = !label;
+  status.setAttribute('aria-label', label);
+  status.classList.toggle('is-animated', Boolean(label));
+  status.replaceChildren(...Array.from(label, (character, index) => {
+    const letter = document.createElement('span');
+    letter.setAttribute('aria-hidden', 'true');
+    letter.style.setProperty('--loading-delay', `${index * 65}ms`);
+    letter.textContent = character;
+    return letter;
+  }));
 }
 
 export function setLoadingProgress(fraction) {
