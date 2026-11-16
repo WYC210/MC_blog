@@ -37,15 +37,15 @@ test('distant Qin details preserve material/shadow batches, actors, lights and l
 
 test('Qin detail switching uses distance to the coast and hysteresis without repeated writes', () => {
   const detail = buildQinDistanceDetail(batch({ opaque: [box(4), box(0.1)] }), {});
-  const camera = { position: { x: -8, y: 200, z: 0 } };
+  const camera = { position: { x: 10, y: 200, z: 0 } };
   let count = 2, writes = 0;
   Object.defineProperty(detail.meshes[0], 'count', { get: () => count, set(value) { count = value; writes++; } });
   detail.update(camera); assert.equal(detail.distant, false);
-  camera.position.x = -20; detail.update(camera); assert.equal(detail.distant, true);
-  camera.position.x = -8;
+  camera.position.x = 3; detail.update(camera); assert.equal(detail.distant, true);
+  camera.position.x = 10;
   for (let frame = 0; frame < 100; frame++) detail.update(camera);
   assert.equal(detail.distant, true); assert.equal(writes, 1);
-  camera.position.x = 0; detail.update(camera); assert.equal(detail.distant, false);
+  camera.position.x = 20; detail.update(camera); assert.equal(detail.distant, false);
   camera.position.x = 160; camera.position.z = -180; detail.update(camera); assert.equal(detail.distant, true);
   camera.position.z = 0; detail.update(camera); assert.equal(detail.distant, false);
   assert.equal(writes, 4);

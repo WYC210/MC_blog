@@ -62,7 +62,7 @@ export function buildQinDistanceDetail(batch, materials, source = null) {
     update(camera, height = 0, force = false) {
       const column = Math.max(QIN_ISLAND.x0 - camera.position.x, 0, camera.position.x - QIN_ISLAND.x1);
       const row = Math.max(QIN_ISLAND.z0 - camera.position.z, 0, camera.position.z - QIN_ISLAND.z1);
-      const next = !force && column * column + row * row > (distant ? 85 : 100) ** 2;
+      const next = !force && column * column + row * row > (distant ? 68 : 80) ** 2;
       errorPixels = proxy ? qinLodErrorPixels(camera, height, proxy.bounds, proxy.error) : Infinity;
       const nextProxy = !!proxy && next && errorPixels < (proxied ? 3.25 : 2.5);
       if (next === distant && nextProxy === proxied) return;

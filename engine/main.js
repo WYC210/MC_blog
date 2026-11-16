@@ -1022,6 +1022,7 @@ async function boot() {
     atmosphere.update(elapsed, now);
     weatherFx.update(elapsed, stage.camera, weatherFocus.set(player.pos.x, player.y + 1, player.pos.z));
     const weatherNow = weatherFx.state, cam = stage.camera.position;
+    stage.pipeline?.setWeather?.(weatherNow);
     environmentDetails?.update(elapsed, weatherNow);
     pool.update(elapsed, stage.camera, player, weatherNow);
     // Under water the view softens; behind its blurred edges is water, not sky.

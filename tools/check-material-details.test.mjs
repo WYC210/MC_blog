@@ -95,6 +95,11 @@ test('rain pools use sparse planar reflections with softened wet edges', () => {
   assert.ok(puddles.includes('grid.type(Math.floor(centerX + offsetX), -1, Math.floor(centerZ + offsetZ))?.name !== \'sand\''));
   assert.ok(puddles.includes('makeWetEdgeGeometry(pools)'));
   assert.ok(puddles.includes('uReflection'));
+  const terrain = readFileSync(new URL('../world/terrain-detail.js', import.meta.url), 'utf8');
+  assert.ok(!terrain.includes('createRainPuddles'));
+  const ultra = readFileSync(new URL('../engine/world/ultra.js', import.meta.url), 'utf8');
+  assert.ok(ultra.includes('reflectionFrame % 2 === 0'));
+  assert.ok(ultra.includes('reflectionWeather.haze < 0.02'));
   assert.ok(puddles.includes('smoothstep(0.88, 1.0, vRadius)'));
   assert.ok(!SURFACE_DETAIL.includes('puddleDistance'));
 });

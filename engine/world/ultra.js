@@ -428,11 +428,30 @@ export function installUltra(stage) {
     return true;
   }
 
+  function nearReflectionBounds(camera, mirror) {
+    if (!mirror.bounds?.length) return true;
+    const maxDistance = mirror.maxDistance ?? Infinity;
+    let distanceSquared = Infinity;
+    for (const bounds of mirror.bounds) {
+      const dx = Math.max(bounds.x0 - camera.position.x, 0, camera.position.x - bounds.x1);
+      const dz = Math.max(bounds.z0 - camera.position.z, 0, camera.position.z - bounds.z1);
+      distanceSquared = Math.min(distanceSquared, dx * dx + dz * dz);
+    }
+    return distanceSquared <= maxDistance * maxDistance;
+  }
+
   // ---------- Per-frame ----------
   const sunPoint = new THREE.Vector3(), forward = new THREE.Vector3();
   const started = performance.now();
   let lastTime = started;
   let night = 0;
+  let reflectionFrame = 0, reflectionReady = false;
+  const reflectionWeather = { cloud: 0, rain: 0, snow: 0, fog: 0, haze: 0 };
+  function clearWeather() {
+    return reflectionWeather.rain < 0.02 && reflectionWeather.snow < 0.02
+      && reflectionWeather.fog < 0.02 && reflectionWeather.haze < 0.02
+      && reflectionWeather.cloud < 0.78 && stage.veil < 0.78;
+  }
   function render(scene, camera) {
     camera.updateMatrixWorld();
     renderer.getDrawingBufferSize(size);
@@ -441,7 +460,22 @@ export function installUltra(stage) {
     const autoClear = renderer.autoClear;
     renderer.autoClear = true;
 
-    for (const m of mirrors) m.uniforms.uReflectOn.value = m.mesh.visible && reflect(scene, m) ? 1 : 0;
+    const clear = clearWeather();
+    if (!clear) {
+      for (const mirror of mirrors) mirror.uniforms.uReflectOn.value = 0;
+      reflectionReady = false;
+    } else {
+      const refresh = !reflectionReady || reflectionFrame % 2 === 0;
+      if (refresh) {
+        let reflected = false;
+        for (const mirror of mirrors) {
+          mirror.uniforms.uReflectOn.value = mirror.mesh.visible && nearReflectionBounds(camera, mirror) && reflect(scene, mirror) ? 1 : 0;
+          reflected ||= mirror.uniforms.uReflectOn.value > 0;
+        }
+        reflectionReady = reflected;
+      }
+      reflectionFrame++;
+    }
     renderer.setRenderTarget(targets.scene);
     renderer.render(scene, camera);
 
@@ -478,7 +512,7 @@ export function installUltra(stage) {
     night = stage.night;
     const under = stage.submerged ? 1 : 0;
     const seen = (sun.visible ? 1 : 0) * (1 - stage.veil) * (1 - under);
-    const shafts = facing * onScreen * seen * (1 - 0.75 * night);
+    const shafts = facing * onScreen * seen * (1 - 0.75 * night) * (clear ? 1 : 0);
     const timestamp = performance.now();
     const adapt = adaptMaterial.uniforms;
     adapt.tScene.value = colourTex; adapt.tDepth.value = depth;
@@ -548,7 +582,8 @@ export function installUltra(stage) {
   const EXPOSURE = 1.2;
   const pipeline = {
     render,
-    // pool.js registers the sea: { mesh, level, uniforms: { uReflection, uReflMatrix, uReflectOn } }.
+    setWeather(weather) { Object.assign(reflectionWeather, weather); },
+    // pool.js registers the sea and its nearby-land reflection bounds.
     addMirror(mirror) {
       const depthMaterial = new THREE.ShaderMaterial({
         vertexShader: mirror.mesh.material.vertexShader,

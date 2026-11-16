@@ -3,7 +3,6 @@ import { ISLAND } from './layout.js';
 import { rng } from '@engine/world/textures.js';
 import { terrainProfile } from './detail-profiles.js';
 import { detailUniforms, detailMotion } from './detail-state.js';
-import { createRainPuddles } from './rain-puddles.js';
 
 function terrainTexture(world, shelter) {
   const width = ISLAND.x1 - ISLAND.x0, depth = ISLAND.z1 - ISLAND.z0;
@@ -107,7 +106,6 @@ export function createEnvironment({ stage, world, weatherFx, player }) {
   detailUniforms.uDetailTerrain.value = texture;
   detailUniforms.uDetailBounds.value.set(ISLAND.x0, ISLAND.z0, 1 / texture.image.width, 1 / texture.image.height);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const puddles = createRainPuddles({ stage, world, shelter: weatherFx.shelter });
   const count = stage.quality.mobile ? 420 : 1400, random = rng(40615);
   const geometry = new THREE.InstancedBufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute([-.5, -.5, 0, .5, -.5, 0, -.5, .5, 0, .5, .5, 0], 3));
@@ -122,7 +120,7 @@ export function createEnvironment({ stage, world, weatherFx, player }) {
   particles.name = 'terrain-wind-grains'; particles.frustumCulled = false;
   stage.scene.add(particles);
   return {
-    particles, texture, uniforms: detailUniforms, puddles,
+    particles, texture, uniforms: detailUniforms,
     update(dt, weather) {
       const motion = reduced.matches ? 0 : 1;
       detailUniforms.uDetailTime.value += Math.min(dt, 0.1) * motion;
@@ -130,7 +128,6 @@ export function createEnvironment({ stage, world, weatherFx, player }) {
       detailUniforms.uDetailWind.value = Math.max(0, Math.min(1, weather.wind || 0));
       detailUniforms.uDetailWet.value = Math.max(weather.wet || 0, weather.rain || 0);
       detailUniforms.uDetailRain.value = weather.rain || 0;
-      puddles.update(dt, weather);
       detailUniforms.uDetailFocus.value.set(player.pos.x * 0.7 + stage.camera.position.x * 0.3, player.pos.z * 0.7 + stage.camera.position.z * 0.3);
       detailUniforms.uDetailViewport.value = stage.renderer.domElement.height;
       detailUniforms.uDetailDaylight.value = 1 - stage.night * 0.9;
