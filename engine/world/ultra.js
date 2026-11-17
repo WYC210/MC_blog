@@ -356,7 +356,10 @@ export function installUltra(stage) {
       bloom: Array.from({ length: LEVELS }, (_, i) => colour(Math.ceil(w / 2 ** (i + 1)), Math.ceil(h / 2 ** (i + 1)))),
     };
     adaptationReady = false;
-    for (const m of mirrors) m.uniforms.uReflection.value = targets.reflection.texture;
+    for (const m of mirrors) {
+      m.uniforms.uReflection.value = targets.reflection.texture;
+      m.reflectionReady = false;
+    }
   }
 
   function draw(material, target) {
@@ -367,6 +370,7 @@ export function installUltra(stage) {
 
   // ---------- Planar reflection (three.js's Reflector, for a level plane) ----------
   const mirrors = [];
+  const reflectionFrustum = new THREE.Frustum(), reflectionProjection = new THREE.Matrix4();
   const waterScene = new THREE.Scene();
   const reflectedMeshes = [], hiddenMeshes = [];
   const clearColor = new THREE.Color();
@@ -375,6 +379,47 @@ export function installUltra(stage) {
     if (object.isMesh || object.isLine || object.isPoints) reflectedMeshes.push(object);
   }
   const mirrorCamera = new THREE.PerspectiveCamera();
+  const reflectionDetails = [], waterFrustum = new THREE.Frustum(), waterProjection = new THREE.Matrix4();
+  const waterCrop = new THREE.Matrix4(), waterCorner = new THREE.Vector3();
+  const waterPolygons = Array.from({ length: 2 }, () => Array.from({ length: 16 }, () => new THREE.Vector3()));
+  const waterFaces = [[0, 1, 3, 2], [4, 5, 7, 6], [0, 1, 5, 4], [2, 3, 7, 6], [0, 2, 6, 4], [1, 3, 7, 5]];
+  function cropToWater(mirror) {
+    const bounds = mirror.surfaceBounds;
+    if (!bounds) return false;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const face of waterFaces) {
+      let input = waterPolygons[0], output = waterPolygons[1], count = 4;
+      for (let index = 0; index < 4; index++) {
+        const corner = face[index];
+        input[index].set(corner & 1 ? bounds.max.x : bounds.min.x, corner & 2 ? bounds.max.y : bounds.min.y, corner & 4 ? bounds.max.z : bounds.min.z);
+      }
+      for (const plane of reflectionFrustum.planes) {
+        let clipped = 0;
+        for (let index = 0; index < count; index++) {
+          const start = input[index], end = input[(index + 1) % count];
+          const from = plane.distanceToPoint(start), to = plane.distanceToPoint(end);
+          if (from >= 0) output[clipped++].copy(start);
+          if ((from >= 0) !== (to >= 0)) output[clipped++].copy(start).lerp(end, from / (from - to));
+        }
+        const swap = input; input = output; output = swap; count = clipped;
+        if (!count) break;
+      }
+      for (let index = 0; index < count; index++) {
+        waterCorner.copy(input[index]).applyMatrix4(reflectionProjection);
+        minX = Math.min(minX, waterCorner.x); maxX = Math.max(maxX, waterCorner.x);
+        minY = Math.min(minY, waterCorner.y); maxY = Math.max(maxY, waterCorner.y);
+      }
+    }
+    if (!Number.isFinite(minX + minY + maxX + maxY)) return false;
+    minX = Math.max(-1, minX - 0.05); maxX = Math.min(1, maxX + 0.05);
+    minY = Math.max(-1, minY - 0.05); maxY = Math.min(1, maxY + 0.05);
+    if (maxX - minX < 0.0001 || maxY - minY < 0.0001) return false;
+    waterCrop.set(2 / (maxX - minX), 0, 0, -(maxX + minX) / (maxX - minX),
+      0, 2 / (maxY - minY), 0, -(maxY + minY) / (maxY - minY), 0, 0, 1, 0, 0, 0, 0, 1);
+    waterProjection.copy(mirrorCamera.projectionMatrix).premultiply(waterCrop).multiply(mirrorCamera.matrixWorldInverse);
+    waterFrustum.setFromProjectionMatrix(waterProjection);
+    return true;
+  }
   const up = new THREE.Vector3(0, 1, 0), point = new THREE.Vector3(), eye = new THREE.Vector3(), mirrored = new THREE.Vector3();
   const look = new THREE.Vector3(), aim = new THREE.Vector3(), rotation = new THREE.Matrix4(), plane = new THREE.Plane();
   const clip = new THREE.Vector4(), q = new THREE.Vector4();
@@ -403,27 +448,39 @@ export function installUltra(stage) {
     clip.multiplyScalar(2 / clip.dot(q));
     e[2] = clip.x; e[6] = clip.y; e[10] = clip.z + 1 - 0.003; e[14] = clip.w;
     mirrorCamera.projectionMatrixInverse.copy(mirrorCamera.projectionMatrix).invert();
+    const optimize = !(renderer.shadowMap.enabled && (renderer.shadowMap.autoUpdate || renderer.shadowMap.needsUpdate));
+    const cropped = optimize && cropToWater(mirror);
     if (scene !== reflectionScene) {
       reflectedMeshes.length = 0;
       scene.traverse(collectReflection);
       reflectionScene = scene;
     }
     hiddenMeshes.length = 0;
-    for (const object of reflectedMeshes) {
-      if (!object.visible) continue;
-      if (object === sky || object === mirror.mesh || !object.isMesh) {
-        object.visible = false;
-        hiddenMeshes.push(object);
-      }
-    }
     const alpha = renderer.getClearAlpha();
     renderer.getClearColor(clearColor);
-    renderer.setClearColor(0x000000, 0);
-    renderer.setRenderTarget(targets.reflection);
-    try { renderer.render(scene, mirrorCamera); }
+    let appliedDetails = 0;
+    try {
+      if (optimize) scene.updateMatrixWorld();
+      if (optimize) for (const detail of reflectionDetails) {
+        appliedDetails++;
+        detail.beginReflection(mirrorCamera, targets.reflection.height);
+      }
+      for (const object of reflectedMeshes) {
+        if (!object.visible) continue;
+        if (object === sky || object === mirror.mesh || !object.isMesh
+          || cropped && object.frustumCulled && !waterFrustum.intersectsObject(object)) {
+          object.visible = false;
+          hiddenMeshes.push(object);
+        }
+      }
+      renderer.setClearColor(0x000000, 0);
+      renderer.setRenderTarget(targets.reflection);
+      renderer.render(scene, mirrorCamera);
+    }
     finally {
       renderer.setClearColor(clearColor, alpha);
       for (const object of hiddenMeshes) object.visible = true;
+      while (appliedDetails) reflectionDetails[--appliedDetails].endReflection();
     }
     return true;
   }
@@ -440,12 +497,21 @@ export function installUltra(stage) {
     return distanceSquared <= maxDistance * maxDistance;
   }
 
+  function surfaceInView(camera, mirror) {
+    if (!camera.layers.test(mirror.mesh.layers)) return false;
+    for (let object = mirror.mesh; object; object = object.parent) if (!object.visible) return false;
+    return mirror.surfaceBounds ? reflectionFrustum.intersectsBox(mirror.surfaceBounds) : reflectionFrustum.intersectsObject(mirror.mesh);
+  }
+
   // ---------- Per-frame ----------
   const sunPoint = new THREE.Vector3(), forward = new THREE.Vector3();
   const started = performance.now();
   let lastTime = started;
   let night = 0;
   let reflectionFrame = 0, reflectionReady = false;
+  let reflectionStatic = false, reflectionDirty = true, reflectionLayers = 0;
+  let reflectionWet = 0, reflectionCover = 0;
+  const reflectionView = new THREE.Matrix4(), reflectionLens = new THREE.Matrix4();
   const reflectionWeather = { cloud: 0, rain: 0, snow: 0, fog: 0, haze: 0 };
   function clearWeather() {
     return reflectionWeather.rain < 0.02 && reflectionWeather.snow < 0.02
@@ -459,30 +525,40 @@ export function installUltra(stage) {
     renderer.info.reset();
     const autoClear = renderer.autoClear;
     renderer.autoClear = true;
+    reflectionProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    reflectionFrustum.setFromProjectionMatrix(reflectionProjection);
 
     const clear = clearWeather();
-    if (!clear) {
-      for (const mirror of mirrors) mirror.uniforms.uReflectOn.value = 0;
-      reflectionReady = false;
-    } else {
-      const refresh = !reflectionReady || reflectionFrame % 2 === 0;
-      if (refresh) {
-        let reflected = false;
-        for (const mirror of mirrors) {
-          mirror.uniforms.uReflectOn.value = mirror.mesh.visible && nearReflectionBounds(camera, mirror) && reflect(scene, mirror) ? 1 : 0;
-          reflected ||= mirror.uniforms.uReflectOn.value > 0;
-        }
-        reflectionReady = reflected;
-      }
-      reflectionFrame++;
+    const viewChanged = reflectionStatic && (!reflectionView.equals(camera.matrixWorld)
+      || !reflectionLens.equals(camera.projectionMatrix) || reflectionLayers !== camera.layers.mask);
+    const shadowsChanged = renderer.shadowMap.enabled && (renderer.shadowMap.autoUpdate || renderer.shadowMap.needsUpdate);
+    const refresh = !reflectionReady || reflectionDirty || shadowsChanged || viewChanged || !reflectionStatic && reflectionFrame % 2 === 0;
+    if (reflectionStatic) {
+      reflectionView.copy(camera.matrixWorld);
+      reflectionLens.copy(camera.projectionMatrix);
+      reflectionLayers = camera.layers.mask;
     }
+    let reflected = false;
+    for (const mirror of mirrors) {
+      mirror.inView = surfaceInView(camera, mirror);
+      if (!clear || !mirror.inView || !nearReflectionBounds(camera, mirror) || camera.position.y < mirror.level + 0.02) {
+        mirror.reflectionReady = false;
+      } else if (refresh || !mirror.reflectionReady) {
+        mirror.reflectionReady = reflect(scene, mirror);
+      }
+      mirror.uniforms.uReflectOn.value = mirror.reflectionReady ? 1 : 0;
+      reflected ||= mirror.reflectionReady;
+    }
+    reflectionReady = reflected;
+    reflectionDirty = false;
+    if (clear) reflectionFrame++;
     renderer.setRenderTarget(targets.scene);
     renderer.render(scene, camera);
 
     renderer.autoClear = false;
     if (mirrors.length) {
       for (const mirror of mirrors) {
-        mirror.depthMesh.visible = mirror.mesh.visible;
+        mirror.depthMesh.visible = mirror.inView;
         mirror.depthMesh.geometry = mirror.mesh.geometry;
         mirror.depthMesh.matrix.copy(mirror.mesh.matrixWorld);
       }
@@ -569,7 +645,7 @@ export function installUltra(stage) {
     u.uTexel.value.set(1 / width, 1 / height); u.uSun.value.set(sx, sy);
     u.uAspect.value = width / height;
     u.uExposure.value = renderer.toneMappingExposure * EXPOSURE;
-    u.uTime.value = (performance.now() - started) / 1000;
+    u.uTime.value = scene.userData.animationTime ?? (performance.now() - started) / 1000;
     u.uSunSeen.value = seen * (1 - night);
     u.uHaze.value = 0.12 / Math.max(40, scene.fog.far);
     u.uShafts.value = 0.25 * shafts;
@@ -582,7 +658,21 @@ export function installUltra(stage) {
   const EXPOSURE = 1.2;
   const pipeline = {
     render,
-    setWeather(weather) { Object.assign(reflectionWeather, weather); },
+    addReflectionDetail(detail) { reflectionDetails.push(detail); },
+    setReflectionStatic(on) {
+      if (reflectionStatic === on) return;
+      reflectionStatic = on;
+      reflectionDirty = true;
+    },
+    invalidateReflections() { if (reflectionStatic) reflectionDirty = true; },
+    setWeather(weather) {
+      Object.assign(reflectionWeather, weather);
+      const wet = weather.wet ?? 0, cover = weather.cover ?? 0;
+      if (Math.abs(wet - reflectionWet) > 0.003 || Math.abs(cover - reflectionCover) > 0.003) {
+        if (reflectionStatic) reflectionDirty = true;
+        reflectionWet = wet; reflectionCover = cover;
+      }
+    },
     // pool.js registers the sea and its nearby-land reflection bounds.
     addMirror(mirror) {
       const depthMaterial = new THREE.ShaderMaterial({

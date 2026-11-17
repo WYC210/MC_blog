@@ -87,11 +87,22 @@ export function createRig(camera, world) {
   // The opening shot: the whole island from high up, then a swoop down behind
   // the player, keeping any roof in place. A portrait screen stands further back so
   // the house and the mountain still fit across its narrow width.
-  function startIntro(player, pos = camera.aspect < 0.8 ? INTRO.portrait : INTRO.pos, at = INTRO.look) {
+  function startIntro(player, pos = camera.aspect < 0.8 ? INTRO.portrait : INTRO.pos, at = INTRO.look, { hold = false } = {}) {
     const from = { pos: new THREE.Vector3(...pos), look: new THREE.Vector3(...at) };
-    intro = { t: 0, from, player };
+    const start = from.pos.clone();
+    if (!hold) start.applyAxisAngle(new THREE.Vector3(0, 1, 0), INTRO_HOLD * 0.05);
+    intro = { t: 0, from, start, aim: from.look.clone(), player, held: hold, fixed: hold };
+    camera.position.copy(from.pos);
+    camera.lookAt(from.look);
+  }
+  function releaseIntro() {
+    if (!intro?.held) return;
+    if (still.matches) { intro = null; return; }
+    intro.held = false;
+    intro.t = INTRO_HOLD;
   }
   function skipIntro() {
+    if (intro?.held) return;
     if (intro) intro.t = Math.max(intro.t, INTRO_HOLD + INTRO_SWOOP / 2);
     if (show && show.back < 0) {
       if (show.orbit) {
@@ -169,18 +180,18 @@ export function createRig(camera, world) {
       return;
     }
     if (intro) {
-      intro.t += dt;
+      if (!intro.held) intro.t += dt;
       if (intro.t < INTRO_HOLD) {
         // Briefly show the complete house before moving down into it.
         const a = intro.t * 0.05;
-        camera.position.copy(intro.from.pos).applyAxisAngle(new THREE.Vector3(0, 1, 0), a);
+        camera.position.copy(intro.from.pos);
+        if (!intro.fixed) camera.position.applyAxisAngle(THREE.Object3D.DEFAULT_UP, a);
         camera.lookAt(intro.from.look);
       } else {
         const p = ease(THREE.MathUtils.clamp((intro.t - INTRO_HOLD) / INTRO_SWOOP, 0, 1));
-        const start = intro.from.pos.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), INTRO_HOLD * 0.05);
-        camera.position.lerpVectors(start, followPos, p);
-        const look = intro.from.look.clone().lerp(focus, p);
-        camera.lookAt(look);
+        camera.position.lerpVectors(intro.start, followPos, p);
+        intro.aim.lerpVectors(intro.from.look, focus, p);
+        camera.lookAt(intro.aim);
         if (p >= 1) intro = null;
       }
     } else if (firstPerson) {
@@ -270,7 +281,7 @@ export function createRig(camera, world) {
   }
 
   return {
-    update, orbit, zoom, startIntro, skipIntro, setFirstPerson, showcase,
+    update, orbit, zoom, startIntro, releaseIntro, skipIntro, setFirstPerson, showcase,
     recenter(player, faceStation = false) {
       intro = null; gazeT = 0; lying = false;
       focus.set(player.pos.x, player.y + 1.25, player.pos.z);

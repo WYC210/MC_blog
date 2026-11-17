@@ -25,6 +25,7 @@ export function buildQinDistanceDetail(batch, materials, source = null) {
   const meshes = batch.build(materials);
   const proxy = source?.build(batch, prominent), proxyMeshes = proxy ? proxy.batch.build(materials) : [];
   const proxyCounts = proxyMeshes.map(mesh => mesh.count);
+  const reflectionCounts = meshes.map(() => 0), reflectionProxyCounts = proxyMeshes.map(() => 0);
   for (const mesh of proxyMeshes) {
     mesh.name = 'qin-far-proxy'; mesh.castShadow = false; mesh.count = 0; mesh.userData.tags = [];
   }
@@ -37,11 +38,16 @@ export function buildQinDistanceDetail(batch, materials, source = null) {
       this.count = state.full;
     };
     mesh.onAfterShadow = function(renderer, object, camera, shadowCamera, geometry, material, group) {
-      this.count = state.main;
+      this.count = state.reflection ?? state.main;
       after?.call(this, renderer, object, camera, shadowCamera, geometry, material, group);
     };
   }
-  let distant = false, proxied = false, warming = false, errorPixels = Infinity;
+  let distant = false, proxied = false, warming = false, reflecting = false, errorPixels = Infinity;
+  function coastDistanceSquared(camera) {
+    const column = Math.max(QIN_ISLAND.x0 - camera.position.x, 0, camera.position.x - QIN_ISLAND.x1);
+    const row = Math.max(QIN_ISLAND.z0 - camera.position.z, 0, camera.position.z - QIN_ISLAND.z1);
+    return column * column + row * row;
+  }
   function apply() {
     for (let index = 0; index < meshes.length; index++) {
       const state = counts[index];
@@ -59,10 +65,32 @@ export function buildQinDistanceDetail(batch, materials, source = null) {
     get proxied() { return proxied; },
     get errorPixels() { return errorPixels; },
     warmup(on) { warming = on; apply(); },
+    beginReflection(camera, height) {
+      const far = !warming && coastDistanceSquared(camera) > 32 ** 2;
+      const useProxy = far && !!proxy && qinLodErrorPixels(camera, height, proxy.bounds, proxy.error) < 2.5;
+      reflecting = true;
+      for (let index = 0; index < meshes.length; index++) {
+        const state = counts[index];
+        reflectionCounts[index] = meshes[index].count;
+        state.reflection = useProxy && state.kind === 'opaque' && state.shadow ? 0 : far ? state.far : state.full;
+        meshes[index].count = state.reflection;
+      }
+      for (let index = 0; index < proxyMeshes.length; index++) {
+        reflectionProxyCounts[index] = proxyMeshes[index].count;
+        proxyMeshes[index].count = warming || useProxy ? proxyCounts[index] : 0;
+      }
+    },
+    endReflection() {
+      if (!reflecting) return;
+      for (let index = 0; index < meshes.length; index++) {
+        counts[index].reflection = null;
+        meshes[index].count = reflectionCounts[index];
+      }
+      for (let index = 0; index < proxyMeshes.length; index++) proxyMeshes[index].count = reflectionProxyCounts[index];
+      reflecting = false;
+    },
     update(camera, height = 0, force = false) {
-      const column = Math.max(QIN_ISLAND.x0 - camera.position.x, 0, camera.position.x - QIN_ISLAND.x1);
-      const row = Math.max(QIN_ISLAND.z0 - camera.position.z, 0, camera.position.z - QIN_ISLAND.z1);
-      const next = !force && column * column + row * row > (distant ? 68 : 80) ** 2;
+      const next = !force && coastDistanceSquared(camera) > (distant ? 68 : 80) ** 2;
       errorPixels = proxy ? qinLodErrorPixels(camera, height, proxy.bounds, proxy.error) : Infinity;
       const nextProxy = !!proxy && next && errorPixels < (proxied ? 3.25 : 2.5);
       if (next === distant && nextProxy === proxied) return;

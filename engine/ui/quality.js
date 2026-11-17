@@ -53,12 +53,16 @@ export function createQualitySettings(stage, beforeOpen) {
     switchUltra(true);
   });
   dialog.addEventListener('click', event => { if (event.target === dialog) close(); });
-  dialog.addEventListener('close', () => packButton.focus({ preventScroll: true }));
+  dialog.addEventListener('close', () => {
+    const welcomeButton = document.querySelector('#welcome:not([hidden]) [data-welcome-quality]');
+    (welcomeButton || packButton).focus({ preventScroll: true });
+  });
   onLang(label);
   label();
 
   return {
     isOpen: () => dialog.open,
+    open,
     close,
     showFallback() {
       const url = new URL(location.href);

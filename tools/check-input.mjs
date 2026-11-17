@@ -105,6 +105,8 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}/?lang=${lang}`);
+    await page.waitForFunction(() => window.__home, null, { timeout: 60000 });
+    if (await page.evaluate(() => !!__home.welcome?.active)) await page.keyboard.press('Enter');
     await page.waitForFunction(() => window.__home && !__home.rig.introActive, null, { timeout: 60000 });
     for (const keys of [['w'], ['a'], ['s'], ['d'], ['ArrowRight'], ['Shift', 'd'], ['w', 'd']]) {
       const start = await page.evaluate(async () => {
@@ -138,6 +140,8 @@ try {
     const touchErrors = [];
     mobile.on('pageerror', error => touchErrors.push(error.message));
     await mobile.goto(`${base}/?lang=${lang}`);
+    await mobile.waitForFunction(() => window.__home, null, { timeout: 60000 });
+    if (await mobile.evaluate(() => !!__home.welcome?.active)) await mobile.touchscreen.tap(195, 422);
     await mobile.waitForFunction(() => window.__home && !__home.rig.introActive, null, { timeout: 60000 });
     await mobile.locator('#flyButton').tap();
     const right = mobile.locator('#flightPad [data-dir="right"]');

@@ -287,6 +287,7 @@ export function createStage(container, quality) {
   container.prepend(renderer.domElement);
 
   const scene = new THREE.Scene();
+  scene.userData.animationTime = 0;
   scene.fog = new THREE.Fog(0xffffff, 80, 220);
 
   // Portrait phones get a wider lens so the house is not seen through a slot.
@@ -378,6 +379,7 @@ export function createStage(container, quality) {
   }
 
   function apply() {
+    pipeline?.invalidateReflections?.();
     const u = sky.material.uniforms;
     u.uTop.value.copy(now.top); u.uHorizon.value.copy(now.horizon); u.uBottom.value.copy(now.bottom);
     u.uFogColor.value.copy(now.fog); u.uCloudLit.value.copy(now.cloudLit); u.uCloudShade.value.copy(now.cloudShade);
@@ -400,10 +402,11 @@ export function createStage(container, quality) {
     if (Math.abs(camera.far - far) > 0.5) { camera.far = far; camera.updateProjectionMatrix(); }
   }
 
-  function update(dt) {
+  function update(dt, animateWorld = true) {
+    if (animateWorld) scene.userData.animationTime += dt;
     const shift = sky.material.uniforms.uCloudShift.value;
     if (!still.matches) { shift.addScaledVector(drift, (1.2 + 6 * weather.wind) * dt); shift.set(shift.x % 1024, shift.y % 1024); }
-    if (!still.matches && !document.hidden && now.night > 0.001 && now.veil < 0.999) {
+    if (animateWorld && !still.matches && !document.hidden && now.night > 0.001 && now.veil < 0.999) {
       const motion = sky.material.uniforms.uSkyMotion.value;
       motion.x = (motion.x + dt * 0.0003) % (Math.PI * 2);
       motion.y = (motion.y + dt * 0.7) % (Math.PI * 2);

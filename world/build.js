@@ -1,7 +1,7 @@
 import { BoxBatch } from '@engine/world/blocks.js';
 import { buildIsland } from '@engine/world/terrain.js';
 import { buildForest, buildTufts } from '@engine/world/landscape.js';
-import { ISLAND, LAND, BAY, BOARDWALK, TREES, FOUNTAIN, MODEL_ORIGIN, IKUN_CENTER, IKUN_ENTRY, LEHUN_ORIGIN, ORIGIN_GONGLU, ORIGIN_FERRIS, inFerrisPlot } from './layout.js';
+import { ISLAND, LAND, POOL, BAY, BOARDWALK, TREES, FOUNTAIN, MODEL_ORIGIN, IKUN_CENTER, IKUN_ENTRY, LEHUN_ORIGIN, ORIGIN_GONGLU, ORIGIN_FERRIS, inFerrisPlot } from './layout.js';
 import { buildLitematicIKUN } from './ikun-model.js';
 import { buildLitematicLEHUN } from './lehun-model.js';
 import { buildLitematicGONGLU } from './gonglu-model.js';
@@ -35,6 +35,7 @@ import { installSurfaceTiles, restoreModelMaterials, materialForBlock } from './
 import { createMaterialProbe } from './material-probe.js';
 import { buildMaterialReview } from './material-review.js';
 import { ULTRA } from '@engine/ultra-flag.js';
+import { createReflectionDetail } from './reflection-detail.js';
 export { createEnvironment } from './terrain-detail.js';
 
 // Two cottages rebuilt one-to-one from litematics. The palette keeps every
@@ -360,14 +361,19 @@ export function build({ grid, layer, materials, stage }) {
 // The floats ride the swell.
 export function setup({ stage, config, player, avatar, rig, sound, world, nav, quality }) {
   if (ULTRA) {
-    world.hdMaterials = { status: 'loading' };
-    world.hdMaterialsReady = import('./hd-materials.js')
-      .then(({ installHdMaterials }) => installHdMaterials(world, stage.renderer))
-      .then(status => { world.hdMaterials = status; })
-      .catch(error => {
-        world.hdMaterials = { status: 'fallback', reason: error.message };
-        console.warn('HD textures could not load; keeping the original materials.', error);
-      });
+    world.hdMaterials = { status: 'pending' };
+    world.loadHdMaterials = () => {
+      if (world.hdMaterialsReady) return world.hdMaterialsReady;
+      world.hdMaterials = { status: 'loading' };
+      world.hdMaterialsReady = import('./hd-materials.js')
+        .then(({ installHdMaterials }) => installHdMaterials(world, stage.renderer, stage.scene))
+        .then(status => { world.hdMaterials = status; })
+        .catch(error => {
+          world.hdMaterials = { status: 'fallback', reason: error.message };
+          console.warn('HD textures could not load; keeping the original materials.', error);
+        });
+      return world.hdMaterialsReady;
+    };
   }
   const materialProbe = createMaterialProbe(stage, world.materials);
   world.tiles.data = world.tiles.texture.image.data;
@@ -386,12 +392,15 @@ export function setup({ stage, config, player, avatar, rig, sound, world, nav, q
   const resident = createResident({ stage, world, nav, player, jetSki, config, nightConcert, qinIsland, rig, sound });
   const coaster = createCoaster({ stage, player, rig, sound, world });
   const travelAgency = createTravelAgency({ player, rig, stage, nav, sound, fishing, lookout, qinIsland, coaster });
+  const reflectionDetail = quality.ultra ? createReflectionDetail({ scene: stage.scene, grid: world.grid, level: POOL.water }) : null;
+  if (reflectionDetail) stage.pipeline.addReflectionDetail(reflectionDetail);
   return {
-    fishing, furniture, jetSki, resident, nightConcert, nightNature, lookout, qinIsland, travelAgency, coaster, materialProbe,
-    warmup(on) { qinIsland.warmup(on); if (!on) materialProbe?.capture(); },
+    fishing, furniture, jetSki, resident, nightConcert, nightNature, lookout, qinIsland, travelAgency, coaster, materialProbe, reflectionDetail,
+    warmup(on) { qinIsland.warmup(on); reflectionDetail?.warmup(on); if (!on) materialProbe?.capture(); },
     interact: () => travelAgency.active || resident?.dialogue.active || coaster.interact() || qinIsland.encounter.interact() || resident?.interact() || lookout.interact() || jetSki.interact() || furniture.interact() || nightConcert.interact(),
     tap: (x, y, picked) => travelAgency.active || qinIsland.encounter.active || resident?.tap(x, y, picked) || coaster.tap(x, y, picked) || lookout.tap() || jetSki.tap(x, y, picked) || furniture.tap(x, y, picked) || qinIsland.tap(x, y, picked),
     pad: jetSki.pad,
+    updateView() { qinIsland.updateDetail(); },
     update(dt) {
       materialProbe?.update(dt);
       coaster.update(dt);

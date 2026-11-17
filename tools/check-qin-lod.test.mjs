@@ -129,3 +129,52 @@ test('moving or non-shadow parts cannot accidentally enter a static replacement'
     assert.throws(() => source.replace(batch, () => batch.box(0, 0, 0, 1, 1, 1, {}, options), () => {}), /static shadow-casting/);
   }
 });
+
+test('reflection selects a cheaper proxy independently and restores every main-pass count', () => {
+  const { detail, camera } = fixture();
+  camera.position.set(25, 10, 0); camera.lookAt(160, 2, 0); camera.updateMatrixWorld();
+  detail.update(camera, 900);
+  assert.equal(detail.distant, false);
+  const main = detail.meshes.map(mesh => mesh.count), proxies = detail.proxyMeshes.map(mesh => mesh.count);
+  detail.beginReflection(camera, 450);
+  assert.deepEqual(detail.meshes.map(mesh => mesh.count), [0, 1]);
+  assert.equal(detail.proxyMeshes[0].count, 2);
+  detail.meshes[0].onBeforeShadow(); detail.meshes[0].onAfterShadow();
+  assert.equal(detail.meshes[0].count, 0);
+  detail.endReflection();
+  assert.deepEqual(detail.meshes.map(mesh => mesh.count), main);
+  assert.deepEqual(detail.proxyMeshes.map(mesh => mesh.count), proxies);
+  assert.equal(detail.distant, false); assert.equal(detail.proxied, false);
+  detail.endReflection();
+  assert.deepEqual(detail.meshes.map(mesh => mesh.count), main);
+});
+
+test('reflection keeps close-up and zoomed silhouettes, actor parts and warmup geometry', () => {
+  const { detail, camera } = fixture();
+  camera.position.set(70, 10, 0); camera.lookAt(160, 2, 0); camera.updateMatrixWorld();
+  detail.update(camera, 900);
+  detail.beginReflection(camera, 450);
+  assert.deepEqual(detail.meshes.map(mesh => mesh.count), [5, 1]);
+  assert.equal(detail.proxyMeshes[0].count, 0);
+  detail.endReflection();
+  camera.position.set(25, 10, 0); camera.fov = 10; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  detail.beginReflection(camera, 900);
+  assert.deepEqual(detail.meshes.map(mesh => mesh.count), [4, 1]);
+  assert.equal(detail.proxyMeshes[0].count, 0);
+  detail.endReflection();
+  camera.fov = 60; camera.updateProjectionMatrix();
+  detail.warmup(true); detail.beginReflection(camera, 450);
+  assert.deepEqual(detail.meshes.map(mesh => mesh.count), [5, 1]);
+  assert.equal(detail.proxyMeshes[0].count, 2);
+  detail.endReflection(); detail.warmup(false);
+});
+
+test('reflection without an authored proxy only trims small details and restores custom counts', () => {
+  const { detail, camera } = fixture(false);
+  detail.meshes[0].count = 3;
+  detail.beginReflection(camera, 450);
+  assert.deepEqual(detail.meshes.map(mesh => mesh.count), [4, 1]);
+  assert.deepEqual(detail.proxyMeshes, []);
+  detail.endReflection();
+  assert.equal(detail.meshes[0].count, 3);
+});

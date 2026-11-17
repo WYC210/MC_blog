@@ -56,7 +56,7 @@ export function buildTufts(layer, materials, tufts, name = 'tufts') {
     mesh.setColorAt(k, colour.set(t.tint ?? 0xffffff));
   });
   mesh.name = name; mesh.receiveShadow = true; mesh.computeBoundingSphere();
-  mesh.onBeforeRender = () => { materials.uniforms.uTime.value = performance.now() / 1000; };
+  mesh.onBeforeRender = (renderer, scene) => { materials.uniforms.uTime.value = scene.userData.animationTime ?? performance.now() / 1000; };
   return mesh;
 }
 

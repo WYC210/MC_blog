@@ -50,6 +50,16 @@ for (const view of VIEWS) {
   const bootMs = Date.now() - start;
   const startup = await page.evaluate(() => window.__homeStartupError || null);
   if (startup) { console.log(`${view.name}: 3D did not start (${startup.phase}: ${startup.message})`); failed = true; await context.close(); continue; }
+  if (await page.evaluate(() => !!window.__home.welcome?.active)) {
+    const held = await page.evaluate(() => __home.stage.camera.position.toArray());
+    await page.waitForTimeout(1200);
+    const stillHeld = await page.evaluate(() => __home.stage.camera.position.toArray());
+    if (held.some((value, index) => Math.abs(value - stillHeld[index]) > .0001)) errors.push('welcome camera moved before entering');
+    await page.screenshot({ path: `${out}${view.name}-welcome.png` });
+    if (view.hasTouch) await page.touchscreen.tap(view.viewport.width / 2, view.viewport.height / 2);
+    else await page.keyboard.press('Enter');
+    await page.waitForFunction(() => !__home.welcome.active, null, { timeout: 30000 });
+  }
   // Let the opening shot finish, then measure a few seconds of frames.
   await page.waitForTimeout(5000);
   const stats = await page.evaluate(() => __home.stats());

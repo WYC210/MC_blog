@@ -33,6 +33,7 @@ import { createPortal, arrival, visitWorld, isTravelling, placePortalControls } 
 import { wornSkin } from './traveller.js';
 import { createWorldList } from './ui/worlds.js';
 import { setLoadingProgress as progress, setLoadingMessage, finishLoading, hideLoading } from './ui/loading.js';
+import { createWelcome } from './ui/welcome.js';
 import { mountHud } from './hud.js';
 import { t, nameOf, applyLang, onLang, langSwitch } from './lang.js';
 
@@ -76,6 +77,7 @@ function plain(error = null) {
   hideLoading();
   document.body.classList.add('plain');
   $('#loading')?.remove();
+  $('#welcome')?.remove();
   const notice = $('#startupNotice');
   if (notice) {
     notice.hidden = false;
@@ -267,6 +269,12 @@ async function boot() {
   const environmentDetails = ULTRA ? W.createEnvironment?.({ stage, world, weatherFx, player }) : null;
   stage.scene.add(player.web);
   const rig = createRig(stage.camera, world);
+  const welcome = !arrivedBy && $('#welcome') ? createWelcome({
+    world,
+    enter: () => { input.clear(); rig.releaseIntro(); },
+    quality: () => qualitySettings.open(),
+    blocked: () => qualitySettings.isOpen(),
+  }) : null;
   const qualitySettings = createQualitySettings(stage, () => { toggleWeatherMenu(false); rig.skipIntro(); });
   // The world's own moving parts (a sailboat, a Vertec, …): build.js setup(app).
   const extras = W.setup?.({ stage, world, nav, player, avatar, sound, rig, quality, config }) || {};
@@ -898,7 +906,8 @@ async function boot() {
   weatherFx.warmup(true);
   pool.warmup(true);
   extras.warmup?.(true);
-  if (world.hdMaterials?.status === 'loading' && world.hdMaterialsReady) {
+  if (!welcome) world.loadHdMaterials?.();
+  if (!welcome && world.hdMaterials?.status === 'loading' && world.hdMaterialsReady) {
     bootPhase = 'hd-materials';
     setLoadingMessage(t('更换材质包中...', 'Changing material pack...'));
     progress(0.88);
@@ -952,6 +961,7 @@ async function boot() {
   // the player stands in this portal's light and walks out once the world
   // shows; Back or Forward to here, or a world without one, settles outside it
   // (or at spawn).
+  const idleMove = { x: 0, z: 0, run: false, up: false, down: false };
   const walkOut = arrivedBy === 'door' && !reducedMotion ? portal?.arrive(player) : null;
   if (walkOut) {
     // Seen from the front, coming out of the light.
@@ -961,8 +971,25 @@ async function boot() {
   } else if (arrivedBy) {
     settlePortalArrival();
     stage.render();
+  } else if (welcome) {
+    rig.startIntro(player, undefined, undefined, { hold: true });
+    player.update(0, idleMove, rig.yaw, false);
+    rig.update(0, player);
+    extras.update?.(0, 0, performance.now());
+    stage.pipeline?.setReflectionStatic?.(true);
+    stage.setClearance(stage.camera.position.distanceTo(player.pos));
+    stage.render();
+    welcome.show();
   } else if (!reducedMotion) rig.startIntro(player);
   finishLoading();
+  if (welcome && world.loadHdMaterials) {
+    await nextFrame();
+    world.loadHdMaterials().then(() => {
+      stage.pipeline?.invalidateReflections?.();
+      welcome.refresh();
+    });
+    welcome.refresh();
+  }
   walkOut?.();
 
   addEventListener('pageshow', event => {
@@ -1001,7 +1028,9 @@ async function boot() {
     requestAnimationFrame(loop);
     if (document.hidden) { last = now; return; }
     const elapsed = (now - last) / 1000;
-    const paused = qualitySettings.isOpen() || minimap.isBigOpen() || panel.open || weatherMenuOpen() || isTravelling();
+    const waiting = !!welcome?.active && !welcome.entering;
+    stage.pipeline?.setReflectionStatic?.(waiting);
+    const paused = !!welcome?.active || qualitySettings.isOpen() || minimap.isBigOpen() || panel.open || weatherMenuOpen() || isTravelling();
     if (paused && !wasPaused) { player.cancel(); input.clear(); }
     wasPaused = paused;
     // Panels pause movement, but the visible world keeps rendering every frame.
@@ -1010,20 +1039,26 @@ async function boot() {
     if (minute !== timeMinute) { timeMinute = minute; if (timeMode === 'auto') applyWeather(); if (phone.up) phone.tick(); }
     const dt = Math.min(elapsed, 0.05);
 
-    const move = paused || rig.introActive || portal?.busy ? { x: 0, z: 0, run: false, up: false, down: false } : input.read();
+    const move = paused || rig.introActive || portal?.busy ? idleMove : input.read();
     const fp = rig.firstPerson && !rig.introActive;
-    player.update(dt, move, rig.yaw, fp);
-    portal?.update(dt, player);
-    rig.update(dt, player);
+    if (!waiting) {
+      player.update(dt, move, rig.yaw, fp);
+      portal?.update(dt, player);
+      rig.update(dt, player);
+    }
+    if (welcome?.entering && !rig.introActive) welcome.finish();
     stage.setClearance(rig.introActive ? stage.camera.position.distanceTo(player.pos) : 0);
-    for (const pet of pets) pet.update(dt, stage.camera, player);
-    aerial?.update(elapsed, stage.camera, screen);
-    extras.update?.(dt, elapsed, now);
-    atmosphere.update(elapsed, now);
+    if (waiting) extras.updateView?.();
+    else {
+      for (const pet of pets) pet.update(dt, stage.camera, player);
+      aerial?.update(elapsed, stage.camera, screen);
+      extras.update?.(dt, elapsed, now);
+      atmosphere.update(elapsed, now);
+    }
     weatherFx.update(elapsed, stage.camera, weatherFocus.set(player.pos.x, player.y + 1, player.pos.z));
     const weatherNow = weatherFx.state, cam = stage.camera.position;
     stage.pipeline?.setWeather?.(weatherNow);
-    environmentDetails?.update(elapsed, weatherNow);
+    environmentDetails?.update(waiting ? 0 : elapsed, weatherNow);
     pool.update(elapsed, stage.camera, player, weatherNow);
     // Under water the view softens; behind its blurred edges is water, not sky.
     if (pool.submerged !== underwater) {
@@ -1032,7 +1067,7 @@ async function boot() {
       document.body.style.background = `#${(underwater ? pool.fogColor : stage.fogTarget).getHexString()}`;
     }
     sound.ambience(weatherNow.rain, pool.submerged, inHouse(cam.x, cam.z) && cam.y < HOUSE.height);
-    stage.update(elapsed);
+    stage.update(elapsed, !waiting);
     // Looking up through their own eyes from the pool's floor, as in first
     // person, their body is out of the way.
     avatar.root.visible = !fp && rig.gazeAmount < 0.7;
@@ -1092,7 +1127,7 @@ async function boot() {
   addEventListener('resize', () => stage.resize());
   // Handy when poking at it from the console.
   window.__home = {
-    stage, world, player, avatar, rig, nav, pets, cat, dog, extras, portal, worn, atmosphere, weatherFx, environmentDetails, pool, weather, config, stats, setWeatherMode, getWeatherMode: () => weatherMode, setTimeMode, getTimeMode: () => timeMode, navigate, openPage, openPortal, go, setMood, photo: photoStudio,
+    stage, world, player, avatar, rig, welcome, nav, pets, cat, dog, extras, portal, worn, atmosphere, weatherFx, environmentDetails, pool, weather, config, stats, setWeatherMode, getWeatherMode: () => weatherMode, setTimeMode, getTimeMode: () => timeMode, navigate, openPage, openPortal, go, setMood, photo: photoStudio,
     teleport(x, z) { player.teleport(x, z); rig.recenter(player); },
     project(x, y, z) {
       const v = new THREE.Vector3(x, y, z).project(stage.camera);

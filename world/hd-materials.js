@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { selectHdTiles, writeHdTile } from './hd-texture-data.js';
+import { collectHdUsage, selectHdTiles, writeHdTile } from './hd-texture-data.js';
 
 const ROOT = new URL('../assets/ruidskin/r250-v1/', import.meta.url);
 const HEAD = /* glsl */`
@@ -10,7 +10,13 @@ const HEAD = /* glsl */`
 const COLOR = /* glsl */`
   vec4 tileTexel = texture(uTiles, vTex);
   vec4 hdColorProfile = texture2D(uHdProfiles, vec2((vTex.z + 0.5) / uDetailProfileWidth, 0.5));
-  if (hdColorProfile.b > 0.5) tileTexel = texture(uHdColors, vec3(vTex.xy, floor(hdColorProfile.r * 255.0 + 0.5)));
+  float hdFootprint = max(length(dFdx(vTex.xy)), length(dFdy(vTex.xy)));
+  float hdNear = (1.0 - smoothstep(24.0, 64.0, length(vViewPosition)))
+    * (1.0 - smoothstep(0.025, 0.09, hdFootprint));
+  if (hdColorProfile.b > 0.5 && hdNear > 0.001) {
+    vec4 hdTexel = texture(uHdColors, vec3(vTex.xy, floor(hdColorProfile.r * 255.0 + 0.5)));
+    tileTexel = mix(tileTexel, hdTexel, hdNear);
+  }
 `;
 const NORMAL = /* glsl */`
   if (detailHdProfile.b > 0.5 && detailNear * detailStrength > 0.001) {
@@ -59,7 +65,7 @@ async function loadImages(filenames, size, signal) {
   return loaded;
 }
 
-export async function installHdMaterials(world, renderer) {
+export async function installHdMaterials(world, renderer, scene) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
   let colors, details, profiles;
@@ -67,7 +73,8 @@ export async function installHdMaterials(world, renderer) {
     const manifest = await (await fetchResource('manifest.json', controller.signal)).json();
     const texture = world.materials.uniforms.uTiles.value;
     const image = texture.image, size = manifest.size;
-    const tiles = selectHdTiles(manifest, world.tiles.layer, image.depth);
+    const usage = collectHdUsage(scene);
+    const tiles = selectHdTiles(manifest, world.tiles.layer, image.depth, usage);
     const detailNames = [...new Set(tiles.map(tile => tile.detail))];
     const context = renderer.getContext();
     const maxLayers = context.getParameter(context.MAX_ARRAY_TEXTURE_LAYERS);
@@ -125,6 +132,7 @@ export async function installHdMaterials(world, renderer) {
     });
     renderer.shadowMap.needsUpdate = true;
     return { status: 'ready', pack: manifest.pack, size, layers, files: filenames.length,
+      usedLayers: usage.size, minUsage: 4,
       estimatedTextureMiB: +((colorPixels.byteLength + detailPixels.byteLength) * 4 / 3 / 1048576).toFixed(1) };
   } catch (error) {
     colors?.dispose(); details?.dispose(); profiles?.dispose();

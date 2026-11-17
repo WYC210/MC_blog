@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="world/qin-cinema.css">
 <link rel="stylesheet" href="world/qin-emperor-encounter.css">
 <link rel="stylesheet" href="world/travel-agency.css">
+<link rel="stylesheet" href="world/welcome.css">
 <script type="importmap">{"imports":{
   "three":"./vendor/three/three.module.min.js",
   "@engine/":"./engine/",
@@ -39,6 +40,21 @@
 <body>
 <main id="world" aria-label="Wyc Home" data-zh-label="Wyc的世界"></main>
 <div id="loading"><div class="bar"><i></i></div><p class="loading-label" role="status" aria-label="世界加载中..." data-zh="世界加载中..." data-en="Loading world...">世界加载中...</p></div>
+<section id="welcome" hidden aria-labelledby="welcomeTitle">
+  <div class="welcome-heading">
+    <img class="welcome-logo" src="assets/favicon.png" width="48" height="48" alt="">
+    <p class="welcome-eyebrow" data-zh="一座海岛，一些想法，一个世界。">An island, a few ideas, a world of my own.</p>
+    <h1 id="welcomeTitle" data-zh="Wyc的世界">Wyc Home</h1>
+    <p class="welcome-tagline" data-zh="惬意的海岛">Cozy Island</p>
+    <p class="welcome-description" data-zh="我是 Wyc，做音乐相关开发，用 AI 把想法变成现实。欢迎来岛上逛逛。">I'm Wyc. I build music software and bring ideas to life with AI. Welcome to my island.</p>
+  </div>
+  <div class="welcome-footer">
+    <p class="welcome-material" role="status" aria-live="polite"></p>
+    <button class="mc-button welcome-quality" type="button" data-welcome-quality data-zh="高清材质包（可选）">HD material pack (optional)</button>
+    <button class="mc-button welcome-enter" type="button" data-welcome-enter data-zh="进入世界">Enter world</button>
+    <p class="welcome-hint" data-zh="按任意键或点击任意处进入">Press any key or click anywhere to enter</p>
+  </div>
+</section>
 
 <section id="pages">
   <h1 class="plain-title" data-zh="Wyc的世界">Wyc Home</h1>
@@ -68,7 +84,7 @@
     <h2 data-zh="个人主页">Website</h2>
     <div class="placeholder-card"><a href="https://blog.wyc21.com" target="_blank" rel="noopener">
       echoes <br>
-      记录个人生活
+      
     </a></div>
   </article>
 

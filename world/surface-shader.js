@@ -10,16 +10,18 @@ export const SURFACE_DETAIL = /* glsl */`
   float detailRoughness = detailProfile.g;
   float detailMetalness = detailProfile.b;
   float detailProcedural = 1.0;
+  float detailFootprint = max(length(dFdx(detailUV)), length(dFdy(detailUV)));
+  float detailNear = (1.0 - smoothstep(16.0, 64.0, length(vViewPosition)))
+    * (1.0 - smoothstep(0.025, 0.09, detailFootprint));
   #ifdef RUIDSKIN_HD
     vec4 detailHdProfile = texture2D(uHdProfiles, vec2((vTex.z + 0.5) / uDetailProfileWidth, 0.5));
     vec4 detailHdSample = vec4(0.5, 0.5, detailRoughness, 1.0);
-    if (detailHdProfile.b > 0.5) {
+    if (detailHdProfile.b > 0.5 && detailNear > 0.001) {
       detailHdSample = texture(uHdDetails, vec3(vTex.xy, floor(detailHdProfile.g * 255.0 + 0.5)));
       detailRoughness = clamp(detailHdSample.b, 0.45, 1.0);
       detailProcedural = 0.0;
     }
   #endif
-  float detailNear = 1.0 - smoothstep(16.0, 64.0, length(vViewPosition));
   float detailStrength = 1.0 - clamp((vEmissive - 0.65) / 0.35, 0.0, 1.0);
   float detailWet = 0.0;
   if (detailKind > 0.5 && detailStrength > 0.001) {

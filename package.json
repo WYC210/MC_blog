@@ -29,6 +29,7 @@
     "check:ocean": "node --test tools/check-ocean-data.test.mjs && node tools/check-ocean.mjs",
     "check:coaster": "node --test tools/check-coaster-route.test.mjs tools/check-qin-distance-detail.test.mjs && node tools/check-coaster.mjs",
     "check:render-budget": "node --test tools/check-qin-distance-detail.test.mjs tools/check-qin-lod.test.mjs && node tools/check-render-budget.mjs",
+    "check:reflections": "node --test tools/check-reflection-detail.test.mjs tools/check-reflection-land-mask.test.mjs tools/check-qin-distance-detail.test.mjs tools/check-qin-lod.test.mjs && node tools/check-reflections.mjs",
     "check:furniture": "node tools/check-furniture.mjs",
     "check:fountain": "node tools/check-fountain.mjs",
     "check:night-lighting": "node tools/check-night-lighting.mjs",

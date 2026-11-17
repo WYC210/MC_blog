@@ -1,0 +1,49 @@
+#welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: max(7vh, env(safe-area-inset-top)) 24px max(5vh, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  color: #fff7e7;
+  background: linear-gradient(180deg, rgba(16, 27, 30, .66), transparent 60%, rgba(16, 27, 30, .78));
+  text-align: center;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, .65);
+  touch-action: manipulation;
+  transition: opacity .45s ease;
+}
+#welcome.leaving { opacity: 0; }
+.welcome-heading { max-width: 640px; }
+.welcome-logo { image-rendering: pixelated; filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, .35)); }
+.welcome-eyebrow { margin: 14px 0; font-size: 13px; letter-spacing: .12em; }
+#welcomeTitle { margin: 0; font-size: clamp(36px, 6vw, 72px); line-height: 1.2; letter-spacing: .04em; }
+.welcome-tagline { margin: 16px 0; font-size: 21px; }
+.welcome-description { max-width: 480px; margin: 0 auto; font-size: 14px; line-height: 1.9; color: #e6e5db; }
+.welcome-footer { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.welcome-material { margin: 0; max-width: 440px; font-size: 12px; line-height: 1.6; color: #d2dcd3; }
+#welcome .welcome-quality { min-height: 38px; font-size: 12px; }
+#welcome .welcome-enter { min-width: 190px; min-height: 48px; background: #426849; color: #fff7e7; font-weight: 600; }
+#welcome .welcome-enter:hover { background: #527b58; }
+.welcome-hint { margin: 0; font-size: 12px; color: #e6e5db; }
+body.plain #welcome { display: none; }
+@media (max-width: 600px) {
+  #welcome { padding: max(6vh, env(safe-area-inset-top)) 22px max(4vh, env(safe-area-inset-bottom)); }
+  .welcome-description { max-width: 320px; font-size: 13px; }
+  .welcome-eyebrow { font-size: 11px; letter-spacing: .05em; }
+  .welcome-tagline { font-size: 18px; }
+}
+@media (max-height: 540px) {
+  #welcome { flex-direction: row; justify-content: space-around; padding: 20px 28px; text-align: left; }
+  .welcome-heading { max-width: 52%; }
+  .welcome-logo { width: 30px; height: 30px; }
+  #welcomeTitle { font-size: 32px; }
+  .welcome-eyebrow, .welcome-tagline { margin: 8px 0; }
+  .welcome-footer { max-width: 40%; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #welcome { transition: none; }
+}

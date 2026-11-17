@@ -473,6 +473,7 @@ export function drawQinMap(context, projectX, projectZ, scale) {
 
 export function setupQinIsland({ world, player, avatar, stage, nav, rig, sound }) {
   const sanctuary = world.qinIsland;
+  if (stage.quality.ultra) stage.pipeline?.addReflectionDetail(sanctuary.distanceDetail);
   const cinema = createQinCinema({ media: sanctuary.media, player });
   const greatWall = createQinGreatWallGuide(sanctuary.greatWall);
   const encounter = createQinEmperorEncounter({ world, stage, nav, player, avatar, rig, sound });

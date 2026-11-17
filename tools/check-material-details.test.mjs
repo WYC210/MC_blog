@@ -4,6 +4,24 @@ import { readFileSync } from 'node:fs';
 import { SURFACE_TILES, MODEL_SURFACES, restoreModelMaterials, materialForBlock, surfaceTile, installSurfaceTiles } from '../world/material-palette.js';
 import { DETAIL_KINDS, detailProfile, terrainProfile, materialDetailStrength } from '../world/detail-profiles.js';
 import { SURFACE_DETAIL } from '../world/surface-shader.js';
+import { collectHdUsage, selectHdTiles } from '../world/hd-texture-data.js';
+
+test('HD selection keeps only used and sufficiently common layers', () => {
+  const manifest = { version: 1, size: 256, tiles: [
+    { targets: ['stone'], color: 'stone.png', detail: 'stone-detail.png' },
+    { targets: ['oak', 'walnut'], color: 'wood.png', detail: 'wood-detail.png' },
+  ] };
+  const layer = { stone: 0, oak: 1, walnut: 2 }, usage = new Map([[0, 8], [1, 3], [2, 0]]);
+  assert.deepEqual(selectHdTiles(manifest, layer, 3, usage, 4).map(tile => tile.targets), [['stone']]);
+  assert.equal(collectHdUsage({ traverse() {} }).size, 0);
+});
+
+test('reflection copies do not promote rare HD layers or increase source material usage', () => {
+  const source = { geometry: { attributes: { iLayers: { array: [1, 1, 1] } } } };
+  const copy = { geometry: source.geometry, userData: { reflectionSource: source } };
+  const usage = collectHdUsage({ traverse(visit) { visit(source); visit(copy); } });
+  assert.equal(usage.get(1), 3);
+});
 
 test('terrain profiles accept block objects and names, and ignore covered or missing blocks', () => {
   for (const name of ['sand', 'qin-sand', 'qin-grass', 'qin-path']) {

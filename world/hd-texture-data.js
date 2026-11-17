@@ -1,4 +1,26 @@
-export function selectHdTiles(manifest, layer, depth) {
+export const HD_MIN_USAGE = 4;
+
+export function collectHdUsage(scene) {
+  const usage = new Map();
+  const add = value => {
+    if (!Number.isInteger(value) || value < 0) return;
+    usage.set(value, (usage.get(value) || 0) + 1);
+  };
+  scene?.traverse(object => {
+    if (object.userData?.reflectionSource) return;
+    const attributes = object.geometry?.attributes;
+    if (attributes?.tileLayer) {
+      for (const value of attributes.tileLayer.array) add(value);
+    }
+    if (attributes?.iLayers) {
+      const values = attributes.iLayers.array;
+      for (let index = 0; index < values.length; index++) add(values[index]);
+    }
+  });
+  return usage;
+}
+
+export function selectHdTiles(manifest, layer, depth, usage = null, minUsage = HD_MIN_USAGE) {
   if (manifest?.version !== 1 || manifest.size !== 256 || !Array.isArray(manifest.tiles) || manifest.tiles.length > 64) {
     throw new Error('Unsupported HD material manifest');
   }
@@ -14,7 +36,8 @@ export function selectHdTiles(manifest, layer, depth) {
       if (!Number.isInteger(layer[name]) || layer[name] < 0 || layer[name] >= depth) throw new Error('Invalid HD tile layer');
       targets.push(name);
     }
-    if (targets.length) selected.push({ ...entry, targets });
+    const filtered = usage ? targets.filter(name => (usage.get(layer[name]) || 0) >= minUsage) : targets;
+    if (filtered.length) selected.push({ ...entry, targets: filtered });
   }
   if (!selected.length) throw new Error('No compatible HD tiles');
   return selected;

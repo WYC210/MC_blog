@@ -404,7 +404,8 @@ export function createPool({ stage, world, shelter, quality }) {
   water.name = 'pool-water'; water.rotation.x = -Math.PI / 2; water.position.copy(CENTRE);
   // After the glass, before the rain, which a surface seen from below hides.
   water.renderOrder = 3;
-  if (quality.ultra) stage.pipeline.addMirror({ mesh: water, level: WATER, uniforms, bounds: [L.LAND, L.QIN_ISLAND], maxDistance: 80 });
+  if (quality.ultra) stage.pipeline.addMirror({ mesh: water, level: WATER, uniforms, bounds: [L.LAND, L.QIN_ISLAND], maxDistance: 80,
+    surfaceBounds: new THREE.Box3(new THREE.Vector3(POOL.x0, WATER - 0.3, POOL.z0), new THREE.Vector3(POOL.x1, WATER + 0.3, POOL.z1)) });
 
   const particleMaterial = new THREE.ShaderMaterial({
     name: 'pool-particles', uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTint: { value: new THREE.Color(0xeefcff) } }]),
